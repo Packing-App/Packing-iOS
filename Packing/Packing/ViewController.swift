@@ -21,13 +21,13 @@ class ViewController: UIViewController {
     }()
     
     private lazy var googleLoginButton: UIButton = {
-        createSocialLoginButton(title: "Google Login", color: .white)
+        createSocialLoginButton(title: "Google Login", color: .gray)
     }()
     private lazy var kakaoLoginButton: UIButton = {
-        createSocialLoginButton(title: "Kakao Login", color: .white)
+        createSocialLoginButton(title: "Kakao Login", color: .yellow)
     }()
     private lazy var naverLoginButton: UIButton = {
-        createSocialLoginButton(title: "Naver Login", color: .white)
+        createSocialLoginButton(title: "Naver Login", color: .green)
     }()
     
     private lazy var appleLoginButton: ASAuthorizationAppleIDButton = {
@@ -37,13 +37,13 @@ class ViewController: UIViewController {
         return button
     }()
     
-    private var webView: WKWebView?
+//    private var webView: WKWebView?
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setupUI()
-        
+        setupButtonActions()
     }
     
     private func setupUI() {
@@ -86,14 +86,16 @@ class ViewController: UIViewController {
     }
     
     @objc private func handleGoogleLogin() {
-        initiateOAuthLogin(for: .googleLogin)
+        print(#fileID, #function, #line, "- ")
+        performOAuthLogin(for: .googleLogin)
     }
     @objc private func handleKakaoLogin() {
-        initiateOAuthLogin(for: .googleLogin)
+        performOAuthLogin(for: .kakaoLogin)
     }
     @objc private func handleNaverLogin() {
-        initiateOAuthLogin(for: .googleLogin)
+        performOAuthLogin(for: .naverLogin)
     }
+    
     @objc private func handleAppleLogin() {
         let appleIDProvider = ASAuthorizationAppleIDProvider()
         let request = appleIDProvider.createRequest()
@@ -105,55 +107,67 @@ class ViewController: UIViewController {
         authorizationController.performRequests()
     }
     
-    private func initiateOAuthLogin(for route: AuthRoute) {
-        NetworkManager.shared.initiateOAuthLogin(route: route) { [weak self] result in
+    private func performOAuthLogin(for route: AuthRoute) {
+        print(#fileID, #function, #line, "- ")
+        NetworkManager.shared.initiateOAuthLogin(route: route) { [weak self]result in
             switch result {
             case .success(let url):
-                self?.presentWebView(with: url)
+//                self?.presentWebView(with: url)   --> WebView 로 직접 소통하려고 하니 google security 정책으로 인해 403 user agent 오류가 뜸.
+                // -> 백엔드를 통해서 Oauth에 인증
+                // 여기서는 ASWebAuthenticationSession 를 통해 handleAuthCallback으로 토큰을 여기서 받으면 됨.
+                self?.startAuthenticationSession(with: url)
             case .failure(let error):
                 print("로그인 실패: \(error.localizedDescription)")
             }
         }
     }
     
-    private func presentWebView(with url: URL) {
-        let configuration = WKWebViewConfiguration()
-        webView = WKWebView(frame: view.bounds, configuration: configuration)
-        webView?.navigationDelegate = self
+    private func startAuthenticationSession(with url: URL) {
+        print(#fileID, #function, #line, "- ")
+        let session = ASWebAuthenticationSession(url: url, callback: .customScheme("packingapp")) { [weak self] url, err in
+            if let err = err {
+                print("Authentication error: \(err.localizedDescription)")
+                return
+            }
+            guard let callbackURL = url else {
+                print("callBackURL is nil")
+                return
+            }
+            self?.handleAuthCallback(url: callbackURL)
+        }
         
-        guard let webView = webView else { return }
-        
-        view.addSubview(webView)
-        webView.load(URLRequest(url: url))
+        session.presentationContextProvider = self
+        session.prefersEphemeralWebBrowserSession = false // 로그인 상태 유지 필요시 false
+        session.start()
     }
-}
-
-extension ViewController: WKNavigationDelegate {
-    func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping @MainActor (WKNavigationResponsePolicy) -> Void) {
-        guard let httpResponse = navigationResponse.response as? HTTPURLResponse,
-              let url = navigationResponse.response.url else {
-            decisionHandler(.cancel)
+    
+    //    private func presentWebView(with url: URL) {
+    //        let configuration = WKWebViewConfiguration()
+    //        webView = WKWebView(frame: view.bounds, configuration: configuration)
+    //        webView?.navigationDelegate = self
+    //
+    //        guard let webView = webView else { return }
+    //
+    //        view.addSubview(webView)
+    //        webView.load(URLRequest(url: url))
+    //    }
+    
+    private func handleAuthCallback(url: URL) {
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: true),
+              let queryItems = components.queryItems else {
             return
         }
         
-        // MARK: - HANDLING DEEP LINK
+        let accessToken = components.queryItems?.first(where: { $0.name == "accessToken"})?.value
+        let refreshToken = components.queryItems?.first(where: { $0.name == "refreshToken"})?.value
+        let userId = components.queryItems?.first(where: { $0.name == "userId"})?.value
         
-        if url.scheme == "packing" && url.host == "auth" && url.path == "/callback" {
-            let components = URLComponents(url: url, resolvingAgainstBaseURL: true)
-            let accessToken = components?.queryItems?.first(where: { $0.name == "accessToken"})?.value
-            let refreshToken = components?.queryItems?.first(where: { $0.name == "refreshToken"})?.value
-            let userId = components?.queryItems?.first(where: { $0.name == "userId"})?.value
-            
-            // TODO: Save Token in KeyChain
-            saveAuthTokens(accessToken: accessToken, refreshToken: refreshToken, userId: userId)
-            
-            // navigate to main view
-            decisionHandler(.cancel)
-            webView.removeFromSuperview()
-        } else {
-            decisionHandler(.allow) //
-        }
+        
+        saveAuthTokens(accessToken: accessToken, refreshToken: refreshToken, userId: userId)
+        
+        // navigate to main view
     }
+    
     
     private func saveAuthTokens(accessToken: String?, refreshToken: String?, userId: String?) {
         print("Access Token: \(accessToken ?? "N/A")")
@@ -161,6 +175,34 @@ extension ViewController: WKNavigationDelegate {
         print("User ID: \(userId ?? "N/A")")
     }
 }
+
+//extension ViewController: WKNavigationDelegate {
+//    func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping @MainActor (WKNavigationResponsePolicy) -> Void) {
+//        guard let httpResponse = navigationResponse.response as? HTTPURLResponse,
+//              let url = navigationResponse.response.url else {
+//            decisionHandler(.cancel)
+//            return
+//        }
+//        
+//        // MARK: - HANDLING DEEP LINK
+//        
+//        if url.scheme == "packing" && url.host == "auth" && url.path == "/callback" {
+//            let components = URLComponents(url: url, resolvingAgainstBaseURL: true)
+//            let accessToken = components?.queryItems?.first(where: { $0.name == "accessToken"})?.value
+//            let refreshToken = components?.queryItems?.first(where: { $0.name == "refreshToken"})?.value
+//            let userId = components?.queryItems?.first(where: { $0.name == "userId"})?.value
+//            
+//            saveAuthTokens(accessToken: accessToken, refreshToken: refreshToken, userId: userId)
+//            
+//            // navigate to main view
+//            decisionHandler(.cancel)
+//            webView.removeFromSuperview()
+//        } else {
+//            decisionHandler(.allow) //
+//        }
+//    }
+//    
+//}
 
 
 
@@ -173,10 +215,19 @@ extension ViewController: ASAuthorizationControllerDelegate {
             let fullName = appleIDCredential.fullName
             let email = appleIDCredential.email
             
-            // MARK: - Send Apple login credentials to backend server
-            print("Apple Login User ID: \(userIdentifier)")
-            print("Name: \(fullName?.givenName ?? "N/A")")
-            print("Email: \(email ?? "N/A")")
+            NetworkManager.shared.sendAppleLoginCredentials(
+                userId: userIdentifier,
+                email: email,
+                fullName: fullName
+            ) { result in
+                switch result {
+                case .success:
+                    print("Apple login credentials sent successfully")
+                    // Handle successful Apple login
+                case .failure(let error):
+                    print("Apple login credential send failed: \(error.localizedDescription)")
+                }
+            }
         }
     }
     
@@ -188,5 +239,12 @@ extension ViewController: ASAuthorizationControllerDelegate {
 extension ViewController: ASAuthorizationControllerPresentationContextProviding {
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
         return self.view.window!
+    }
+}
+
+
+extension ViewController: ASWebAuthenticationPresentationContextProviding {
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        return view.window!
     }
 }

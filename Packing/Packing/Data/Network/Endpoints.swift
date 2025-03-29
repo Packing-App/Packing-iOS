@@ -40,7 +40,6 @@ extension Endpoint {
 enum AuthEndpoint: Endpoint {
     
     // for email Login
-    
     // for social Login
     case googleLogin
     case kakaoLogin

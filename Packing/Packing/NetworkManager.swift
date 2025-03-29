@@ -11,7 +11,7 @@ import AuthenticationServices
 // MARK: - URL
 
 enum BaseURL {
-    static let development = ""
+    static let development = "http://localhost:5001"
     static let production = "https://port-0-node-express-m8mn7lwcb2d4bc3e.sel4.cloudtype.app"
 }
 

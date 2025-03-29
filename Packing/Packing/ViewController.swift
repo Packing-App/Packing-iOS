@@ -140,18 +140,6 @@ class ViewController: UIViewController {
         session.prefersEphemeralWebBrowserSession = false // 로그인 상태 유지 필요시 false
         session.start()
     }
-    
-    //    private func presentWebView(with url: URL) {
-    //        let configuration = WKWebViewConfiguration()
-    //        webView = WKWebView(frame: view.bounds, configuration: configuration)
-    //        webView?.navigationDelegate = self
-    //
-    //        guard let webView = webView else { return }
-    //
-    //        view.addSubview(webView)
-    //        webView.load(URLRequest(url: url))
-    //    }
-    
     private func handleAuthCallback(url: URL) {
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: true),
               let queryItems = components.queryItems else {
@@ -176,35 +164,12 @@ class ViewController: UIViewController {
     }
 }
 
-//extension ViewController: WKNavigationDelegate {
-//    func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping @MainActor (WKNavigationResponsePolicy) -> Void) {
-//        guard let httpResponse = navigationResponse.response as? HTTPURLResponse,
-//              let url = navigationResponse.response.url else {
-//            decisionHandler(.cancel)
-//            return
-//        }
-//        
-//        // MARK: - HANDLING DEEP LINK
-//        
-//        if url.scheme == "packing" && url.host == "auth" && url.path == "/callback" {
-//            let components = URLComponents(url: url, resolvingAgainstBaseURL: true)
-//            let accessToken = components?.queryItems?.first(where: { $0.name == "accessToken"})?.value
-//            let refreshToken = components?.queryItems?.first(where: { $0.name == "refreshToken"})?.value
-//            let userId = components?.queryItems?.first(where: { $0.name == "userId"})?.value
-//            
-//            saveAuthTokens(accessToken: accessToken, refreshToken: refreshToken, userId: userId)
-//            
-//            // navigate to main view
-//            decisionHandler(.cancel)
-//            webView.removeFromSuperview()
-//        } else {
-//            decisionHandler(.allow) //
-//        }
-//    }
-//    
-//}
 
-
+extension ViewController: ASWebAuthenticationPresentationContextProviding {
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        return view.window!
+    }
+}
 
 // MARK: - APPLE LOGIN
 
@@ -239,12 +204,5 @@ extension ViewController: ASAuthorizationControllerDelegate {
 extension ViewController: ASAuthorizationControllerPresentationContextProviding {
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
         return self.view.window!
-    }
-}
-
-
-extension ViewController: ASWebAuthenticationPresentationContextProviding {
-    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        return view.window!
     }
 }

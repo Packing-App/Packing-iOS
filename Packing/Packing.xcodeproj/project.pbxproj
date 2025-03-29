@@ -7,7 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		CEBF1A332D95346F00AF1B94 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A322D95346F00AF1B94 /* GoogleSignIn */; };
+		CEBF1A362D9796B900AF1B94 /* ReactorKit in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A352D9796B900AF1B94 /* ReactorKit */; };
+		CEBF1A392D9796D700AF1B94 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A382D9796D700AF1B94 /* SnapKit */; };
+		CEBF1A3B2D9796D700AF1B94 /* SnapKit-Dynamic in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A3A2D9796D700AF1B94 /* SnapKit-Dynamic */; };
+		CEBF1A3E2D97970000AF1B94 /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A3D2D97970000AF1B94 /* RxCocoa */; };
+		CEBF1A402D97970000AF1B94 /* RxRelay in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A3F2D97970000AF1B94 /* RxRelay */; };
+		CEBF1A422D97970000AF1B94 /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A412D97970000AF1B94 /* RxSwift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -18,7 +23,7 @@
 		CE797F102D91A3ED00EEA5B1 /* Exceptions for "Packing" folder in "Packing" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Info.plist,
+				Resources/Info.plist,
 			);
 			target = CE797EFD2D91A3EB00EEA5B1 /* Packing */;
 		};
@@ -40,7 +45,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CEBF1A332D95346F00AF1B94 /* GoogleSignIn in Frameworks */,
+				CEBF1A422D97970000AF1B94 /* RxSwift in Frameworks */,
+				CEBF1A402D97970000AF1B94 /* RxRelay in Frameworks */,
+				CEBF1A392D9796D700AF1B94 /* SnapKit in Frameworks */,
+				CEBF1A362D9796B900AF1B94 /* ReactorKit in Frameworks */,
+				CEBF1A3E2D97970000AF1B94 /* RxCocoa in Frameworks */,
+				CEBF1A3B2D9796D700AF1B94 /* SnapKit-Dynamic in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -83,7 +93,12 @@
 			);
 			name = Packing;
 			packageProductDependencies = (
-				CEBF1A322D95346F00AF1B94 /* GoogleSignIn */,
+				CEBF1A352D9796B900AF1B94 /* ReactorKit */,
+				CEBF1A382D9796D700AF1B94 /* SnapKit */,
+				CEBF1A3A2D9796D700AF1B94 /* SnapKit-Dynamic */,
+				CEBF1A3D2D97970000AF1B94 /* RxCocoa */,
+				CEBF1A3F2D97970000AF1B94 /* RxRelay */,
+				CEBF1A412D97970000AF1B94 /* RxSwift */,
 			);
 			productName = Packing;
 			productReference = CE797EFE2D91A3EB00EEA5B1 /* Packing.app */;
@@ -114,7 +129,9 @@
 			mainGroup = CE797EF52D91A3EB00EEA5B1;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				CEBF1A312D95346F00AF1B94 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				CEBF1A342D9796B900AF1B94 /* XCRemoteSwiftPackageReference "ReactorKit" */,
+				CEBF1A372D9796D700AF1B94 /* XCRemoteSwiftPackageReference "SnapKit" */,
+				CEBF1A3C2D97970000AF1B94 /* XCRemoteSwiftPackageReference "RxSwift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CE797EFF2D91A3EB00EEA5B1 /* Products */;
@@ -354,21 +371,62 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		CEBF1A312D95346F00AF1B94 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+		CEBF1A342D9796B900AF1B94 /* XCRemoteSwiftPackageReference "ReactorKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			repositoryURL = "https://github.com/ReactorKit/ReactorKit.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 8.0.0;
+				minimumVersion = 3.2.0;
+			};
+		};
+		CEBF1A372D9796D700AF1B94 /* XCRemoteSwiftPackageReference "SnapKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SnapKit/SnapKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.7.1;
+			};
+		};
+		CEBF1A3C2D97970000AF1B94 /* XCRemoteSwiftPackageReference "RxSwift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ReactiveX/RxSwift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.9.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		CEBF1A322D95346F00AF1B94 /* GoogleSignIn */ = {
+		CEBF1A352D9796B900AF1B94 /* ReactorKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = CEBF1A312D95346F00AF1B94 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
-			productName = GoogleSignIn;
+			package = CEBF1A342D9796B900AF1B94 /* XCRemoteSwiftPackageReference "ReactorKit" */;
+			productName = ReactorKit;
+		};
+		CEBF1A382D9796D700AF1B94 /* SnapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CEBF1A372D9796D700AF1B94 /* XCRemoteSwiftPackageReference "SnapKit" */;
+			productName = SnapKit;
+		};
+		CEBF1A3A2D9796D700AF1B94 /* SnapKit-Dynamic */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CEBF1A372D9796D700AF1B94 /* XCRemoteSwiftPackageReference "SnapKit" */;
+			productName = "SnapKit-Dynamic";
+		};
+		CEBF1A3D2D97970000AF1B94 /* RxCocoa */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CEBF1A3C2D97970000AF1B94 /* XCRemoteSwiftPackageReference "RxSwift" */;
+			productName = RxCocoa;
+		};
+		CEBF1A3F2D97970000AF1B94 /* RxRelay */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CEBF1A3C2D97970000AF1B94 /* XCRemoteSwiftPackageReference "RxSwift" */;
+			productName = RxRelay;
+		};
+		CEBF1A412D97970000AF1B94 /* RxSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CEBF1A3C2D97970000AF1B94 /* XCRemoteSwiftPackageReference "RxSwift" */;
+			productName = RxSwift;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

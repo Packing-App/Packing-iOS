@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		CEBF1A362D9796B900AF1B94 /* ReactorKit in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A352D9796B900AF1B94 /* ReactorKit */; };
 		CEBF1A392D9796D700AF1B94 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A382D9796D700AF1B94 /* SnapKit */; };
-		CEBF1A3B2D9796D700AF1B94 /* SnapKit-Dynamic in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A3A2D9796D700AF1B94 /* SnapKit-Dynamic */; };
 		CEBF1A3E2D97970000AF1B94 /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A3D2D97970000AF1B94 /* RxCocoa */; };
 		CEBF1A402D97970000AF1B94 /* RxRelay in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A3F2D97970000AF1B94 /* RxRelay */; };
 		CEBF1A422D97970000AF1B94 /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A412D97970000AF1B94 /* RxSwift */; };
@@ -23,7 +22,7 @@
 		CE797F102D91A3ED00EEA5B1 /* Exceptions for "Packing" folder in "Packing" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Resources/Info.plist,
+				Info.plist,
 			);
 			target = CE797EFD2D91A3EB00EEA5B1 /* Packing */;
 		};
@@ -50,7 +49,6 @@
 				CEBF1A392D9796D700AF1B94 /* SnapKit in Frameworks */,
 				CEBF1A362D9796B900AF1B94 /* ReactorKit in Frameworks */,
 				CEBF1A3E2D97970000AF1B94 /* RxCocoa in Frameworks */,
-				CEBF1A3B2D9796D700AF1B94 /* SnapKit-Dynamic in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -95,7 +93,6 @@
 			packageProductDependencies = (
 				CEBF1A352D9796B900AF1B94 /* ReactorKit */,
 				CEBF1A382D9796D700AF1B94 /* SnapKit */,
-				CEBF1A3A2D9796D700AF1B94 /* SnapKit-Dynamic */,
 				CEBF1A3D2D97970000AF1B94 /* RxCocoa */,
 				CEBF1A3F2D97970000AF1B94 /* RxRelay */,
 				CEBF1A412D97970000AF1B94 /* RxSwift */,
@@ -407,11 +404,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CEBF1A372D9796D700AF1B94 /* XCRemoteSwiftPackageReference "SnapKit" */;
 			productName = SnapKit;
-		};
-		CEBF1A3A2D9796D700AF1B94 /* SnapKit-Dynamic */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = CEBF1A372D9796D700AF1B94 /* XCRemoteSwiftPackageReference "SnapKit" */;
-			productName = "SnapKit-Dynamic";
 		};
 		CEBF1A3D2D97970000AF1B94 /* RxCocoa */ = {
 			isa = XCSwiftPackageProductDependency;

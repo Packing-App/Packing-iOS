@@ -265,15 +265,6 @@ class LoginViewController: UIViewController {
         return imageView
     }()
     
-    private lazy var titleLabel: UILabel = {
-        let label = UILabel()
-        label.text = "PACKING"
-        label.font = .preferredFont(forTextStyle: .headline)
-        label.textAlignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    
     private lazy var subtitleLabel: UILabel = {
         let label = UILabel()
         label.text = "여행에 딱! \n필요한 짐만, 패킹"
@@ -373,6 +364,7 @@ class LoginViewController: UIViewController {
     
     // MARK: - UI Setup
     private func setupUI() {
+        self.navigationItem.title = "PACKING"
         view.backgroundColor = .systemBackground
         
         view.addSubview(stackView)
@@ -380,8 +372,6 @@ class LoginViewController: UIViewController {
         view.addSubview(loadingIndicator)
         view.addSubview(emailLoginButton)
         
-        stackView.addArrangedSubview(titleLabel)
-        stackView.setCustomSpacing(80, after: titleLabel)
         stackView.addArrangedSubview(logoImageView)
         stackView.addArrangedSubview(subtitleLabel)
         stackView.setCustomSpacing(80, after: subtitleLabel)
@@ -428,6 +418,12 @@ class LoginViewController: UIViewController {
     
     @objc private func didTapEmailLoginButton(_ sender: UIButton) {
         print(#fileID, #function, #line, "- ")
+        
+        let emailLoginVC = EmailLoginViewController()
+        self.navigationController?.isNavigationBarHidden = false
+        self.navigationController?.pushViewController(emailLoginVC, animated: true)
+        
+        
     }
 }
 
@@ -435,5 +431,5 @@ class LoginViewController: UIViewController {
 
 
 #Preview {
-    LoginViewController()
+    UINavigationController(rootViewController: LoginViewController())
 }

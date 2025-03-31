@@ -357,6 +357,8 @@ class LoginViewController: UIViewController {
         return indicator
     }()
     
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -400,8 +402,6 @@ class LoginViewController: UIViewController {
             emailLoginButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -70),
             emailLoginButton.heightAnchor.constraint(equalToConstant: 50),
             emailLoginButton.topAnchor.constraint(equalTo: socialLoginButtons.bottomAnchor, constant: 30),
-            
-            
             
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)

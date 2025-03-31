@@ -5,21 +5,38 @@
 //  Created by 이융의 on 3/29/25.
 //
 
-import Foundation
 import UIKit    // for device id
 import RxSwift
 
-enum NetworkError: Error {
+enum NetworkError: Error, LocalizedError {
     case invalidURL
     case networkError(Error)
     case invalidResponse
     case decodingError(Error)
+    case unauthorized
+    case serverError(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .invalidURL: return "URL이 유효하지 않습니다."
+        case .networkError(let error): return "네트워크 에러: \(error.localizedDescription)"
+        case .invalidResponse: return "서버 응답이 유효하지 않습니다"
+        case .decodingError(let error): return "데이터 파싱 오류: \(error.localizedDescription)"
+        case .unauthorized: return "인증이 필요합니다."
+        case .serverError(let message): return "서버 에러: \(message)"
+        }
+    }
+}
+
+struct ErrorResponse: Decodable {
+    let success: Bool
+    let message: String
 }
 
 class APIClient {
     static let shared = APIClient()
     
-    private let baseURL: String
+    private(set) var baseURL: String
     private let session: URLSession
     
     private init() {
@@ -39,10 +56,9 @@ class APIClient {
     // for apple login
     func request<T: Decodable>(endpoint: Endpoint) -> Observable<T> {
         // 나중에 생기는 데이터
-        return Observable.create { observer in
-            
+        return Observable.create { [weak self] observer in
             // 1. url (baseURL + path)
-            guard let url = endpoint.url(with: self.baseURL) else {
+            guard let self = self, let url = endpoint.url(with: self.baseURL) else {
                 observer.onError(NetworkError.invalidURL)
                 return Disposables.create()
             }
@@ -72,19 +88,31 @@ class APIClient {
                     return
                 }
                 
-                guard let httpResponse = response as? HTTPURLResponse,
-                      (200...299).contains(httpResponse.statusCode) else {
+                guard let httpResponse = response as? HTTPURLResponse else {
                     observer.onError(NetworkError.invalidResponse)
                     return
                 }
                 
-                if let data = data {
+                switch httpResponse.statusCode {
+                case 200...299:
+                    guard let data = data else {
+                        observer.onError(NetworkError.invalidResponse)
+                        return
+                    }
+                    
                     do {
                         let decodedObject = try JSONDecoder().decode(T.self, from: data)
                         observer.onNext(decodedObject)
                         observer.onCompleted()
                     } catch let error {
                         observer.onError(NetworkError.decodingError(error))
+                    }
+                case 401:
+                    observer.onError(NetworkError.unauthorized)
+                default:
+                    if let data = data, let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
+                        print("Status code: \(httpResponse.statusCode)")
+                        observer.onError(NetworkError.serverError(errorResponse.message))
                     }
                 }
             }

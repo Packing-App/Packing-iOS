@@ -12,6 +12,7 @@
 		CEBF1A3E2D97970000AF1B94 /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A3D2D97970000AF1B94 /* RxCocoa */; };
 		CEBF1A402D97970000AF1B94 /* RxRelay in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A3F2D97970000AF1B94 /* RxRelay */; };
 		CEBF1A422D97970000AF1B94 /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A412D97970000AF1B94 /* RxSwift */; };
+		CEBF1AC02D9845F600AF1B94 /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1ABF2D9845F600AF1B94 /* KeychainAccess */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -46,6 +47,7 @@
 			files = (
 				CEBF1A422D97970000AF1B94 /* RxSwift in Frameworks */,
 				CEBF1A402D97970000AF1B94 /* RxRelay in Frameworks */,
+				CEBF1AC02D9845F600AF1B94 /* KeychainAccess in Frameworks */,
 				CEBF1A392D9796D700AF1B94 /* SnapKit in Frameworks */,
 				CEBF1A362D9796B900AF1B94 /* ReactorKit in Frameworks */,
 				CEBF1A3E2D97970000AF1B94 /* RxCocoa in Frameworks */,
@@ -96,6 +98,7 @@
 				CEBF1A3D2D97970000AF1B94 /* RxCocoa */,
 				CEBF1A3F2D97970000AF1B94 /* RxRelay */,
 				CEBF1A412D97970000AF1B94 /* RxSwift */,
+				CEBF1ABF2D9845F600AF1B94 /* KeychainAccess */,
 			);
 			productName = Packing;
 			productReference = CE797EFE2D91A3EB00EEA5B1 /* Packing.app */;
@@ -129,6 +132,7 @@
 				CEBF1A342D9796B900AF1B94 /* XCRemoteSwiftPackageReference "ReactorKit" */,
 				CEBF1A372D9796D700AF1B94 /* XCRemoteSwiftPackageReference "SnapKit" */,
 				CEBF1A3C2D97970000AF1B94 /* XCRemoteSwiftPackageReference "RxSwift" */,
+				CEBF1ABE2D9845F600AF1B94 /* XCRemoteSwiftPackageReference "KeychainAccess" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CE797EFF2D91A3EB00EEA5B1 /* Products */;
@@ -392,6 +396,14 @@
 				minimumVersion = 6.9.0;
 			};
 		};
+		CEBF1ABE2D9845F600AF1B94 /* XCRemoteSwiftPackageReference "KeychainAccess" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kishikawakatsumi/KeychainAccess.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -419,6 +431,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CEBF1A3C2D97970000AF1B94 /* XCRemoteSwiftPackageReference "RxSwift" */;
 			productName = RxSwift;
+		};
+		CEBF1ABF2D9845F600AF1B94 /* KeychainAccess */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CEBF1ABE2D9845F600AF1B94 /* XCRemoteSwiftPackageReference "KeychainAccess" */;
+			productName = KeychainAccess;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -258,14 +258,9 @@ class EmailSignUpViewController: UIViewController {
         return stackView
     }()
     
-    private lazy var nextButton: UIButton = {
-        let button = UIButton()
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.applyStyle(MainButtonStyle(color: .main))
-        button.configuration?.title = "완료"
+    private lazy var nextButton: UIBarButtonItem = {
+        let button = UIBarButtonItem(title: "완료", style: .done, target: self, action: #selector(nextButtonTapped))
         button.isEnabled = false
-        button.alpha = 0.8
-        button.addTarget(self, action: #selector(nextButtonTapped), for: .touchUpInside)
         return button
     }()
     
@@ -287,7 +282,9 @@ class EmailSignUpViewController: UIViewController {
     
     private func setupUI() {
 //        self.navigationItem.title = "회원가입"
+        self.navigationItem.rightBarButtonItem = nextButton
         title = "회원가입"
+        
         view.backgroundColor = .systemBackground
         
         // Setup scrollView
@@ -323,7 +320,7 @@ class EmailSignUpViewController: UIViewController {
         verificationStackView.addArrangedSubview(verificationErrorLabel)
         
         // Add sections to main stack View
-        [emailStackView, passwordStackView, confirmPasswordStackView, nameStackView, verificationStackView, nextButton].forEach { stack in
+        [emailStackView, passwordStackView, confirmPasswordStackView, nameStackView, verificationStackView].forEach { stack in
             mainStackView.addArrangedSubview(stack)
         }
                 
@@ -359,10 +356,7 @@ class EmailSignUpViewController: UIViewController {
             passwordTextField.heightAnchor.constraint(equalToConstant: 48),
             confirmPasswordTextField.heightAnchor.constraint(equalToConstant: 48),
             nameTextField.heightAnchor.constraint(equalToConstant: 48),
-            verificationTextField.heightAnchor.constraint(equalToConstant: 48),
-            
-            // Next Button
-            nextButton.heightAnchor.constraint(equalToConstant: 50)
+            verificationTextField.heightAnchor.constraint(equalToConstant: 48)
         ])
         
     }
@@ -528,7 +522,7 @@ class EmailSignUpViewController: UIViewController {
     private func updateNextButtonState() {
         let isFormValid = isValidEmail && isValidPassword && isValidConfirmPassword && isValidName && isValidCode
         nextButton.isEnabled = isFormValid
-        nextButton.alpha = isValidCode ? 1.0 : 0.8
+//        nextButton = isValidCode ? 1.0 : 0.8
     }
 }
 
@@ -553,5 +547,7 @@ extension EmailSignUpViewController: UITextFieldDelegate {
 // MARK: - PREVIEW
 
 #Preview {
-    EmailSignUpViewController()
+    let viewController = EmailSignUpViewController()
+    let navigationController = UINavigationController(rootViewController: viewController)
+    return navigationController
 }

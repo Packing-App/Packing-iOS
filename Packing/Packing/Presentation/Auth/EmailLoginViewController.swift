@@ -150,8 +150,11 @@ class EmailLoginViewController: UIViewController {
     }
     @objc private func signUpButtonTapped() {
         print(#fileID, #function, #line, "- ")
+        
+        let signUpViewController = EmailSignUpViewController()
+        self.navigationController?.isNavigationBarHidden = false
+        navigationController?.pushViewController(signUpViewController, animated: true)
     }
-    
 }
 
 

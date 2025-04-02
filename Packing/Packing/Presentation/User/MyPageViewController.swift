@@ -34,6 +34,18 @@ class MyPageViewController: UIViewController {
     
     // MARK: - UI COMPONENTS
     
+    private lazy var scrollView: UIScrollView = {
+        let scrollView = UIScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        return scrollView
+    }()
+    
+    private lazy var contentView: UIView = {
+        let contentView = UIView()
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        return contentView
+    }()
+    
     private lazy var profileContainerView: UIView = {
         let view = UIView()
         view.backgroundColor = .white
@@ -88,7 +100,7 @@ class MyPageViewController: UIViewController {
         
         table.separatorStyle = .singleLine
         table.translatesAutoresizingMaskIntoConstraints = false
-        table.isScrollEnabled = false
+        table.isScrollEnabled = false // 테이블뷰 자체 스크롤 비활성화
         return table
     }()
     
@@ -96,12 +108,26 @@ class MyPageViewController: UIViewController {
     
     var user = User.exampleUser
     private let menuItems = ProfileMenuItem.allCases
+    private var tableViewHeightConstraint: NSLayoutConstraint?
 
     // MARK: - LIFE CYCLE
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        // 테이블뷰 높이를 동적으로 조정
+        let height = tableView.contentSize.height
+        if let heightConstraint = tableViewHeightConstraint {
+            heightConstraint.constant = height
+        } else {
+            tableViewHeightConstraint = tableView.heightAnchor.constraint(equalToConstant: height)
+            tableViewHeightConstraint?.isActive = true
+        }
     }
     
     private func setupUI() {
@@ -123,44 +149,70 @@ class MyPageViewController: UIViewController {
         profileContainerView.addSubview(bioLabel)
         profileContainerView.addSubview(editProfileButton)
         
-        view.addSubview(profileContainerView)
-        view.addSubview(tableView)
+        
+        // 스크롤뷰 설정
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        
+        // 콘텐츠뷰에 컨텐츠 추가
+        contentView.addSubview(profileContainerView)
+        contentView.addSubview(tableView)
+        
         
         NSLayoutConstraint.activate([
-            // Profile Container View
-            profileContainerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            profileContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            profileContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            // 스크롤뷰
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+
+            // 콘텐츠뷰
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             
-            // Profile Image
+            // 프로필 컨테이너 뷰
+            profileContainerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
+            profileContainerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            profileContainerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            
+            // 프로필 이미지
             profileImageView.topAnchor.constraint(equalTo: profileContainerView.topAnchor, constant: 20),
             profileImageView.centerXAnchor.constraint(equalTo: profileContainerView.centerXAnchor),
             profileImageView.widthAnchor.constraint(equalToConstant: 100),
             profileImageView.heightAnchor.constraint(equalToConstant: 100),
             
-            // Name Label
+            // 이름 레이블
             nameLabel.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 20),
             nameLabel.centerXAnchor.constraint(equalTo: profileContainerView.centerXAnchor),
             nameLabel.leadingAnchor.constraint(lessThanOrEqualTo: profileContainerView.leadingAnchor, constant: 20),
             nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: profileContainerView.trailingAnchor, constant: -20),
             
-            // Bio Label (intro Label)
+            // 소개 레이블
             bioLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 10),
             bioLabel.centerXAnchor.constraint(equalTo: profileContainerView.centerXAnchor),
             bioLabel.leadingAnchor.constraint(lessThanOrEqualTo: profileContainerView.leadingAnchor, constant: 20),
             bioLabel.trailingAnchor.constraint(lessThanOrEqualTo: profileContainerView.trailingAnchor, constant: -20),
             
-            // Edit Button
+            // 편집 버튼
             editProfileButton.topAnchor.constraint(equalTo: bioLabel.bottomAnchor, constant: 20),
             editProfileButton.centerXAnchor.constraint(equalTo: profileContainerView.centerXAnchor),
             editProfileButton.bottomAnchor.constraint(equalTo: profileContainerView.bottomAnchor, constant: -20),
             
-            // Table View
+            // 테이블뷰
             tableView.topAnchor.constraint(equalTo: profileContainerView.bottomAnchor, constant: 10),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            tableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            
+            // 콘텐츠뷰의 하단을 테이블뷰의 하단에 연결 (중요!)
+            contentView.bottomAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 20)
         ])
+        
+        // 초기 테이블뷰 높이 설정 (이후 viewDidLayoutSubviews에서 동적으로 조정됨)
+        tableViewHeightConstraint = tableView.heightAnchor.constraint(equalToConstant: CGFloat(menuItems.count * 44))
+        tableViewHeightConstraint?.isActive = true
     }
     
     // MARK: - ACTIONS

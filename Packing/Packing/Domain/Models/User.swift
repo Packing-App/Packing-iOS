@@ -13,7 +13,7 @@ struct User: Codable, Equatable {
     let email: String
 //    let password: Int
     let profileImage: String?
-//    let intro: String
+    let intro: String
     let socialType: LoginType
     let socialId: String?
 //    let refreshToken: String?
@@ -24,6 +24,7 @@ struct User: Codable, Equatable {
         case name
         case email
         case profileImage
+        case intro
         case socialType
         case socialId
     }
@@ -35,4 +36,17 @@ enum LoginType: String, Codable {
     case google
     case kakao
     case naver
+}
+
+
+extension User {
+    static let exampleUser = User(
+        id: UUID().uuidString,
+        name: "라라",
+        email: "rsdbddml@gmail.com",
+        profileImage: "demoUserProfileImage",
+        intro: "세계일주를 꿈꾸는 라라, 두 번째 여행 시작!",
+        socialType: .naver,
+        socialId: "dbddml631@naver.com"
+    )
 }

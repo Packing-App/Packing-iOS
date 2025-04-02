@@ -175,6 +175,7 @@ class EmailSignUpViewController: UIViewController {
     private lazy var nameTextField: UITextField = {
         let textField = UITextField()
         textField.placeholder = "사용할 이름(별명)"
+        textField.autocapitalizationType = .none
         textField.borderStyle = .roundedRect
         textField.delegate = self
         textField.tag = 3
@@ -200,66 +201,10 @@ class EmailSignUpViewController: UIViewController {
         return stackView
     }()
     
-    // MARK: - Email Verification Code Section
-    
-    private lazy var verificationHeaderStack: UIStackView = {
-        let stack = UIStackView()
-        stack.axis = .horizontal
-        stack.alignment = .center
-        stack.distribution = .fill
-        stack.spacing = 10
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        return stack
-    }()
-    
-    private lazy var verificationLabel: UILabel = {
-        let label = UILabel()
-        label.text = "인증번호를 입력하세요."
-        label.font = .systemFont(ofSize: 15, weight: .medium)
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    
-    private lazy var resendButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("재전송", for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 13)
-        button.addTarget(self, action: #selector(resendButtonTapped), for: .touchUpInside)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
-    
-    private lazy var verificationTextField: UITextField = {
-        let textField = UITextField()
-        textField.placeholder = "인증번호"
-        textField.borderStyle = .roundedRect
-        textField.keyboardType = .numberPad
-        textField.delegate = self
-        textField.tag = 4
-        textField.addTarget(self, action: #selector(textFieldDidChange(_:)), for: .editingChanged)
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        return textField
-    }()
-    
-    private lazy var verificationErrorLabel: UILabel = {
-        let label = UILabel()
-        label.textColor = .systemRed
-        label.font = .systemFont(ofSize: 12, weight: .medium)
-        label.isHidden = true
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    
-    private lazy var verificationStackView: UIStackView = {
-        let stackView = UIStackView()
-        stackView.axis = .vertical
-        stackView.spacing = 8
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        return stackView
-    }()
+    // MARK: - Next Button Section
     
     private lazy var nextButton: UIBarButtonItem = {
-        let button = UIBarButtonItem(title: "완료", style: .done, target: self, action: #selector(nextButtonTapped))
+        let button = UIBarButtonItem(title: "다음", style: .done, target: self, action: #selector(nextButtonTapped))
         button.isEnabled = false
         return button
     }()
@@ -270,7 +215,6 @@ class EmailSignUpViewController: UIViewController {
     private var isValidPassword = false
     private var isValidConfirmPassword = false
     private var isValidName = false
-    private var isValidCode = false
 
     // MARK: - LIFE CYCLE
     
@@ -315,12 +259,8 @@ class EmailSignUpViewController: UIViewController {
         nameStackView.addArrangedSubview(nameTextField)
         nameStackView.addArrangedSubview(nameErrorLabel)
         
-        verificationStackView.addArrangedSubview(verificationLabel)
-        verificationStackView.addArrangedSubview(verificationTextField)
-        verificationStackView.addArrangedSubview(verificationErrorLabel)
-        
         // Add sections to main stack View
-        [emailStackView, passwordStackView, confirmPasswordStackView, nameStackView, verificationStackView].forEach { stack in
+        [emailStackView, passwordStackView, confirmPasswordStackView, nameStackView].forEach { stack in
             mainStackView.addArrangedSubview(stack)
         }
                 
@@ -356,9 +296,7 @@ class EmailSignUpViewController: UIViewController {
             passwordTextField.heightAnchor.constraint(equalToConstant: 48),
             confirmPasswordTextField.heightAnchor.constraint(equalToConstant: 48),
             nameTextField.heightAnchor.constraint(equalToConstant: 48),
-            verificationTextField.heightAnchor.constraint(equalToConstant: 48)
         ])
-        
     }
     
     private func setupKeyboardHandling() {
@@ -374,11 +312,17 @@ class EmailSignUpViewController: UIViewController {
     
     @objc private func nextButtonTapped() {
         print(#fileID, #function, #line, "- ")
-        print("Email: \(emailTextField.text ?? "")")
-        print("Password: \(String(repeating: "*", count: passwordTextField.text!.count))")
-        print("Name: \(nameTextField.text ?? "")")
-        print("Verification Code: \(verificationTextField.text ?? "")")
-        // TODO: 회원가입 로직
+        
+        guard let email = emailTextField.text,
+              let password = passwordTextField.text,
+              let userName = nameTextField.text else {
+            return
+        }
+        
+        let verificationVC = EmailVerificationViewController(email: email, password: password, userName: userName)
+        self.navigationController?.isNavigationBarHidden = false
+        navigationController?.pushViewController(verificationVC, animated: true)
+        
     }
     
     @objc private func textFieldDidChange(_ textField: UITextField) {
@@ -432,56 +376,10 @@ class EmailSignUpViewController: UIViewController {
                 isValidName = false
                 nameErrorLabel.isHidden = true
             }
-        case 4: // Code
-            if let code = textField.text, !code.isEmpty {
-                isValidCode = validateCode(code: code)
-                
-                if code.isEmpty {
-                    verificationErrorLabel.isHidden = true
-                } else if !isValidCode {
-                    verificationErrorLabel.text = "6자리 숫자를 입력해주세요."
-                    verificationErrorLabel.textColor = .systemRed
-                    verificationErrorLabel.isHidden = false
-                } else {
-                    verificationErrorLabel.isHidden = true
-                }
-            }
         default: break
         }
         
         updateNextButtonState()
-    }
-    
-    @objc private func resendButtonTapped() {
-        // 인증번호 재전송 로직
-        print("인증번호 재전송 요청됨")
-        
-        // 재전송 버튼 일시적으로 비활성화
-        resendButton.isEnabled = false
-        
-        // 애니메이션 효과와 함께 3초 후 다시 활성화
-        UIView.animate(withDuration: 0.3) {
-            self.resendButton.alpha = 0.5
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            self.resendButton.isEnabled = true
-            UIView.animate(withDuration: 0.3) {
-                self.resendButton.alpha = 1.0
-            }
-        }
-        
-        // 사용자에게 알림
-        verificationErrorLabel.text = "인증번호가 재전송되었습니다."
-        verificationErrorLabel.textColor = .systemBlue
-        verificationErrorLabel.isHidden = false
-        
-        // 3초 후 알림 숨기기
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            if self.verificationErrorLabel.textColor == .systemBlue {
-                self.verificationErrorLabel.isHidden = true
-            }
-        }
     }
     
     // MARK: - VALIDATION
@@ -511,18 +409,9 @@ class EmailSignUpViewController: UIViewController {
         return !name.isEmpty && name.count <= 20
     }
     
-    // Code Validation
-    private func validateCode(code: String) -> Bool {
-        // 간단한 검증: 6자리 숫자인지 확인
-        let codeRegex = "^[0-9]{6}$"
-        let codePredicate = NSPredicate(format: "SELF MATCHES %@", codeRegex)
-        return codePredicate.evaluate(with: code)
-    }
-    
     private func updateNextButtonState() {
-        let isFormValid = isValidEmail && isValidPassword && isValidConfirmPassword && isValidName && isValidCode
+        let isFormValid = isValidEmail && isValidPassword && isValidConfirmPassword && isValidName
         nextButton.isEnabled = isFormValid
-//        nextButton = isValidCode ? 1.0 : 0.8
     }
 }
 
@@ -533,8 +422,6 @@ extension EmailSignUpViewController: UITextFieldDelegate {
         case 0: passwordTextField.becomeFirstResponder()
         case 1: confirmPasswordTextField.becomeFirstResponder()
         case 2: nameTextField.becomeFirstResponder()
-        case 3:
-            verificationTextField.resignFirstResponder()
             if nextButton.isEnabled {
                 nextButtonTapped()
             }

@@ -238,24 +238,14 @@ class LoginViewController: UIViewController {
     
     // MARK: - UI COMPONENTS
     
-    private lazy var stackView: UIStackView = {
-        let stack = UIStackView()
-        stack.axis = .vertical
-        stack.spacing = 20
-        stack.alignment = .center
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        return stack
-    }()
-    
-    private lazy var socialLoginButtons: UIStackView = {
-        let stack = UIStackView()
-        stack.axis = .horizontal
-        stack.spacing = 8
-        stack.distribution = .equalSpacing
-        stack.alignment = .center
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        return stack
-    }()
+//    private lazy var stackView: UIStackView = {
+//        let stack = UIStackView()
+//        stack.axis = .vertical
+//        stack.spacing = 20
+//        stack.alignment = .center
+//        stack.translatesAutoresizingMaskIntoConstraints = false
+//        return stack
+//    }()
     
     private lazy var logoImageView: UIImageView = {
         let imageView = UIImageView()
@@ -325,6 +315,16 @@ class LoginViewController: UIViewController {
         return containerView
     }()
     
+    private lazy var socialLoginButtons: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.spacing = 8
+        stack.distribution = .equalSpacing
+        stack.alignment = .center
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        return stack
+    }()
+    
     private lazy var emailLoginButton: UIButton = {
         let button = UIButton()
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -357,8 +357,6 @@ class LoginViewController: UIViewController {
         return indicator
     }()
     
-    
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -369,15 +367,13 @@ class LoginViewController: UIViewController {
         self.navigationItem.title = "PACKING"
         view.backgroundColor = .systemBackground
         
-        view.addSubview(stackView)
+        view.addSubview(logoImageView)
+        
+        view.addSubview(subtitleLabel)
+        view.addSubview(loginPromptLabel)
         view.addSubview(socialLoginButtons)
         view.addSubview(loadingIndicator)
         view.addSubview(emailLoginButton)
-        
-        stackView.addArrangedSubview(logoImageView)
-        stackView.addArrangedSubview(subtitleLabel)
-        stackView.setCustomSpacing(80, after: subtitleLabel)
-        stackView.addArrangedSubview(loginPromptLabel)
         
         socialLoginButtons.addArrangedSubview(googleLoginButton)
         socialLoginButtons.addArrangedSubview(kakaoLoginButton)
@@ -386,22 +382,29 @@ class LoginViewController: UIViewController {
         
         // TODO: constraints with snapkit
         NSLayoutConstraint.activate([
-            stackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            stackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 80),
-            stackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
-            
+            logoImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 40),
+            logoImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             logoImageView.heightAnchor.constraint(equalToConstant: 200),
+            logoImageView.widthAnchor.constraint(equalToConstant: 200),
+            
+            subtitleLabel.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: 30),
+            subtitleLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 40),
+            subtitleLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -40),
+            subtitleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            
+            loginPromptLabel.bottomAnchor.constraint(equalTo: socialLoginButtons.topAnchor, constant: -20),
+            loginPromptLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
             socialLoginButtons.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             socialLoginButtons.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 70),
             socialLoginButtons.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -70),
-            socialLoginButtons.topAnchor.constraint(equalTo: stackView.bottomAnchor, constant: 10),
+            socialLoginButtons.bottomAnchor.constraint(equalTo: emailLoginButton.topAnchor, constant: -30),
             
             emailLoginButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emailLoginButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 70),
             emailLoginButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -70),
             emailLoginButton.heightAnchor.constraint(equalToConstant: 50),
-            emailLoginButton.topAnchor.constraint(equalTo: socialLoginButtons.bottomAnchor, constant: 30),
+            emailLoginButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -40),
             
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)

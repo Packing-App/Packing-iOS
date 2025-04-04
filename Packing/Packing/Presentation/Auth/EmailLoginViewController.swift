@@ -43,13 +43,6 @@ class EmailLoginViewController: UIViewController {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.applyStyle(MainButtonStyle(color: .main))
         button.configuration?.title = "로그인"
-        
-//        let button = UIButton(type: .system)
-//        button.setTitle("로그인", for: .normal)
-//        button.backgroundColor = .main
-//        button.setTitleColor(.white, for: .normal)
-//        button.layer.cornerRadius = 8
-//        button.translatesAutoresizingMaskIntoConstraints = false
         button.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
         return button
     }()

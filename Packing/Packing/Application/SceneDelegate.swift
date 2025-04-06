@@ -24,11 +24,19 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         window = UIWindow(frame: UIScreen.main.bounds)
         
-        let loginViewReactor = LoginViewReactor()
-        let loginViewController = LoginViewController(reactor: loginViewReactor)
+        let userManager = UserManager.shared
+        let rootViewController: UIViewController
         
+        if userManager.currentUser != nil {
+            let myPageViewReactor = MyPageViewReactor()
+            rootViewController = MyPageViewController(reactor: myPageViewReactor)
+        } else {
+            let loginViewReactor = LoginViewReactor()
+            rootViewController = LoginViewController(reactor: loginViewReactor)
+        }
+
         // navigation Controller
-        let navigationController = UINavigationController(rootViewController: loginViewController)
+        let navigationController = UINavigationController(rootViewController: rootViewController)
         navigationController.isNavigationBarHidden = true
         
         window?.rootViewController = navigationController

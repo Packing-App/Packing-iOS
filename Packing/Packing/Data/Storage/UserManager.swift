@@ -19,7 +19,9 @@ class UserManager {
         }
     }
     
-    private init() {}
+    private init() {
+        
+    }
     
     func setCurrentUser(_ user: User?) {
         currentUser = user

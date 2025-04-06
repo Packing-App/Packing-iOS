@@ -90,7 +90,7 @@ final class MyPageViewReactor: Reactor {
     // 사용자 프로필 새로고침
     private func refreshUserProfile() -> Observable<Mutation> {
         let startLoading = Observable.just(Mutation.setLoading(true))
-        
+        // TODO: remove userService or authService
         let refreshProfile = userService.getMyProfile()
             .map { user -> Mutation in
                 return .setUser(user)

@@ -96,11 +96,7 @@ class MyPageViewController: UIViewController, View {
     
     private lazy var tableView: UITableView = {
         let table = UITableView(frame: .zero, style: .insetGrouped)
-        
         table.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
-        table.delegate = self
-        table.dataSource = self
-        
         table.separatorStyle = .singleLine
         table.translatesAutoresizingMaskIntoConstraints = false
         table.isScrollEnabled = false // 테이블뷰 자체 스크롤 비활성화
@@ -254,9 +250,12 @@ class MyPageViewController: UIViewController, View {
     }
     
     private func setupTableView() {
-        tableView.rx.setDelegate(self)
-            .disposed(by: disposeBag)
-        
+        // TODO: 왜 안됐는지 트러블 슈팅 (behavior vs ... subject랑 관련있나?)
+//        tableView.rx.setDelegate(self)
+//            .disposed(by: disposeBag)
+        tableView.delegate = self
+        tableView.dataSource = self
+//
         // 테이블뷰 데이터 소스 바인딩은 bind 메서드에서 수행
     }
     

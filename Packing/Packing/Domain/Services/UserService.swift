@@ -30,7 +30,7 @@ class UserService: UserServiceProtocol {
     
     func getMyProfile() -> Observable<User> {
         return apiClient.request(APIEndpoint.getMyProfile)
-            .map { (response: APIResponse<TokenData>) -> User in
+            .map { (response: APIResponse<UserResponse>) -> User in
                 guard let data = response.data else {
                     throw NetworkError.invalidResponse
                 }

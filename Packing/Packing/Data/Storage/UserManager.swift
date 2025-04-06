@@ -20,7 +20,7 @@ class UserManager {
     }
     
     private init() {
-        
+        loadUserFromDefaults()
     }
     
     func setCurrentUser(_ user: User?) {

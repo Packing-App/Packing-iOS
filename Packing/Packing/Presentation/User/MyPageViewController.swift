@@ -7,6 +7,7 @@
 
 import UIKit
 
+/*
 enum ProfileMenuItem: String, CaseIterable {
     case connectedAccount = "연결된 계정" // (just display)
     case versionInfo = "버전 정보"  // (just display)
@@ -348,11 +349,468 @@ extension MyPageViewController: UITableViewDelegate, UITableViewDataSource {
     }
 }
 
-
 // MARK: - PREVIEW
 
 #Preview {
     let viewController = MyPageViewController()
     let navigationViewController = UINavigationController(rootViewController: viewController)
     return navigationViewController
+}
+
+*/
+
+// Presentation/MyPage/MyPageViewController.swift
+
+import UIKit
+import ReactorKit
+import RxSwift
+import RxCocoa
+import SnapKit
+
+class MyPageViewController: UIViewController, StoryboardView {
+    
+    typealias Reactor = MyPageReactor
+    var disposeBag = DisposeBag()
+    
+    // MARK: - UI Components
+    
+    private let scrollView = UIScrollView()
+    private let contentView = UIView()
+    
+    private let profileImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.backgroundColor = .lightGray
+        imageView.layer.cornerRadius = 50
+        imageView.clipsToBounds = true
+        imageView.contentMode = .scaleAspectFill
+        return imageView
+    }()
+    
+    private let changeProfileButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("사진 변경", for: .normal)
+        button.setTitleColor(.systemBlue, for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 14)
+        return button
+    }()
+    
+    private let nameLabel: UILabel = {
+        let label = UILabel()
+        label.text = "이름"
+        label.font = .systemFont(ofSize: 14)
+        label.textColor = .darkGray
+        return label
+    }()
+    
+    private let nameTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "이름을 입력하세요"
+        textField.borderStyle = .roundedRect
+        return textField
+    }()
+    
+    private let introLabel: UILabel = {
+        let label = UILabel()
+        label.text = "자기소개"
+        label.font = .systemFont(ofSize: 14)
+        label.textColor = .darkGray
+        return label
+    }()
+    
+    private let introTextView: UITextView = {
+        let textView = UITextView()
+        textView.layer.borderWidth = 0.5
+        textView.layer.borderColor = UIColor.lightGray.cgColor
+        textView.layer.cornerRadius = 5
+        textView.font = .systemFont(ofSize: 14)
+        return textView
+    }()
+    
+    private let emailLabel: UILabel = {
+        let label = UILabel()
+        label.text = "이메일"
+        label.font = .systemFont(ofSize: 14)
+        label.textColor = .darkGray
+        return label
+    }()
+    
+    private let emailValueLabel: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 14)
+        label.textColor = .black
+        return label
+    }()
+    
+    private let saveButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("저장", for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = .systemBlue
+        button.layer.cornerRadius = 8
+        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
+        button.isEnabled = false
+        button.alpha = 0.5
+        return button
+    }()
+    
+    private let logoutButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("로그아웃", for: .normal)
+        button.setTitleColor(.systemRed, for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 14)
+        return button
+    }()
+    
+    private let deleteAccountButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("계정 삭제", for: .normal)
+        button.setTitleColor(.systemRed, for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 14)
+        return button
+    }()
+    
+    private let activityIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.hidesWhenStopped = true
+        return indicator
+    }()
+    
+    // MARK: - Lifecycle
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
+        setupKeyboardHandling()
+    }
+    
+    // MARK: - Setup
+    
+    private func setupUI() {
+        view.backgroundColor = .white
+        navigationItem.title = "내 프로필"
+        
+        // 스크롤 뷰 설정
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        
+        // 컨텐츠 추가
+        contentView.addSubview(profileImageView)
+        contentView.addSubview(changeProfileButton)
+        contentView.addSubview(nameLabel)
+        contentView.addSubview(nameTextField)
+        contentView.addSubview(introLabel)
+        contentView.addSubview(introTextView)
+        contentView.addSubview(emailLabel)
+        contentView.addSubview(emailValueLabel)
+        contentView.addSubview(saveButton)
+        contentView.addSubview(logoutButton)
+        contentView.addSubview(deleteAccountButton)
+        contentView.addSubview(activityIndicator)
+        
+        // 제약 조건 설정
+        scrollView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
+        
+        contentView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+            make.width.equalTo(scrollView.snp.width)
+            make.height.greaterThanOrEqualTo(view.snp.height).priority(.low)
+        }
+        
+        profileImageView.snp.makeConstraints { make in
+            make.top.equalToSuperview().offset(20)
+            make.centerX.equalToSuperview()
+            make.width.height.equalTo(100)
+        }
+        
+        changeProfileButton.snp.makeConstraints { make in
+            make.top.equalTo(profileImageView.snp.bottom).offset(8)
+            make.centerX.equalToSuperview()
+        }
+        
+        nameLabel.snp.makeConstraints { make in
+            make.top.equalTo(changeProfileButton.snp.bottom).offset(20)
+            make.left.equalToSuperview().offset(20)
+        }
+        
+        nameTextField.snp.makeConstraints { make in
+            make.top.equalTo(nameLabel.snp.bottom).offset(8)
+            make.left.right.equalToSuperview().inset(20)
+            make.height.equalTo(40)
+        }
+        
+        introLabel.snp.makeConstraints { make in
+            make.top.equalTo(nameTextField.snp.bottom).offset(20)
+            make.left.equalToSuperview().offset(20)
+        }
+        
+        introTextView.snp.makeConstraints { make in
+            make.top.equalTo(introLabel.snp.bottom).offset(8)
+            make.left.right.equalToSuperview().inset(20)
+            make.height.equalTo(100)
+        }
+        
+        emailLabel.snp.makeConstraints { make in
+            make.top.equalTo(introTextView.snp.bottom).offset(20)
+            make.left.equalToSuperview().offset(20)
+        }
+        
+        emailValueLabel.snp.makeConstraints { make in
+            make.top.equalTo(emailLabel.snp.bottom).offset(8)
+            make.left.right.equalToSuperview().inset(20)
+        }
+        
+        saveButton.snp.makeConstraints { make in
+            make.top.equalTo(emailValueLabel.snp.bottom).offset(30)
+            make.left.right.equalToSuperview().inset(20)
+            make.height.equalTo(50)
+        }
+        
+        logoutButton.snp.makeConstraints { make in
+            make.top.equalTo(saveButton.snp.bottom).offset(30)
+            make.centerX.equalToSuperview()
+        }
+        
+        deleteAccountButton.snp.makeConstraints { make in
+            make.top.equalTo(logoutButton.snp.bottom).offset(16)
+            make.centerX.equalToSuperview()
+            make.bottom.equalToSuperview().offset(-20)
+        }
+        
+        activityIndicator.snp.makeConstraints { make in
+            make.center.equalToSuperview()
+        }
+    }
+    
+    private func setupKeyboardHandling() {
+        // 키보드가 올라올 때 스크롤 조정
+        NotificationCenter.default.rx.notification(UIResponder.keyboardWillShowNotification)
+            .subscribe(onNext: { [weak self] notification in
+                guard let self = self,
+                      let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else {
+                    return
+                }
+                
+                let contentInsets = UIEdgeInsets(top: 0, left: 0, bottom: keyboardFrame.height, right: 0)
+                self.scrollView.contentInset = contentInsets
+                self.scrollView.scrollIndicatorInsets = contentInsets
+            })
+            .disposed(by: disposeBag)
+        
+        // 키보드가 내려갈 때 스크롤 원복
+        NotificationCenter.default.rx.notification(UIResponder.keyboardWillHideNotification)
+            .subscribe(onNext: { [weak self] _ in
+                guard let self = self else { return }
+                
+                let contentInsets = UIEdgeInsets.zero
+                self.scrollView.contentInset = contentInsets
+                self.scrollView.scrollIndicatorInsets = contentInsets
+            })
+            .disposed(by: disposeBag)
+        
+        // 배경 탭 시 키보드 내리기
+        let tapGesture = UITapGestureRecognizer()
+        view.addGestureRecognizer(tapGesture)
+        
+        tapGesture.rx.event
+            .subscribe(onNext: { [weak self] _ in
+                self?.view.endEditing(true)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - Binding
+    
+    func bind(reactor: MyPageReactor) {
+        // Initial load
+        Observable.just(Reactor.Action.loadProfile)
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        // Action
+        nameTextField.rx.text.orEmpty
+            .map { Reactor.Action.updateName($0) }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        introTextView.rx.text.orEmpty
+            .map { Reactor.Action.updateIntro($0) }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        saveButton.rx.tap
+            .map { Reactor.Action.saveProfile }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        changeProfileButton.rx.tap
+            .subscribe(onNext: { [weak self] _ in
+                self?.presentImagePicker()
+            })
+            .disposed(by: disposeBag)
+        
+        logoutButton.rx.tap
+            .map { Reactor.Action.logout }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        deleteAccountButton.rx.tap
+            .subscribe(onNext: { [weak self] _ in
+                self?.showDeleteAccountAlert()
+            })
+            .disposed(by: disposeBag)
+        
+        // State
+        reactor.state.map { $0.isLoading }
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] isLoading in
+                if isLoading {
+                    self?.activityIndicator.startAnimating()
+                    self?.saveButton.isEnabled = false
+                    self?.saveButton.alpha = 0.5
+                } else {
+                    self?.activityIndicator.stopAnimating()
+                    let isSaveEnabled = reactor.currentState.isSaveEnabled
+                    self?.saveButton.isEnabled = isSaveEnabled
+                    self?.saveButton.alpha = isSaveEnabled ? 1.0 : 0.5
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        reactor.state.map { $0.user }
+            .distinctUntilChanged { $0?.id == $1?.id }
+            .filter { $0 != nil }
+            .subscribe(onNext: { [weak self] user in
+                guard let user = user else { return }
+                
+                self?.nameTextField.text = user.name
+                self?.introTextView.text = user.intro
+                self?.emailValueLabel.text = user.email
+                
+                // 프로필 이미지 로드
+                if let profileImageUrl = user.profileImage, let url = URL(string: profileImageUrl) {
+                    self?.loadProfileImage(from: url)
+                } else {
+                    self?.profileImageView.image = UIImage(systemName: "person.circle.fill")
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        reactor.state.map { $0.isSaveEnabled }
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] isEnabled in
+                self?.saveButton.isEnabled = isEnabled
+                self?.saveButton.alpha = isEnabled ? 1.0 : 0.5
+            })
+            .disposed(by: disposeBag)
+        
+        reactor.state.map { $0.error }
+            .distinctUntilChanged { $0?.localizedDescription == $1?.localizedDescription }
+            .filter { $0 != nil }
+            .subscribe(onNext: { [weak self] error in
+                // 오류 메시지 표시
+                let alert = UIAlertController(
+                    title: "오류",
+                    message: error?.localizedDescription,
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: "확인", style: .default))
+                self?.present(alert, animated: true)
+            })
+            .disposed(by: disposeBag)
+        
+        reactor.state.map { $0.isLoggedOut }
+            .distinctUntilChanged()
+            .filter { $0 }
+            .subscribe(onNext: { [weak self] _ in
+                // 로그아웃 성공 후 로그인 화면으로 이동
+                self?.navigateToLoginScreen()
+            })
+            .disposed(by: disposeBag)
+        
+        reactor.state.map { $0.isAccountDeleted }
+            .distinctUntilChanged()
+            .filter { $0 }
+            .subscribe(onNext: { [weak self] _ in
+                // 계정 삭제 성공 후 로그인 화면으로 이동
+                self?.navigateToLoginScreen()
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func presentImagePicker() {
+        let imagePickerController = UIImagePickerController()
+        imagePickerController.sourceType = .photoLibrary
+        imagePickerController.delegate = self
+        imagePickerController.allowsEditing = true
+        present(imagePickerController, animated: true)
+    }
+    
+    private func loadProfileImage(from url: URL) {
+        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            if let error = error {
+                print("프로필 이미지 로드 오류: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let data = data, let image = UIImage(data: data) else {
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self?.profileImageView.image = image
+            }
+        }.resume()
+    }
+    
+    private func showDeleteAccountAlert() {
+        let alert = UIAlertController(
+            title: "계정 삭제",
+            message: "정말로 계정을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+            self?.reactor?.action.onNext(.deleteAccount)
+        })
+        
+        present(alert, animated: true)
+    }
+    
+    private func navigateToLoginScreen() {
+        let authService = AuthService()
+        let loginReactor = LoginReactor(authService: authService, presentingViewController: UIViewController())
+        let loginVC = LoginViewController()
+        loginVC.reactor = loginReactor
+        
+        let navigationController = UINavigationController(rootViewController: loginVC)
+        UIApplication.shared.windows.first?.rootViewController = navigationController
+    }
+}
+
+// MARK: - UIImagePickerControllerDelegate
+
+extension MyPageViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        picker.dismiss(animated: true)
+        
+        guard let selectedImage = info[.editedImage] as? UIImage ?? info[.originalImage] as? UIImage else {
+            return
+        }
+        
+        // 이미지 업데이트
+        profileImageView.image = selectedImage
+        
+        // 리액터에 이미지 업데이트 액션 전달
+        reactor?.action.onNext(.updateProfileImage(selectedImage))
+    }
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true)
+    }
 }

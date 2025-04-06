@@ -8,38 +8,69 @@
 import Foundation
 import KeychainAccess
 
-protocol TokenStorage {
-    func saveTokens(accessToken: String, refreshToken: String, userId: String)
-    func getAccessToken() -> String?
-    func getRefreshToken() -> String?
-    func getUserId() -> String?
-    func clearTokens()
-}
-
-class KeyChainTokenStorage: TokenStorage {
+class KeyChainTokenStorage {
+    static let shared = KeyChainTokenStorage()
+    
+    private init() {}
+    
     private let keychain: Keychain = Keychain(service: "me.iyungui.Packing")
+    private let accessTokenKey = "accessToken"
+    private let refreshTokenKey = "refreshToken"
+    private let userIdKey = "userId"
+    
+    
+    var accessToken: String? {
+        get {
+            try? keychain.getString(accessTokenKey)
+        }
+        set {
+            guard let newValue = newValue else {
+                try? keychain.remove(accessTokenKey)
+                return
+            }
+            try? keychain.set(newValue, key: accessTokenKey)
+        }
+    }
+    
+    var refreshToken: String? {
+        get {
+            try? keychain.getString(refreshTokenKey)
+        }
+        set {
+            guard let newValue = newValue else {
+                try? keychain.remove(refreshTokenKey)
+                return
+            }
+            try? keychain.set(newValue, key: refreshTokenKey)
+        }
+    }
+    
+    var userId: String? {
+        get {
+            try? keychain.getString(userIdKey)
+        }
+        set {
+            guard let newValue = newValue else {
+                try? keychain.remove(userIdKey)
+                return
+            }
+            try? keychain.set(newValue, key: userIdKey)
+        }
+    }
+    
+    var isLoggedIn: Bool {
+        return accessToken != nil && refreshToken != nil
+    }
     
     func saveTokens(accessToken: String, refreshToken: String, userId: String) {
-        try? keychain.set(accessToken, key: "accessToken")
-        try? keychain.set(refreshToken, key: "refreshToken")
-        try? keychain.set(userId, key: "userId")
-    }
-    
-    func getAccessToken() -> String? {
-        return try? keychain.get("accessToken")
-    }
-    
-    func getRefreshToken() -> String? {
-        return try? keychain.get("refreshToken")
-    }
-    
-    func getUserId() -> String? {
-        return try? keychain.get("userId")
+        self.accessToken = accessToken
+        self.refreshToken = refreshToken
+        self.userId = userId
     }
     
     func clearTokens() {
-        try? keychain.remove("accessToken")
-        try? keychain.remove("refreshToken")
-        try? keychain.remove("userId")
+        accessToken = nil
+        refreshToken = nil
+        userId = nil
     }
 }

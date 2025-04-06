@@ -11,13 +11,12 @@ struct User: Codable, Equatable {
     let id: String
     let name: String
     let email: String
-//    let password: Int
     let profileImage: String?
-    let intro: String
+    let intro: String?
     let socialType: LoginType
     let socialId: String?
-//    let refreshToken: String?
-//    let pushNotificationEnabled: Bool
+    let pushNotificationEnabled: Bool?
+    let isEmailVerified: Bool?
     
     enum CodingKeys: String, CodingKey {
         case id = "_id"
@@ -27,6 +26,8 @@ struct User: Codable, Equatable {
         case intro
         case socialType
         case socialId
+        case pushNotificationEnabled
+        case isEmailVerified
     }
 }
 
@@ -47,6 +48,8 @@ extension User {
         profileImage: "demoUserProfileImage",
         intro: "세계일주를 꿈꾸는 라라, 두 번째 여행 시작!",
         socialType: .naver,
-        socialId: "dbddml631@naver.com"
+        socialId: "dbddml631@naver.com",
+        pushNotificationEnabled: true,
+        isEmailVerified: true
     )
 }

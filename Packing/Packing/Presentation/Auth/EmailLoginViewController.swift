@@ -6,7 +6,14 @@
 //
 
 import UIKit
-class EmailLoginViewController: UIViewController {
+import RxSwift
+import RxCocoa
+import ReactorKit
+
+class EmailLoginViewController: UIViewController, StoryboardView {
+    
+    // MARK: - PROPERTIES
+    var disposeBag = DisposeBag()
     
     // MARK: - UI COMPONENTS
     
@@ -43,7 +50,6 @@ class EmailLoginViewController: UIViewController {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.applyStyle(MainButtonStyle(color: .main))
         button.configuration?.title = "로그인"
-        button.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
         return button
     }()
     
@@ -52,7 +58,6 @@ class EmailLoginViewController: UIViewController {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.applyStyle(MainButtonStyle(color: .black))
         button.configuration?.title = "회원가입"
-        button.addTarget(self, action: #selector(signUpButtonTapped), for: .touchUpInside)
         return button
     }()
     
@@ -63,6 +68,13 @@ class EmailLoginViewController: UIViewController {
         stackView.distribution = .fillEqually
         stackView.translatesAutoresizingMaskIntoConstraints = false
         return stackView
+    }()
+    
+    private lazy var loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        indicator.hidesWhenStopped = true
+        return indicator
     }()
     
     // MARK: - LIFECYCLE
@@ -86,6 +98,7 @@ class EmailLoginViewController: UIViewController {
         view.addSubview(passwordTextField)
         view.addSubview(logInButton)
         view.addSubview(signUpButton)
+        view.addSubview(loadingIndicator)
         
         // constraint
         NSLayoutConstraint.activate([
@@ -113,10 +126,15 @@ class EmailLoginViewController: UIViewController {
             logInButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             logInButton.heightAnchor.constraint(equalToConstant: 50),
             
+            // 회원가입 버튼
             signUpButton.topAnchor.constraint(equalTo: logInButton.bottomAnchor, constant: 24),
             signUpButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             signUpButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            signUpButton.heightAnchor.constraint(equalToConstant: 50)
+            signUpButton.heightAnchor.constraint(equalToConstant: 50),
+            
+            // 로딩 인디케이터
+            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
     }
     
@@ -131,25 +149,110 @@ class EmailLoginViewController: UIViewController {
         view.endEditing(true)
     }
     
-    @objc private func loginButtonTapped() {
-        guard let email = emailTextField.text, !email.isEmpty,
-              let password = passwordTextField.text, !password.isEmpty else {
-            // 여기에 입력 검증 로직 추가
-            return
-        }
+    // MARK: - Binding
+    
+    func bind(reactor: EmailLoginReactor) {
+        // Action
+        emailTextField.rx.text.orEmpty
+            .map { Reactor.Action.updateEmail($0) }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
         
-        // 로그인 로직 구현
-        print("로그인 시도: \(email)")
-    }
-    @objc private func signUpButtonTapped() {
-        print(#fileID, #function, #line, "- ")
+        passwordTextField.rx.text.orEmpty
+            .map { Reactor.Action.updatePassword($0) }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
         
-        let signUpViewController = EmailSignUpViewController()
-        self.navigationController?.isNavigationBarHidden = false
-        navigationController?.pushViewController(signUpViewController, animated: true)
+        logInButton.rx.tap
+            .map { Reactor.Action.login }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        signUpButton.rx.tap
+            .map { Reactor.Action.goToSignUp }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        // State
+        reactor.state.map { $0.isLoginEnabled }
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] isEnabled in
+                self?.logInButton.isEnabled = isEnabled
+                self?.logInButton.alpha = isEnabled ? 1.0 : 0.5
+            })
+            .disposed(by: disposeBag)
+        
+        reactor.state.map { $0.isLoading }
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] isLoading in
+                if isLoading {
+                    self?.loadingIndicator.startAnimating()
+                    self?.logInButton.isEnabled = false
+                    self?.signUpButton.isEnabled = false
+                    self?.emailTextField.isEnabled = false
+                    self?.passwordTextField.isEnabled = false
+                } else {
+                    self?.loadingIndicator.stopAnimating()
+                    let isEnabled = reactor.currentState.isLoginEnabled
+                    self?.logInButton.isEnabled = isEnabled
+                    self?.logInButton.alpha = isEnabled ? 1.0 : 0.5
+                    self?.signUpButton.isEnabled = true
+                    self?.emailTextField.isEnabled = true
+                    self?.passwordTextField.isEnabled = true
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        reactor.state.map { $0.user }
+            .distinctUntilChanged { $0?.id == $1?.id }
+            .filter { $0 != nil }
+            .subscribe(onNext: { [weak self] user in
+                // 로그인 성공 후 MyPage로 이동
+                guard let self = self else { return }
+                
+                let userService = UserService()
+                let authService = AuthService.shared
+                let myPageReactor = MyPageReactor(userService: userService, authService: authService)
+                let myPageVC = MyPageViewController()
+                myPageVC.reactor = myPageReactor
+                
+                // 루트 뷰 컨트롤러로 설정 (로그인 스택 제거)
+                let navigationController = UINavigationController(rootViewController: myPageVC)
+                navigationController.isNavigationBarHidden = false
+                UIApplication.shared.windows.first?.rootViewController = navigationController
+            })
+            .disposed(by: disposeBag)
+        
+        reactor.state.map { $0.error }
+            .distinctUntilChanged { $0?.localizedDescription == $1?.localizedDescription }
+            .filter { $0 != nil }
+            .subscribe(onNext: { [weak self] error in
+                // 오류 메시지 표시
+                let alert = UIAlertController(
+                    title: "로그인 오류",
+                    message: error?.localizedDescription,
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: "확인", style: .default))
+                self?.present(alert, animated: true)
+            })
+            .disposed(by: disposeBag)
+        
+        reactor.state.map { $0.isNavigatingToSignUp }
+            .distinctUntilChanged()
+            .filter { $0 }
+            .subscribe(onNext: { [weak self] _ in
+                // 회원가입 화면으로 이동
+                let authService = AuthService.shared
+                let signUpReactor = EmailSignUpReactor()
+                let signUpVC = EmailSignUpViewController()
+                signUpVC.reactor = signUpReactor
+                
+                self?.navigationController?.pushViewController(signUpVC, animated: true)
+            })
+            .disposed(by: disposeBag)
     }
 }
-
 
 #Preview {
     EmailLoginViewController()

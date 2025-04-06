@@ -14,80 +14,195 @@ enum HTTPMethod: String {
     case delete = "DELETE"
 }
 
-enum BaseURL {
-    static let development = "http://localhost:5001"
-    static let production = "https://port-0-node-express-m8mn7lwcb2d4bc3e.sel4.cloudtype.app"
-}
-
-protocol Endpoint {
+protocol Endpoints {
     var path: String { get }
     var method: HTTPMethod { get }
-//    var parameters: [String: Any]? { get }
-    var headers: [String: String]? { get }
-    var body: Data? { get }
-    
-//    func decode<T: Decodable>(_ type: T.Type) throws -> T
-//    func urlRequest(baseURL: URL) -> URLRequest
-    func url(with baseURL: String) -> URL?
+//    var headers: [String: String]? { get }
+    var parameters: [String: Any]? { get }
+    var baseURL: String { get }
+    func url() -> URL?
 }
 
-extension Endpoint {
-    func url(with baseURL: String) -> URL? {
+extension Endpoints {
+    var baseURL: String {
+        return "https://port-0-node-express-m8mn7lwcb2d4bc3e.sel4.cloudtype.app/api"
+    }
+    
+    func url() -> URL? {
         return URL(string: baseURL + path)
     }
 }
 
-enum AuthEndpoint: Endpoint {
+enum APIEndpoint: Endpoints {
     
-    // for email Login
-    // for social Login
+    // MARK: - AUTH ENDPOINTS
+    // 이메일 회원가입
+    case register(name: String, email: String, password: String)
+    
+    // 이메일 로그인
+    case login(email: String, password: String)
+    
+    // 이메일 인증
+    case verifyEmail(email: String, code: String)
+    case resendVerificationCode(email: String)
+    
+    // 비밀번호 찾기
+    case forgotPassword(email: String)
+    case verifyResetCode(email: String, code: String)
+    case resetPassword(email: String, code: String, password: String)
+    
+    // 비밀번호 재설정(로그인 상태)
+    case changePassword(currentPassword: String, newPassword: String)
+    
+    // refresh Token 으로 access token 재발급 (자동 로그인)
+    case refreshToken(refreshToken: String)
+    
+    // 로그아웃(to make refresh Token to null)
+    case logout
+    
+    // 계정삭제 (이메일, 소셜로그인(revoke social account))
+    case deleteAccount
+    
+    // Sign in with apple
+    case appleVerify(userId: String, email: String?, fullName: PersonNameComponents?)
+    
+    // Sign in with google, kakao, naver (to be opened in AuthenticationServices)
     case googleLogin
     case kakaoLogin
     case naverLogin
-    case appleLogin(userId: String, email: String?, fullName: PersonNameComponents?)
     
+    // MARK: - USER PROFILE ENDPOINTS
+    
+    case getMyProfile
+    case updateProfile(name: String, intro: String)
+    case updateProfileImage(imageData: Data)
+    
+    // MARK: - PATH
     var path: String {
         switch self {
+        // Auth
+        case .register:
+            return "/auth/register"
+        case .login:
+            return "/auth/login"
+        case .verifyEmail:
+            return "/auth/verify-email"
+        case .resendVerificationCode:
+            return "/auth/resend-verification"
+        case .forgotPassword:
+            return "/auth/forgot-password"
+        case .verifyResetCode:
+            return "/auth/verify-reset-code"
+        case .resetPassword:
+            return "/auth/reset-password"
+        case .changePassword:
+            return "/auth/change-password"
+        case .refreshToken:
+            return "/auth/refresh-token"
+        case .logout:
+            return "/auth/logout"
+        case .deleteAccount:
+            return "/auth/delete-account"
+            
+        // Social Login
+        case .appleVerify:
+            return "/auth/apple/verify"
         case .googleLogin:
-            return "/api/auth/google"
+            return "/auth/google"
         case .kakaoLogin:
-            return "/api/auth/kakao"
+            return "/auth/kakao"
         case .naverLogin:
-            return "/api/auth/naver"
-        case .appleLogin:
-            return "/api/auth/apple/verify"
+            return "/auth/naver"
+            
+        // user profile
+        case .getMyProfile, .updateProfile:
+            return "/users/me"
+        case .updateProfileImage:
+            return "/users/me/profile-image"
         }
     }
+    
+    // MARK: - METHODS
     
     var method: HTTPMethod {
         switch self {
-        case .googleLogin, .kakaoLogin, .naverLogin: return .get
-        case .appleLogin: return .post
+        case .register, .login, .verifyEmail, .resendVerificationCode, .forgotPassword, .verifyResetCode, .resetPassword, .changePassword, .refreshToken, .appleVerify:
+            return .post
+        case .logout:
+            return .post
+        case .deleteAccount:
+            return .delete
+        case .getMyProfile:
+            return .get
+        case .updateProfile:
+            return .put
+        case .updateProfileImage:
+            return .put
+        case .googleLogin, .kakaoLogin, .naverLogin:
+            return .get
         }
     }
     
-    var headers: [String: String]? {
-        switch self {
-        case .appleLogin: return ["Content-Type": "application/json"]
-        default: return nil
-        }
-    }
+    // MARK: - HEADERS
+    //    var headers: [String: String]? {
+    //        switch self {
+    //        case .appleLogin: return ["Content-Type": "application/json"]
+    //        default: return nil
+    //        }
+    //    }
     
-    var body: Data? {
+//    var headers: [String: String]? {
+//        return ["Content-Type": "application/json"]
+//    }
+    
+    // MARK: - PARAMETERS
+    
+    var parameters: [String : Any]? {
         switch self {
-        case .appleLogin(userId: let userId, email: let email, fullName: let fullName):
-            let payload: [String: Any] = [
-                "userId": userId,
-                "email": email ?? "",
-                "fullName": [
-                    "givenName": fullName?.givenName ?? "",
-                    "familyName": fullName?.familyName ?? ""
-                ],
-            ]
-            return try? JSONSerialization.data(withJSONObject: payload)
+        case .register(let name, let email, let password):
+            return ["name": name, "email": email, "password": password]
+        case .login(let email, let password):
+            return ["email": email, "password": password]
+        case .verifyEmail(let email, let code):
+            return ["email": email, "code": code]
+        case .resendVerificationCode(let email):
+            return ["email": email]
+        case .forgotPassword(let email):
+            return ["email": email]
+        case .verifyResetCode(let email, let code):
+            return ["email": email, "code": code]
+        case .resetPassword(let email, let password, let code):
+            return ["email": email, "password": password, "code": code]
+        case .changePassword(let currentPassword, let newPassword):
+            return ["currentPassword": currentPassword, "newPassword": newPassword]
+        case .refreshToken(let refreshToken):
+            return ["refreshToken": refreshToken]
+        
+            // social Login
+        case .appleVerify(let userId, let email, let fullName):
+            var params: [String: Any] = ["userId": userId]
+            
+            if let email = email, !email.isEmpty {
+                params["email"] = email
+            }
+            
+            if let fullName = fullName {
+                var nameParams: [String: String?] = [:]
+                if let givenName = fullName.givenName {
+                    nameParams["givenName"] = givenName
+                }
+                if let familyName = fullName.familyName {
+                    nameParams["familyName"] = familyName
+                }
+                if !nameParams.isEmpty {
+                    params["fullName"] = nameParams
+                }
+            }
+            
+            return params
+        case .updateProfile(let name, let intro):
+            return ["name": name, "intro": intro]
         default: return nil
         }
     }
-        // MARK: - log out, delete user
 }
-

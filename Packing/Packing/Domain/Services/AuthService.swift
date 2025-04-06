@@ -27,7 +27,6 @@ enum AuthError: Error {
             return "데이터가 없습니다."
         }
     }
-    
 }
 
 protocol AuthServiceProtocol {
@@ -250,6 +249,7 @@ class AuthService: NSObject, AuthServiceProtocol {
                 throw error
             }
     }
+    
     func handleSocialLogin(from viewController: UIViewController, type: LoginType) -> Observable<TokenData> {
         let subject = PublishSubject<TokenData>()
         self.socialLoginSubject = subject
@@ -346,6 +346,9 @@ class AuthService: NSObject, AuthServiceProtocol {
     }
     // 사용자 정보 가져오기
     private func getUserInfo() -> Observable<TokenData> {
+        print("===GET USER INFO===")
+        print(#fileID, #function, #line, "- ")
+        
         return apiClient.request(APIEndpoint.getMyProfile)
             .map { (response: AuthResponse) -> TokenData in
                 guard let data = response.data,

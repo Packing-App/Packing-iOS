@@ -14,7 +14,7 @@ import AuthenticationServices
 
 // MARK: - UI VIEW
 
-class LoginViewController: UIViewController {
+class LoginViewController: UIViewController, View {
     
     // MARK: - UI COMPONENTS
 
@@ -101,7 +101,7 @@ class LoginViewController: UIViewController {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.applyStyle(MainButtonStyle(color: .main))
         button.configuration?.title = "이메일로 로그인"
-        button.addTarget(self, action: #selector(didTapEmailLoginButton), for: .touchUpInside)
+//        button.addTarget(self, action: #selector(didTapEmailLoginButton), for: .touchUpInside)
         return button
     }()
     
@@ -128,6 +128,17 @@ class LoginViewController: UIViewController {
         return indicator
     }()
     
+    // MARK: - Initialize
+    
+    init(reactor: LoginViewReactor) {
+        super.init(nibName: nil, bundle: nil)
+        self.reactor = reactor
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -135,11 +146,10 @@ class LoginViewController: UIViewController {
     
     // MARK: - UI Setup
     private func setupUI() {
-        self.navigationItem.title = "PACKING"
+        title = "PACKING"
         view.backgroundColor = .systemBackground
         
         view.addSubview(logoImageView)
-        
         view.addSubview(subtitleLabel)
         view.addSubview(loginPromptLabel)
         view.addSubview(socialLoginButtons)
@@ -190,14 +200,172 @@ class LoginViewController: UIViewController {
         return button
     }
     
-    @objc private func didTapEmailLoginButton(_ sender: UIButton) {
-        print(#fileID, #function, #line, "- ")
+//    @objc private func didTapEmailLoginButton(_ sender: UIButton) {
+//        print(#fileID, #function, #line, "- ")
+//        
+//        let emailLoginVC = EmailLoginViewController()
+//        self.navigationController?.isNavigationBarHidden = false
+//        self.navigationController?.pushViewController(emailLoginVC, animated: true)
+//    }
+    
+    // View 프로토콜 요구사항
+    typealias Reactor = LoginViewReactor
+    var disposeBag = DisposeBag()
+    
+    // ReactorKit 바인딩 메서드
+    func bind(reactor: LoginViewReactor) {
+        // Action 바인딩
+        bindActions(reactor)
         
+        // State 바인딩
+        bindState(reactor)
+    }
+    
+    private func bindActions(_ reactor: LoginViewReactor) {
+        
+        // 이메일 로그인 버튼 액션
+        emailLoginButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.navigateToEmailLogin()
+            })
+            .disposed(by: disposeBag)
+        
+        // 구글 로그인 버튼 액션
+        googleLoginButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.performSocialLogin(type: .google)
+            })
+            .disposed(by: disposeBag)
+        
+        // 카카오 로그인 버튼 액션
+        kakaoLoginButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.performSocialLogin(type: .kakao)
+            })
+            .disposed(by: disposeBag)
+        
+        // 네이버 로그인 버튼 액션
+        naverLoginButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.performSocialLogin(type: .naver)
+            })
+            .disposed(by: disposeBag)
+        
+        // 애플 로그인 버튼 액션
+        appleLoginButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.performAppleLogin()
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    private func bindState(_ reactor: LoginViewReactor) {
+        // 로딩 상태 바인딩
+        reactor.state
+            .map { $0.isLoading }
+            .distinctUntilChanged()
+            .bind(to: loadingIndicator.rx.isAnimating)
+            .disposed(by: disposeBag)
+        
+        // 로그인 결과 바인딩
+        reactor.state
+            .compactMap { $0.loginResult }
+            .distinctUntilChanged { prev, current in
+                switch (prev, current) {
+                case (.success(let prevData), .success(let currentData)):
+                    return prevData.accessToken == currentData.accessToken
+                case (.failure(let prevError), .failure(let currentError)):
+                    return prevError.localizedDescription == currentError.localizedDescription
+                default:
+                    return false
+                }
+            }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] result in
+                switch result {
+                case .success:
+                    // 로그인 성공 - 메인 화면으로 이동
+                    self?.navigateToMainScreen()
+                case .failure(let error):
+                    // 로그인 실패 - 에러 메시지 표시
+                    self?.showAlert(message: error.localizedDescription)
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        // 에러 메시지 바인딩
+        reactor.state
+            .compactMap { $0.errorMessage }
+            .distinctUntilChanged()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] message in
+                self?.showAlert(message: message)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - Navigation & Helpers
+    
+    private func navigateToEmailLogin() {
         let emailLoginVC = EmailLoginViewController()
         self.navigationController?.isNavigationBarHidden = false
         self.navigationController?.pushViewController(emailLoginVC, animated: true)
+    }
+    
+    private func navigateToMainScreen() {
+        let myPageViewController = MyPageViewController()
+        self.navigationController?.isNavigationBarHidden = false
+        self.navigationController?.pushViewController(myPageViewController, animated: true)
+    }
+    
+    private func showAlert(message: String) {
+        let alert = UIAlertController(title: "알림", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
+    
+    private func performSocialLogin(type: LoginType) {
+        loadingIndicator.startAnimating()
         
+        AuthService.shared.handleSocialLogin(from: self, type: type)
+            .observe(on: MainScheduler.instance)
+            .subscribe(
+                onNext: { [weak self] tokenData in
+                    self?.loadingIndicator.stopAnimating()
+                    self?.navigateToMainScreen()
+                },
+                onError: { [weak self] error in
+                    self?.loadingIndicator.stopAnimating()
+                    if let authError = error as? AuthError {
+                        self?.showAlert(message: authError.localizedDescription)
+                    } else {
+                        self?.showAlert(message: error.localizedDescription)
+                    }
+                }
+            )
+            .disposed(by: disposeBag)
+    }
+    
+    private func performAppleLogin() {
+        loadingIndicator.startAnimating()
         
+        AuthService.shared.handleAppleLogin(from: self)
+            .observe(on: MainScheduler.instance)
+            .subscribe(
+                onNext: { [weak self] tokenData in
+                    self?.loadingIndicator.stopAnimating()
+                    self?.navigateToMainScreen()
+                },
+                onError: { [weak self] error in
+                    self?.loadingIndicator.stopAnimating()
+                    if let authError = error as? AuthError {
+                        self?.showAlert(message: authError.localizedDescription)
+                    } else {
+                        self?.showAlert(message: error.localizedDescription)
+                    }
+                }
+            )
+            .disposed(by: disposeBag)
     }
 }
 
@@ -205,5 +373,5 @@ class LoginViewController: UIViewController {
 
 
 #Preview {
-    UINavigationController(rootViewController: LoginViewController())
+    UINavigationController(rootViewController: LoginViewController(reactor: LoginViewReactor()))
 }

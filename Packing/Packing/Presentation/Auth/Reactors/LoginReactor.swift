@@ -8,108 +8,59 @@
 import ReactorKit
 import RxSwift
 import RxCocoa
-import Foundation
-import UIKit
 
-class LoginReactor: Reactor {
+final class LoginViewReactor: Reactor {
+    // 액션 정의 - 실제로 사용되는 액션만 포함
     enum Action {
         case emailLogin
-        case googleLogin
-        case kakaoLogin
-        case naverLogin
-        case appleLogin
     }
     
+    // 상태 변화의 중간 단계 Mutation 정의
     enum Mutation {
         case setLoading(Bool)
-        case setLoggedIn(User)
-        case setError(Error)
-        case navigateToEmailLogin
+        case setSocialLoginResult(Result<TokenData, AuthError>)
+        case setError(String)
     }
     
+    // View의 상태 정의
     struct State {
         var isLoading: Bool = false
-        var user: User?
-        var error: Error?
-        var isNavigatingToEmailLogin: Bool = false
+        var loginResult: Result<TokenData, AuthError>?
+        var errorMessage: String?
     }
     
-    let initialState = State()
-    private let authService: AuthService
-    private let presentingViewController: UIViewController
+    // 초기 상태
+    let initialState: State = State()
     
-    init(authService: AuthService, presentingViewController: UIViewController) {
+    // 의존성
+    private let authService: AuthServiceProtocol
+    
+    init(authService: AuthServiceProtocol = AuthService.shared) {
         self.authService = authService
-        self.presentingViewController = presentingViewController
     }
     
+    // Action을 Mutation으로 변환
     func mutate(action: Action) -> Observable<Mutation> {
         switch action {
         case .emailLogin:
-            return Observable.just(Mutation.navigateToEmailLogin)
-            
-        case .googleLogin:
-            return Observable.concat([
-                Observable.just(Mutation.setLoading(true)),
-                
-                authService.handleSocialLogin(from: presentingViewController, type: .google)
-                    .map { Mutation.setLoggedIn($0.user) }
-                    .catch { Observable.just(Mutation.setError($0)) },
-                
-                Observable.just(Mutation.setLoading(false))
-            ])
-            
-        case .kakaoLogin:
-            return Observable.concat([
-                Observable.just(Mutation.setLoading(true)),
-                
-                authService.handleSocialLogin(from: presentingViewController, type: .kakao)
-                    .map { Mutation.setLoggedIn($0.user) }
-                    .catch { Observable.just(Mutation.setError($0)) },
-                
-                Observable.just(Mutation.setLoading(false))
-            ])
-            
-        case .naverLogin:
-            return Observable.concat([
-                Observable.just(Mutation.setLoading(true)),
-                
-                authService.handleSocialLogin(from: presentingViewController, type: .naver)
-                    .map { Mutation.setLoggedIn($0.user) }
-                    .catch { Observable.just(Mutation.setError($0)) },
-                
-                Observable.just(Mutation.setLoading(false))
-            ])
-            
-        case .appleLogin:
-            return Observable.concat([
-                Observable.just(Mutation.setLoading(true)),
-                
-                authService.handleAppleLogin(from: presentingViewController)
-                    .map { Mutation.setLoggedIn($0.user) }
-                    .catch { Observable.just(Mutation.setError($0)) },
-                
-                Observable.just(Mutation.setLoading(false))
-            ])
+            // 이메일 로그인은 화면 전환만 하므로 상태변경 없음
+            return .empty()
         }
     }
     
+    // Mutation을 기반으로 State 업데이트
     func reduce(state: State, mutation: Mutation) -> State {
         var newState = state
         
         switch mutation {
-        case let .setLoading(isLoading):
+        case .setLoading(let isLoading):
             newState.isLoading = isLoading
-            
-        case let .setLoggedIn(user):
-            newState.user = user
-            newState.error = nil
-            
-        case let .setError(error):
-            newState.error = error
-            
-        case .navigateToEmailLogin:
-            newState.isNavigatingToEmailLogin = true
+        case .setSocialLoginResult(let result):
+            newState.loginResult = result
+            newState.isLoading = false
+        case .setError(let message):
+            newState.errorMessage = message
+            newState.isLoading = false
         }
         
         return newState

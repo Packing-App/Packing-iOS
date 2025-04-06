@@ -101,6 +101,7 @@ class APIClient {
                     } catch let error {
                         print(#fileID, #function, #line, "- ")
                         print("디코딩 에러: \(error)")
+                        print("Failed to decode to type: \(T.self)")
                         observer.onError(NetworkError.decodingFailed(error))
                     }
                 case 401:

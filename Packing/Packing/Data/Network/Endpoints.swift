@@ -17,7 +17,7 @@ enum HTTPMethod: String {
 protocol Endpoints {
     var path: String { get }
     var method: HTTPMethod { get }
-//    var headers: [String: String]? { get }
+    var headers: [String: String]? { get }
     var parameters: [String: Any]? { get }
     var baseURL: String { get }
     func url() -> URL?
@@ -26,6 +26,10 @@ protocol Endpoints {
 extension Endpoints {
     var baseURL: String {
         return "https://port-0-node-express-m8mn7lwcb2d4bc3e.sel4.cloudtype.app/api"
+    }
+    
+    var headers: [String: String]? {
+        return ["Content-Type": "application/json"]
     }
     
     func url() -> URL? {
@@ -142,18 +146,6 @@ enum APIEndpoint: Endpoints {
             return .get
         }
     }
-    
-    // MARK: - HEADERS
-    //    var headers: [String: String]? {
-    //        switch self {
-    //        case .appleLogin: return ["Content-Type": "application/json"]
-    //        default: return nil
-    //        }
-    //    }
-    
-//    var headers: [String: String]? {
-//        return ["Content-Type": "application/json"]
-//    }
     
     // MARK: - PARAMETERS
     

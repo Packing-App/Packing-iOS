@@ -9,14 +9,12 @@ import UIKit
 import RxSwift
 import RxCocoa
 import ReactorKit
+import SnapKit
+import AuthenticationServices
 
 // MARK: - UI VIEW
 
-class LoginViewController: UIViewController, StoryboardView {
-    
-    // MARK: - PROPERTIES
-    
-    var disposeBag = DisposeBag()
+class LoginViewController: UIViewController {
     
     // MARK: - UI COMPONENTS
 
@@ -103,6 +101,7 @@ class LoginViewController: UIViewController, StoryboardView {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.applyStyle(MainButtonStyle(color: .main))
         button.configuration?.title = "이메일로 로그인"
+        button.addTarget(self, action: #selector(didTapEmailLoginButton), for: .touchUpInside)
         return button
     }()
     
@@ -191,106 +190,14 @@ class LoginViewController: UIViewController, StoryboardView {
         return button
     }
     
-    // MARK: - Binding
-    
-    func bind(reactor: LoginReactor) {
-        // Action
-        emailLoginButton.rx.tap
-            .map { Reactor.Action.emailLogin }
-            .bind(to: reactor.action)
-            .disposed(by: disposeBag)
+    @objc private func didTapEmailLoginButton(_ sender: UIButton) {
+        print(#fileID, #function, #line, "- ")
         
-        googleLoginButton.rx.tap
-            .map { Reactor.Action.googleLogin }
-            .bind(to: reactor.action)
-            .disposed(by: disposeBag)
+        let emailLoginVC = EmailLoginViewController()
+        self.navigationController?.isNavigationBarHidden = false
+        self.navigationController?.pushViewController(emailLoginVC, animated: true)
         
-        kakaoLoginButton.rx.tap
-            .map { Reactor.Action.kakaoLogin }
-            .bind(to: reactor.action)
-            .disposed(by: disposeBag)
         
-        naverLoginButton.rx.tap
-            .map { Reactor.Action.naverLogin }
-            .bind(to: reactor.action)
-            .disposed(by: disposeBag)
-        
-        appleLoginButton.rx.tap
-            .map { Reactor.Action.appleLogin }
-            .bind(to: reactor.action)
-            .disposed(by: disposeBag)
-        
-        // State
-        reactor.state.map { $0.isLoading }
-            .distinctUntilChanged()
-            .subscribe(onNext: { [weak self] isLoading in
-                if isLoading {
-                    self?.loadingIndicator.startAnimating()
-                    self?.emailLoginButton.isEnabled = false
-                    self?.googleLoginButton.isEnabled = false
-                    self?.kakaoLoginButton.isEnabled = false
-                    self?.naverLoginButton.isEnabled = false
-                    self?.appleLoginButton.isEnabled = false
-                } else {
-                    self?.loadingIndicator.stopAnimating()
-                    self?.emailLoginButton.isEnabled = true
-                    self?.googleLoginButton.isEnabled = true
-                    self?.kakaoLoginButton.isEnabled = true
-                    self?.naverLoginButton.isEnabled = true
-                    self?.appleLoginButton.isEnabled = true
-                }
-            })
-            .disposed(by: disposeBag)
-        
-        reactor.state.map { $0.user }
-            .distinctUntilChanged { $0?.id == $1?.id }
-            .filter { $0 != nil }
-            .subscribe(onNext: { [weak self] user in
-                // 로그인 성공 후 MyPage로 이동
-                guard let self = self else { return }
-                
-                let userService = UserService()
-                let authService = AuthService.shared
-                let myPageReactor = MyPageReactor(userService: userService, authService: authService)
-                let myPageVC = MyPageViewController()
-                myPageVC.reactor = myPageReactor
-                
-                // 루트 뷰 컨트롤러로 설정 (로그인 스택 제거)
-                let navigationController = UINavigationController(rootViewController: myPageVC)
-                navigationController.isNavigationBarHidden = false
-                UIApplication.shared.windows.first?.rootViewController = navigationController
-            })
-            .disposed(by: disposeBag)
-        
-        reactor.state.map { $0.error }
-            .distinctUntilChanged { $0?.localizedDescription == $1?.localizedDescription }
-            .filter { $0 != nil }
-            .subscribe(onNext: { [weak self] error in
-                // 오류 메시지 표시
-                let alert = UIAlertController(
-                    title: "로그인 오류",
-                    message: error?.localizedDescription,
-                    preferredStyle: .alert
-                )
-                alert.addAction(UIAlertAction(title: "확인", style: .default))
-                self?.present(alert, animated: true)
-            })
-            .disposed(by: disposeBag)
-        
-        reactor.state.map { $0.isNavigatingToEmailLogin }
-            .distinctUntilChanged()
-            .filter { $0 }
-            .subscribe(onNext: { [weak self] _ in
-                // 이메일 로그인 화면으로 이동
-                let authService = AuthService()
-                let emailLoginReactor = EmailLoginReactor(authService: authService)
-                let emailLoginVC = EmailLoginViewController()
-                emailLoginVC.reactor = emailLoginReactor
-                
-                self?.navigationController?.isNavigationBarHidden = false
-                self?.navigationController?.pushViewController(emailLoginVC, animated: true)
-            })
-            .disposed(by: disposeBag)
     }
 }
 

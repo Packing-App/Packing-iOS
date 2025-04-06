@@ -10,17 +10,18 @@ import UIKit
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
-    private var appCoordinator: AppCoordinator?
+//    private var appCoordinator: AppCoordinator?
     
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         Thread.sleep(forTimeInterval: 2.0)
         guard let windowScene = (scene as? UIWindowScene) else { return }
-        let window = UIWindow(windowScene: windowScene)
-        self.window = window
-        appCoordinator = AppCoordinator(window: window)
-        appCoordinator?.start()
         
-        /*
+//        let window = UIWindow(windowScene: windowScene)
+//        self.window = window
+//        appCoordinator = AppCoordinator(window: window)
+//        appCoordinator?.start()
+        
+        
         window = UIWindow(frame: UIScreen.main.bounds)
         let viewController = LoginViewController()
         
@@ -31,9 +32,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.rootViewController = navigationController
         window?.makeKeyAndVisible()
         window?.windowScene = windowScene
-         */
+         
     }
-
+/*
     // 소셜 로그인 콜백 URL 처리
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
         if let url = URLContexts.first?.url, url.scheme == "packingapp" {
@@ -58,6 +59,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                 })
         }
     }
+    */
 
     func sceneDidDisconnect(_ scene: UIScene) {
         // Called as the scene is being released by the system.

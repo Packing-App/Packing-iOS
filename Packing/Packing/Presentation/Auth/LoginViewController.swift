@@ -313,7 +313,8 @@ class LoginViewController: UIViewController, View {
     }
     
     private func navigateToMainScreen() {
-        let myPageViewController = MyPageViewController()
+        let myPageViewReactor = MyPageViewReactor()
+        let myPageViewController = MyPageViewController(reactor: myPageViewReactor)
         self.navigationController?.isNavigationBarHidden = false
         self.navigationController?.pushViewController(myPageViewController, animated: true)
     }

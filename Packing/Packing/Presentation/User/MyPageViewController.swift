@@ -6,6 +6,9 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
+import ReactorKit
 
 enum ProfileMenuItem: String, CaseIterable {
     case connectedAccount = "연결된 계정" // (just display)
@@ -30,7 +33,7 @@ enum ProfileMenuItem: String, CaseIterable {
 }
 
 
-class MyPageViewController: UIViewController {
+class MyPageViewController: UIViewController, View {
     
     // MARK: - UI COMPONENTS
     
@@ -86,7 +89,7 @@ class MyPageViewController: UIViewController {
         button.setTitle("수정", for: .normal)
         button.setTitleColor(.systemBlue, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 16)
-        button.addTarget(self, action: #selector(editProfileButtonTapped), for: .touchUpInside)
+        //        button.addTarget(self, action: #selector(editProfileButtonTapped), for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -104,17 +107,45 @@ class MyPageViewController: UIViewController {
         return table
     }()
     
+    private lazy var loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        indicator.hidesWhenStopped = true
+        return indicator
+    }()
+    
     // MARK: - PROPERTIES
     
-    var user = User.exampleUser
+    typealias Reactor = MyPageViewReactor
+    var disposeBag = DisposeBag()
+    
     private let menuItems = ProfileMenuItem.allCases
     private var tableViewHeightConstraint: NSLayoutConstraint?
-
+    
+    // MARK: - Initialize
+    
+    init(reactor: MyPageViewReactor) {
+        super.init(nibName: nil, bundle: nil)
+        self.reactor = reactor
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     // MARK: - LIFE CYCLE
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        setupTableView()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // 화면이 나타날 때마다 최신 사용자 정보 로드
+        reactor?.action.onNext(.refresh)
     }
     
     override func viewDidLayoutSubviews() {
@@ -130,24 +161,22 @@ class MyPageViewController: UIViewController {
         }
     }
     
+    // MARK: - UI Setup
+    
     private func setupUI() {
         title = "내 프로필"
         view.backgroundColor = .systemGray6
         
-        if let imageName = user.profileImage, !imageName.isEmpty, let image = UIImage(named: imageName) {
-            profileImageView.image = image
-        } else {
-            profileImageView.image = UIImage(systemName: "person.circle.fill")
-            profileImageView.tintColor = .white
-        }
+        //        if let imageName = user.profileImage, !imageName.isEmpty, let image = UIImage(named: imageName) {
+        //            profileImageView.image = image
+        //        } else {
+        //            profileImageView.image = UIImage(systemName: "person.circle.fill")
+        //            profileImageView.tintColor = .white
+        //        }
         
-        nameLabel.text = user.name
-        bioLabel.text = user.intro
+        //        nameLabel.text = user.name
+        //        bioLabel.text = user.intro
         
-        profileContainerView.addSubview(profileImageView)
-        profileContainerView.addSubview(nameLabel)
-        profileContainerView.addSubview(bioLabel)
-        profileContainerView.addSubview(editProfileButton)
         
         
         // 스크롤뷰 설정
@@ -157,7 +186,12 @@ class MyPageViewController: UIViewController {
         // 콘텐츠뷰에 컨텐츠 추가
         contentView.addSubview(profileContainerView)
         contentView.addSubview(tableView)
+        view.addSubview(loadingIndicator)
         
+        profileContainerView.addSubview(profileImageView)
+        profileContainerView.addSubview(nameLabel)
+        profileContainerView.addSubview(bioLabel)
+        profileContainerView.addSubview(editProfileButton)
         
         NSLayoutConstraint.activate([
             // 스크롤뷰
@@ -165,7 +199,7 @@ class MyPageViewController: UIViewController {
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-
+            
             // 콘텐츠뷰
             contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
@@ -207,7 +241,11 @@ class MyPageViewController: UIViewController {
             tableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             
             // 콘텐츠뷰의 하단을 테이블뷰의 하단에 연결 (중요!)
-            contentView.bottomAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 20)
+            contentView.bottomAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 20),
+            
+            // 로딩 인디케이터
+            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
         
         // 초기 테이블뷰 높이 설정 (이후 viewDidLayoutSubviews에서 동적으로 조정됨)
@@ -215,54 +253,163 @@ class MyPageViewController: UIViewController {
         tableViewHeightConstraint?.isActive = true
     }
     
-    // MARK: - ACTIONS
-    
-    @objc private func editProfileButtonTapped() {
-        print(#fileID, #function, #line, "- Edit profile button tapped")
+    private func setupTableView() {
+        tableView.rx.setDelegate(self)
+            .disposed(by: disposeBag)
+        
+        // 테이블뷰 데이터 소스 바인딩은 bind 메서드에서 수행
     }
     
-    private func getSocialTypeImage() -> UIImage? {
-        switch user.socialType {
-        case .naver:
-            return UIImage(named: "naver")
-        case .kakao:
-            return UIImage(named: "kakao")
-        case .apple:
-            return UIImage(named: "apple")
-        case .google:
-            return UIImage(named: "google")
-        case .email:
-            return UIImage(systemName: "envelope.fill")
+    // MARK: - ReactorKit Binding
+    
+    func bind(reactor: MyPageViewReactor) {
+        bindActions(reactor)
+        bindState(reactor)
+        bindTableView()
+    }
+    
+    
+    private func bindActions(_ reactor: MyPageViewReactor) {
+        // 프로필 편집 버튼 액션
+        editProfileButton.rx.tap
+            .map { Reactor.Action.editProfile }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        // 프로필 편집 화면으로 이동 (별도 처리)
+        editProfileButton.rx.tap
+            .subscribe(onNext: { [weak self] _ in
+                self?.navigateToEditProfile()
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    private func bindState(_ reactor: MyPageViewReactor) {
+        // 사용자 정보 바인딩
+        reactor.state
+            .map { $0.user }
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] user in
+                self?.updateUserInfo(user)
+            })
+            .disposed(by: disposeBag)
+        
+        // 로딩 상태 바인딩
+        reactor.state
+            .map { $0.isLoading }
+            .distinctUntilChanged()
+            .bind(to: loadingIndicator.rx.isAnimating)
+            .disposed(by: disposeBag)
+        
+        // 에러 메시지 바인딩
+        reactor.state
+            .compactMap { $0.errorMessage }
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] message in
+                self?.showAlert(message: message)
+            })
+            .disposed(by: disposeBag)
+        
+        // 로그아웃/회원탈퇴 성공 시 로그인 화면으로 이동
+        reactor.state
+            .map { $0.user }
+            .distinctUntilChanged { $0?.id == $1?.id }
+            .filter { $0 == nil }
+            .subscribe(onNext: { [weak self] _ in
+                self?.navigateToLogin()
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    private func bindTableView() {
+        // 테이블뷰 셀 선택 이벤트
+        tableView.rx.itemSelected
+            .subscribe(onNext: { [weak self] indexPath in
+                self?.tableView.deselectRow(at: indexPath, animated: true)
+                self?.handleMenuItemSelection(at: indexPath.row)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - UI Updates
+    private func updateUserInfo(_ user: User?) {
+        print(#fileID, #function, #line, "- ")
+        guard let user = user else { return }
+        
+        // 프로필 이미지 설정
+        if let imageURL = user.profileImage, !imageURL.isEmpty {
+            // 여기서는 간단하게 처리했지만, 실제로는 이미지 로딩 라이브러리(Kingfisher 등) 사용 권장
+            if let image = UIImage(named: imageURL) {
+                profileImageView.image = image
+            } else {
+                // URL에서 이미지 로드 로직 (생략)
+                profileImageView.image = UIImage(systemName: "person.circle.fill")
+            }
+        } else {
+            profileImageView.image = UIImage(systemName: "person.circle.fill")
+        }
+        
+        // 이름과 소개 설정
+        nameLabel.text = user.name
+        bioLabel.text = user.intro ?? "소개가 없습니다."
+        
+        // 테이블뷰 리로드 (소셜 로그인 타입이 변경될 수 있으므로)
+        tableView.reloadData()
+    }
+    
+    // MARK: - Navigation & Helpers
+    
+    private func navigateToEditProfile() {
+        print("프로필 편집 화면으로 이동")
+        
+        // 실제 구현 시 아래와 같이 처리
+        // let editProfileVC = EditProfileViewController(reactor: EditProfileViewReactor(user: reactor?.currentState.user))
+        // navigationController?.pushViewController(editProfileVC, animated: true)
+    }
+    
+    private func navigateToLogin() {
+        // 로그아웃 or 계정 삭제 후 로그인 화면으로 이동
+        
+        let loginViewReactor = LoginViewReactor()
+        let loginViewController = LoginViewController(reactor: loginViewReactor)
+        
+        // 루트 뷰 컨트롤러로 설정하여 뒤로가기를 방지
+        if let window = UIApplication.shared.windows.first {
+            window.rootViewController = UINavigationController(rootViewController: loginViewController)
+            window.makeKeyAndVisible()
+            
+            // animation (optional)
+            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
         }
     }
     
-    private func getSocialTypeName() -> String {
-        switch user.socialType {
-        case .naver:
-            return "네이버"
-        case .kakao:
-            return "카카오"
-        case .apple:
-            return "애플"
-        case .google:
-            return "구글"
-        case .email:
-            return "이메일"
+    private func handleMenuItemSelection(at index: Int) {
+        let menuItem = menuItems[index]
+        
+        switch menuItem {
+        case .connectedAccount, .versionInfo:
+            // 표시 전용 항목은 아무 동작 없음
+            break
+            
+        case .developerInfo, .privacy, .legal:
+            navigateToInfoScreen(for: menuItem)
+            
+        case .logout:
+            showLogoutConfirmation()
+            
+        case .deleteId:
+            showDeleteAccountConfirmation()
         }
     }
     
-    private func getAppVersion() -> String {
-        return Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-    }
-    
-    private func navigateToViewController(for menuItem: ProfileMenuItem) {
+    private func navigateToInfoScreen(for menuItem: ProfileMenuItem) {
         let viewController = UIViewController()
         viewController.view.backgroundColor = .systemBackground
         viewController.title = menuItem.rawValue
         navigationController?.pushViewController(viewController, animated: true)
     }
     
-    private func showLogoutAlert() {
+    private func showLogoutConfirmation() {
         let alert = UIAlertController(
             title: "로그아웃",
             message: "정말 로그아웃 하시겠습니까?",
@@ -270,15 +417,14 @@ class MyPageViewController: UIViewController {
         )
         
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        alert.addAction(UIAlertAction(title: "로그아웃", style: .destructive) { _ in
-            print("User logged out")
-            // Handle logout logic here
+        alert.addAction(UIAlertAction(title: "로그아웃", style: .destructive) { [weak self] _ in
+            self?.reactor?.action.onNext(.logout)
         })
         
         present(alert, animated: true)
     }
     
-    private func showDeleteAccountAlert() {
+    private func showDeleteAccountConfirmation() {
         let alert = UIAlertController(
             title: "회원탈퇴",
             message: "정말 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
@@ -286,11 +432,16 @@ class MyPageViewController: UIViewController {
         )
         
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        alert.addAction(UIAlertAction(title: "탈퇴하기", style: .destructive) { _ in
-            print("User account deleted")
-            // Handle account deletion logic here
+        alert.addAction(UIAlertAction(title: "탈퇴하기", style: .destructive) { [weak self] _ in
+            self?.reactor?.action.onNext(.deleteAccount)
         })
         
+        present(alert, animated: true)
+    }
+    
+    private func showAlert(message: String) {
+        let alert = UIAlertController(title: "알림", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
         present(alert, animated: true)
     }
 }
@@ -312,20 +463,24 @@ extension MyPageViewController: UITableViewDelegate, UITableViewDataSource {
         // Configure cell based on menu item
         switch menuItem {
         case .connectedAccount:
-            content.secondaryText = getSocialTypeName()
-            let socialIconView = UIImageView(frame: CGRect(x: 0, y: 0, width: 24, height: 24))
-            socialIconView.contentMode = .scaleAspectFit
-            socialIconView.image = getSocialTypeImage()
-            cell.accessoryView = socialIconView
+            if let user = reactor?.currentState.user {
+                content.secondaryText = getSocialTypeName(for: user.socialType)
+                let socialIconView = UIImageView(frame: CGRect(x: 0, y: 0, width: 24, height: 24))
+                socialIconView.contentMode = .scaleAspectFit
+                socialIconView.image = getSocialTypeImage(for: user.socialType)
+                cell.accessoryView = socialIconView
+            }
             cell.selectionStyle = .none
         case .versionInfo:
             content.secondaryText = getAppVersion()
             cell.accessoryView = nil
             cell.accessoryType = .none
             cell.selectionStyle = .none
+            
         case .developerInfo, .privacy, .legal:
             cell.accessoryView = nil
             cell.accessoryType = .disclosureIndicator
+            
         case .logout, .deleteId:
             content.textProperties.color = .systemRed
             cell.accessoryView = nil
@@ -336,15 +491,38 @@ extension MyPageViewController: UITableViewDelegate, UITableViewDataSource {
         return cell
     }
     
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        let menuItem = menuItems[indexPath.row]
-        switch menuItem {
-        case .connectedAccount, .versionInfo: break
-        case .developerInfo, .privacy, .legal: navigateToViewController(for: menuItem)
-        case .logout: showLogoutAlert()
-        case .deleteId: showDeleteAccountAlert()
+    private func getSocialTypeImage(for type: LoginType) -> UIImage? {
+        switch type {
+        case .naver:
+            return UIImage(named: "naver")
+        case .kakao:
+            return UIImage(named: "kakao")
+        case .apple:
+            return UIImage(named: "apple")
+        case .google:
+            return UIImage(named: "google")
+        case .email:
+            return UIImage(systemName: "envelope.fill")
         }
+    }
+    
+    private func getSocialTypeName(for type: LoginType) -> String {
+        switch type {
+        case .naver:
+            return "네이버"
+        case .kakao:
+            return "카카오"
+        case .apple:
+            return "애플"
+        case .google:
+            return "구글"
+        case .email:
+            return "이메일"
+        }
+    }
+    
+    private func getAppVersion() -> String {
+        return Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
     }
 }
 
@@ -352,7 +530,8 @@ extension MyPageViewController: UITableViewDelegate, UITableViewDataSource {
 // MARK: - PREVIEW
 
 #Preview {
-    let viewController = MyPageViewController()
+    let viewReactor = MyPageViewReactor()
+    let viewController = MyPageViewController(reactor: viewReactor)
     let navigationViewController = UINavigationController(rootViewController: viewController)
     return navigationViewController
 }

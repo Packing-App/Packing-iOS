@@ -8,10 +8,14 @@
 import UIKit    // for device id
 import RxSwift
 
-struct AuthResponse: Codable {
+struct APIResponse<T: Codable>: Codable {
     let success: Bool
     let message: String
-    let data: TokenData?
+    let data: T?
+}
+
+struct UserResponse: Codable {
+    let user: User
 }
 
 struct TokenData: Codable {
@@ -159,9 +163,9 @@ class APIClient {
         let refreshEndpoint = APIEndpoint.refreshToken(refreshToken: refreshToken)
         
         // 수정된 부분: 명시적으로 타입을 지정하여 request 호출
-        let refreshRequest: Observable<AuthResponse> = self.request(refreshEndpoint)
+        let refreshRequest: Observable<APIResponse<TokenData>> = self.request(refreshEndpoint)
         
-        refreshRequest.subscribe(onNext: { [weak self] (authResponse: AuthResponse) in
+        refreshRequest.subscribe(onNext: { [weak self] (authResponse: APIResponse<TokenData>) in
             guard let self = self else { return }
             
             // save new token
@@ -244,7 +248,7 @@ class APIClient {
                     }
                     
                     do {
-                        let decodedObject = try JSONDecoder().decode(AuthResponse.self, from: data)
+                        let decodedObject = try JSONDecoder().decode(APIResponse<TokenData>.self, from: data)
                         if let tokenData = decodedObject.data {
                             observer.onNext(tokenData)
                             observer.onCompleted()

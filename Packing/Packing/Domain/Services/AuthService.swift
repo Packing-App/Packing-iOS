@@ -42,9 +42,9 @@ protocol AuthServiceProtocol {
     
     func refreshToken() -> Observable<String>
     
-    func handleSocialLogin(from viewController: UIViewController, type: LoginType) -> Observable<TokenData>
-    func handleAppleLogin(from viewController: UIViewController) -> Observable<TokenData>
-    func handleDeepLink(_ url: URL) -> Observable<TokenData>
+    func handleSocialLogin(from viewController: UIViewController, type: LoginType) -> Observable<User>
+    func handleAppleLogin(from viewController: UIViewController) -> Observable<User>
+    func handleDeepLink(_ url: URL) -> Observable<User>
 }
 
 class AuthService: NSObject, AuthServiceProtocol {
@@ -56,7 +56,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     private let disposeBag = DisposeBag()
     
     // 소셜 로그인 콜백
-    private var socialLoginSubject: PublishSubject<TokenData>?
+    private var socialLoginSubject: PublishSubject<User>?
     private var presentationContext: UIViewController?
     
     override init() {
@@ -65,7 +65,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     
     func registerUser(name: String, email: String, password: String) -> Observable<TokenData> {
         return apiClient.request(APIEndpoint.register(name: name, email: email, password: password))
-            .map { (response: AuthResponse) -> TokenData in
+            .map { (response: APIResponse<TokenData>) -> TokenData in
                 guard let data = response.data else {
                     throw AuthError.noData
                 }
@@ -92,7 +92,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     
     func login(email: String, password: String) -> Observable<TokenData> {
         return apiClient.request(APIEndpoint.login(email: email, password: password))
-            .map { (response: AuthResponse) -> TokenData in
+            .map { (response: APIResponse<TokenData>) -> TokenData in
                 guard let data = response.data else {
                     throw AuthError.noData
                 }
@@ -118,7 +118,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     
     func verifyEmail(email: String, code: String) -> Observable<Bool> {
         return apiClient.request(APIEndpoint.verifyEmail(email: email, code: code))
-            .map { (response: AuthResponse) -> Bool in
+            .map { (response: APIResponse<TokenData>) -> Bool in
                 return response.success
             }
             .catch { error in
@@ -131,7 +131,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     
     func resendVerificationCode(email: String) -> Observable<Bool> {
         return apiClient.request(APIEndpoint.resendVerificationCode(email: email))
-            .map { (response: AuthResponse) -> Bool in
+            .map { (response: APIResponse<TokenData>) -> Bool in
                 return response.success
             }
             .catch { error in
@@ -144,7 +144,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     
     func forgotPassword(email: String) -> Observable<Bool> {
         return apiClient.request(APIEndpoint.forgotPassword(email: email))
-            .map { (response: AuthResponse) -> Bool in
+            .map { (response: APIResponse<TokenData>) -> Bool in
                 return response.success
             }
             .catch { error in
@@ -157,7 +157,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     
     func verifyResetCode(email: String, code: String) -> Observable<Bool> {
         return apiClient.request(APIEndpoint.verifyResetCode(email: email, code: code))
-            .map { (response: AuthResponse) -> Bool in
+            .map { (response: APIResponse<TokenData>) -> Bool in
                 return response.success
             }
             .catch { error in
@@ -170,7 +170,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     
     func resetPassword(email: String, code: String, password: String) -> Observable<TokenData> {
         return apiClient.request(APIEndpoint.resetPassword(email: email, code: code, password: password))
-            .map { (response: AuthResponse) -> TokenData in
+            .map { (response: APIResponse<TokenData>) -> TokenData in
                 guard let data = response.data else {
                     throw AuthError.noData
                 }
@@ -197,7 +197,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     
     func logout() -> Observable<Bool> {
         return apiClient.request(APIEndpoint.logout)
-            .map { (response: AuthResponse) -> Bool in
+            .map { (response: APIResponse<TokenData>) -> Bool in
                 // 토큰과 사용자 정보 삭제
                 self.tokenStorage.clearTokens()
                 self.userManager.clearCurrentUser()
@@ -213,7 +213,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     
     func deleteAccount() -> Observable<Bool> {
         return apiClient.request(APIEndpoint.deleteAccount)
-            .map { (response: AuthResponse) -> Bool in
+            .map { (response: APIResponse<TokenData>) -> Bool in
                 // 계정 삭제 후 토큰과 사용자 정보 삭제
                 self.tokenStorage.clearTokens()
                 self.userManager.clearCurrentUser()
@@ -233,7 +233,7 @@ class AuthService: NSObject, AuthServiceProtocol {
         }
         
         return apiClient.request(APIEndpoint.refreshToken(refreshToken: refreshToken))
-            .map { (response: AuthResponse) -> String in
+            .map { (response: APIResponse<TokenData>) -> String in
                 guard let data = response.data else {
                     throw AuthError.noData
                 }
@@ -250,8 +250,8 @@ class AuthService: NSObject, AuthServiceProtocol {
             }
     }
     
-    func handleSocialLogin(from viewController: UIViewController, type: LoginType) -> Observable<TokenData> {
-        let subject = PublishSubject<TokenData>()
+    func handleSocialLogin(from viewController: UIViewController, type: LoginType) -> Observable<User> {
+        let subject = PublishSubject<User>()
         self.socialLoginSubject = subject
         self.presentationContext = viewController
         
@@ -286,8 +286,8 @@ class AuthService: NSObject, AuthServiceProtocol {
             
             // 딥링크 처리
             _ = self.handleDeepLink(callbackURL)
-                .subscribe(onNext: { tokenData in
-                    subject.onNext(tokenData)
+                .subscribe(onNext: { user in
+                    subject.onNext(user)
                     subject.onCompleted()
                 }, onError: { error in
                     subject.onError(error)
@@ -306,8 +306,8 @@ class AuthService: NSObject, AuthServiceProtocol {
     
     
     // Apple 로그인 처리
-    func handleAppleLogin(from viewController: UIViewController) -> Observable<TokenData> {
-        let subject = PublishSubject<TokenData>()
+    func handleAppleLogin(from viewController: UIViewController) -> Observable<User> {
+        let subject = PublishSubject<User>()
         self.socialLoginSubject = subject
         self.presentationContext = viewController
         
@@ -324,7 +324,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     }
     
     // 딥링크 처리 (소셜 로그인 콜백)
-    func handleDeepLink(_ url: URL) -> Observable<TokenData> {
+    func handleDeepLink(_ url: URL) -> Observable<User> {
         // URL에서 토큰 추출
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: true),
               let queryItems = components.queryItems,
@@ -345,26 +345,20 @@ class AuthService: NSObject, AuthServiceProtocol {
         return self.getUserInfo()
     }
     // 사용자 정보 가져오기
-    private func getUserInfo() -> Observable<TokenData> {
+    private func getUserInfo() -> Observable<User> {
         print("===GET USER INFO===")
         print(#fileID, #function, #line, "- ")
         
         return apiClient.request(APIEndpoint.getMyProfile)
-            .map { (response: AuthResponse) -> TokenData in
-                guard let data = response.data,
-                      let accessToken = self.tokenStorage.accessToken,
-                      let refreshToken = self.tokenStorage.refreshToken else {
+            .map { (response: APIResponse<UserResponse>) -> User in
+                guard let data = response.data else {
                     throw AuthError.noData
                 }
                 
                 // 사용자 정보 저장
                 self.userManager.setCurrentUser(data.user)
                 
-                return TokenData(
-                    accessToken: accessToken,
-                    refreshToken: refreshToken,
-                    user: data.user
-                )
+                return data.user
             }
             .catch { error in
                 if let apiError = error as? NetworkError {
@@ -394,7 +388,7 @@ extension AuthService: ASAuthorizationControllerDelegate, ASAuthorizationControl
             
             // Apple 로그인 검증 요청
             _ = apiClient.request(APIEndpoint.appleVerify(userId: userId, email: email, fullName: fullName))
-                .subscribe(onNext: { [weak self] (response: AuthResponse) in
+                .subscribe(onNext: { [weak self] (response: APIResponse<TokenData>) in
                     guard let self = self, let data = response.data else {
                         self?.socialLoginSubject?.onError(AuthError.noData)
                         return
@@ -410,7 +404,7 @@ extension AuthService: ASAuthorizationControllerDelegate, ASAuthorizationControl
                     // 사용자 정보 저장
                     self.userManager.setCurrentUser(data.user)
                     
-                    self.socialLoginSubject?.onNext(data)
+                    self.socialLoginSubject?.onNext(data.user)
                     self.socialLoginSubject?.onCompleted()
                 }, onError: { [weak self] error in
                     if let networkError = error as? NetworkError {

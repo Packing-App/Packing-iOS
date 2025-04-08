@@ -5,8 +5,10 @@
 //  Created by 이융의 on 3/29/25.
 //
 
-import UIKit    // for device id
+import Foundation
 import RxSwift
+
+// MARK: - API 모델
 
 struct APIResponse<T: Codable>: Codable {
     let success: Bool
@@ -18,7 +20,7 @@ struct UserResponse: Codable {
     let user: User
 }
 
-struct TokenData: Codable {
+struct TokenData: Codable, Equatable {
     let accessToken: String
     let refreshToken: String
     let user: User
@@ -43,24 +45,17 @@ class APIClient {
     }
     
     func request<T: Decodable>(_ endpoint: APIEndpoint) -> Observable<T> {
-        // 나중에 생기는 데이터
         return Observable.create { [weak self] observer in
-            
-            // 1. url (baseURL + path)
             guard let self = self, let url = endpoint.url() else {
                 observer.onError(NetworkError.invalidURL)
                 return Disposables.create()
             }
             
             var request = URLRequest(url: url)
-            
-            // 2. httpMethod(put, post, get, delete)
             request.httpMethod = endpoint.method.rawValue
-            
-            // 3. header
             request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
-            // Optional - 인증이 필요한 endpoints 에는 token 추가
+            // 인증이 필요한 endpoints에는 token 추가
             if self.requiresAuthentication(endpoint) {
                 if let token = self.tokenManager.accessToken {
                     request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -70,16 +65,17 @@ class APIClient {
                 }
             }
             
-            // 4. body (data)
+            // HTTP body 설정
             if let params = endpoint.parameters {
-                do { request.httpBody = try JSONSerialization.data(withJSONObject: params, options: [])
+                do {
+                    request.httpBody = try JSONSerialization.data(withJSONObject: params, options: [])
                 } catch {
                     observer.onError(NetworkError.requestFailed(error))
                     return Disposables.create()
                 }
             }
             
-            // 5. 네트워크 요청 실행
+            // 네트워크 요청 실행
             let task = self.session.dataTask(with: request) { data, response, error in
                 if let error = error {
                     observer.onError(NetworkError.requestFailed(error))
@@ -103,14 +99,13 @@ class APIClient {
                         observer.onNext(decodedObject)
                         observer.onCompleted()
                     } catch let error {
-                        print(#fileID, #function, #line, "- ")
-                        print("디코딩 에러: \(error)")
-                        print("Failed to decode to type: \(T.self)")
                         observer.onError(NetworkError.decodingFailed(error))
                     }
+                    
                 case 401:
-                    // 인증 오류, 토큰 갱신 시도 (retry?)
+                    // 인증 오류, 토큰 갱신 시도
                     self.refreshTokenAndRetry(endpoint: endpoint, observer: observer)
+                    
                 case 404:
                     observer.onError(NetworkError.notFound)
                     
@@ -130,7 +125,6 @@ class APIClient {
             
             task.resume()
             
-            // Disposable 생성 시 task cancel
             return Disposables.create {
                 task.cancel()
             }
@@ -148,31 +142,27 @@ class APIClient {
         }
     }
     
-    // MARK: - Retry Logic (get access token)
+    // MARK: - 토큰 갱신 및 재시도 로직
     
     private func refreshTokenAndRetry<T: Decodable>(
         endpoint: APIEndpoint,
         observer: AnyObserver<T>
     ) {
         guard let refreshToken = tokenManager.refreshToken else {
-            // 토큰 갱신 실패, 로그아웃 필요
             observer.onError(NetworkError.unauthorized)
             return
         }
         
         let refreshEndpoint = APIEndpoint.refreshToken(refreshToken: refreshToken)
-        
-        // 수정된 부분: 명시적으로 타입을 지정하여 request 호출
         let refreshRequest: Observable<APIResponse<TokenData>> = self.request(refreshEndpoint)
         
         refreshRequest.subscribe(onNext: { [weak self] (authResponse: APIResponse<TokenData>) in
             guard let self = self else { return }
             
-            // save new token
+            // 새 토큰 저장
             self.tokenManager.accessToken = authResponse.data?.accessToken
             
-            // 원래 endpoint 요청 다시시도 retry
-            // 수정된 부분: 명시적으로 타입을 지정하여 request 호출
+            // 원래 요청 재시도
             let originalRequest: Observable<T> = self.request(endpoint)
             
             originalRequest.subscribe(onNext: { (result: T) in
@@ -190,6 +180,7 @@ class APIClient {
         })
         .disposed(by: DisposeBag())
     }
+
     
     // 멀티파트 폼 데이터 요청 (이미지 업로드용)
     func uploadImage(imageData: Data, endpoint: APIEndpoint) -> Observable<TokenData> {

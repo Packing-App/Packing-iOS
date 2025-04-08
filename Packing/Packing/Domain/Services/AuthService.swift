@@ -118,7 +118,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     
     func verifyEmail(email: String, code: String) -> Observable<Bool> {
         return apiClient.request(APIEndpoint.verifyEmail(email: email, code: code))
-            .map { (response: APIResponse<TokenData>) -> Bool in
+            .map { (response: APIResponse<Bool>) -> Bool in
                 return response.success
             }
             .catch { error in
@@ -131,7 +131,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     
     func resendVerificationCode(email: String) -> Observable<Bool> {
         return apiClient.request(APIEndpoint.resendVerificationCode(email: email))
-            .map { (response: APIResponse<TokenData>) -> Bool in
+            .map { (response: APIResponse<Bool>) -> Bool in
                 return response.success
             }
             .catch { error in
@@ -144,7 +144,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     
     func forgotPassword(email: String) -> Observable<Bool> {
         return apiClient.request(APIEndpoint.forgotPassword(email: email))
-            .map { (response: APIResponse<TokenData>) -> Bool in
+            .map { (response: APIResponse<Bool>) -> Bool in
                 return response.success
             }
             .catch { error in
@@ -157,7 +157,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     
     func verifyResetCode(email: String, code: String) -> Observable<Bool> {
         return apiClient.request(APIEndpoint.verifyResetCode(email: email, code: code))
-            .map { (response: APIResponse<TokenData>) -> Bool in
+            .map { (response: APIResponse<Bool>) -> Bool in
                 return response.success
             }
             .catch { error in
@@ -196,31 +196,24 @@ class AuthService: NSObject, AuthServiceProtocol {
     }
     
     func logout() -> Observable<Bool> {
-        print("Logout API 호출")
-        
         return apiClient.request(APIEndpoint.logout)
-            .timeout(DispatchTimeInterval.seconds(5), scheduler: MainScheduler.instance) // 5초 타임아웃 추가
             .map { (response: APIResponse<Bool>) -> Bool in
-                print("Logout API 응답 성공: \(response.success)")
                 // 토큰과 사용자 정보 삭제
                 self.tokenStorage.clearTokens()
                 self.userManager.clearCurrentUser()
                 return response.success
             }
             .catch { error in
-                print("Logout API 오류: \(error)")
                 // API 호출이 실패하더라도 로컬에서는 로그아웃 처리
                 self.tokenStorage.clearTokens()
                 self.userManager.clearCurrentUser()
-                
-                // 로컬 로그아웃 성공으로 true 반환
                 return .just(true)
             }
     }
     
     func deleteAccount() -> Observable<Bool> {
         return apiClient.request(APIEndpoint.deleteAccount)
-            .map { (response: APIResponse<TokenData>) -> Bool in
+            .map { (response: APIResponse<Bool>) -> Bool in
                 // 계정 삭제 후 토큰과 사용자 정보 삭제
                 self.tokenStorage.clearTokens()
                 self.userManager.clearCurrentUser()
@@ -351,11 +344,9 @@ class AuthService: NSObject, AuthServiceProtocol {
         // 사용자 정보 가져오기
         return self.getUserInfo()
     }
+    
     // 사용자 정보 가져오기
     private func getUserInfo() -> Observable<User> {
-        print("===GET USER INFO===")
-        print(#fileID, #function, #line, "- ")
-        
         return apiClient.request(APIEndpoint.getMyProfile)
             .map { (response: APIResponse<UserResponse>) -> User in
                 guard let data = response.data else {
@@ -374,9 +365,7 @@ class AuthService: NSObject, AuthServiceProtocol {
                 throw error
             }
     }
-
 }
-
 
 extension AuthService: ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     
@@ -436,5 +425,4 @@ extension AuthService: ASWebAuthenticationPresentationContextProviding {
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
         return presentationContext?.view.window ?? UIWindow()
     }
-
 }

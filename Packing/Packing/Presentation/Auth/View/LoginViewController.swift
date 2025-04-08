@@ -8,13 +8,17 @@
 import UIKit
 import RxSwift
 import RxCocoa
-import ReactorKit
 import SnapKit
 import AuthenticationServices
 
 // MARK: - UI VIEW
 
-class LoginViewController: UIViewController, View {
+class LoginViewController: UIViewController {
+    
+    // MARK: - Properties
+    
+    private var viewModel: LoginViewModel
+    private let disposeBag = DisposeBag()
     
     // MARK: - UI COMPONENTS
 
@@ -101,7 +105,6 @@ class LoginViewController: UIViewController, View {
         button.translatesAutoresizingMaskIntoConstraints = false
         button.applyStyle(MainButtonStyle(color: .main))
         button.configuration?.title = "이메일로 로그인"
-//        button.addTarget(self, action: #selector(didTapEmailLoginButton), for: .touchUpInside)
         return button
     }()
     
@@ -130,9 +133,9 @@ class LoginViewController: UIViewController, View {
     
     // MARK: - Initialize
     
-    init(reactor: LoginViewReactor) {
+    init(viewModel: LoginViewModel = LoginViewModel()) {
+        self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
-        self.reactor = reactor
     }
     
     required init?(coder: NSCoder) {
@@ -142,6 +145,7 @@ class LoginViewController: UIViewController, View {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        bindViewModel()
     }
     
     // MARK: - UI Setup
@@ -200,79 +204,52 @@ class LoginViewController: UIViewController, View {
         return button
     }
     
-    // View 프로토콜 요구사항
-    typealias Reactor = LoginViewReactor
-    var disposeBag = DisposeBag()
-    
-    // ReactorKit 바인딩 메서드
-    func bind(reactor: LoginViewReactor) {
-        // Action 바인딩
-        bindActions(reactor)
-        
-        // State 바인딩
-        bindState(reactor)
-    }
-    
-    private func bindActions(_ reactor: LoginViewReactor) {
-        
-        // 이메일 로그인 버튼 액션
+    private func bindViewModel() {
         emailLoginButton.rx.tap
             .subscribe(onNext: { [weak self] in
                 self?.navigateToEmailLogin()
             })
             .disposed(by: disposeBag)
         
-        // 구글 로그인 버튼 액션
         googleLoginButton.rx.tap
             .subscribe(onNext: { [weak self] in
-                self?.performSocialLogin(type: .google)
+                guard let self = self else { return }
+                self.viewModel.performSocialLogin(from: self, type: .google)
             })
             .disposed(by: disposeBag)
         
         // 카카오 로그인 버튼 액션
         kakaoLoginButton.rx.tap
             .subscribe(onNext: { [weak self] in
-                self?.performSocialLogin(type: .kakao)
+                guard let self = self else { return }
+                self.viewModel.performSocialLogin(from: self, type: .kakao)
             })
             .disposed(by: disposeBag)
         
         // 네이버 로그인 버튼 액션
         naverLoginButton.rx.tap
             .subscribe(onNext: { [weak self] in
-                self?.performSocialLogin(type: .naver)
+                guard let self = self else { return }
+                self.viewModel.performSocialLogin(from: self, type: .naver)
             })
             .disposed(by: disposeBag)
         
         // 애플 로그인 버튼 액션
         appleLoginButton.rx.tap
             .subscribe(onNext: { [weak self] in
-                self?.performAppleLogin()
+                guard let self = self else { return }
+                self.viewModel.performAppleLogin(from: self)
             })
             .disposed(by: disposeBag)
-    }
-    
-    private func bindState(_ reactor: LoginViewReactor) {
+        
         // 로딩 상태 바인딩
-        reactor.state
-            .map { $0.isLoading }
+        viewModel.isLoading
             .distinctUntilChanged()
             .bind(to: loadingIndicator.rx.isAnimating)
             .disposed(by: disposeBag)
         
         // 로그인 결과 바인딩
-        reactor.state
-            .compactMap { $0.loginResult }
-            .distinctUntilChanged { prev, current in
-                switch (prev, current) {
-                case (.success(let prevData), .success(let currentData)):
-                    return prevData.accessToken == currentData.accessToken
-                case (.failure(let prevError), .failure(let currentError)):
-                    return prevError.localizedDescription == currentError.localizedDescription
-                default:
-                    return false
-                }
-            }
-            .observe(on: MainScheduler.instance)
+        viewModel.loginResult
             .subscribe(onNext: { [weak self] result in
                 switch result {
                 case .success:
@@ -286,10 +263,7 @@ class LoginViewController: UIViewController, View {
             .disposed(by: disposeBag)
         
         // 에러 메시지 바인딩
-        reactor.state
-            .compactMap { $0.errorMessage }
-            .distinctUntilChanged()
-            .observe(on: MainScheduler.instance)
+        viewModel.errorMessage
             .subscribe(onNext: { [weak self] message in
                 self?.showAlert(message: message)
             })
@@ -316,55 +290,11 @@ class LoginViewController: UIViewController, View {
         alert.addAction(UIAlertAction(title: "확인", style: .default))
         present(alert, animated: true)
     }
-    
-    private func performSocialLogin(type: LoginType) {
-        loadingIndicator.startAnimating()
-        
-        AuthService.shared.handleSocialLogin(from: self, type: type)
-            .observe(on: MainScheduler.instance)
-            .subscribe(
-                onNext: { [weak self] tokenData in
-                    self?.loadingIndicator.stopAnimating()
-                    self?.navigateToMainScreen()
-                },
-                onError: { [weak self] error in
-                    self?.loadingIndicator.stopAnimating()
-                    if let authError = error as? AuthError {
-                        self?.showAlert(message: authError.localizedDescription)
-                    } else {
-                        self?.showAlert(message: error.localizedDescription)
-                    }
-                }
-            )
-            .disposed(by: disposeBag)
-    }
-    
-    private func performAppleLogin() {
-        loadingIndicator.startAnimating()
-        
-        AuthService.shared.handleAppleLogin(from: self)
-            .observe(on: MainScheduler.instance)
-            .subscribe(
-                onNext: { [weak self] tokenData in
-                    self?.loadingIndicator.stopAnimating()
-                    self?.navigateToMainScreen()
-                },
-                onError: { [weak self] error in
-                    self?.loadingIndicator.stopAnimating()
-                    if let authError = error as? AuthError {
-                        self?.showAlert(message: authError.localizedDescription)
-                    } else {
-                        self?.showAlert(message: error.localizedDescription)
-                    }
-                }
-            )
-            .disposed(by: disposeBag)
-    }
 }
 
 
 
 
 #Preview {
-    UINavigationController(rootViewController: LoginViewController(reactor: LoginViewReactor()))
+    UINavigationController(rootViewController: LoginViewController())
 }

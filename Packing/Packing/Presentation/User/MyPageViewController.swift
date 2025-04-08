@@ -381,7 +381,7 @@ class MyPageViewController: UIViewController, View {
         // 로그아웃 or 계정 삭제 후 로그인 화면으로 이동
         
         let loginViewReactor = LoginViewReactor()
-        let loginViewController = LoginViewController(reactor: loginViewReactor)
+        let loginViewController = LoginViewController()
         
         // 루트 뷰 컨트롤러로 설정하여 뒤로가기를 방지
         if let window = UIApplication.shared.windows.first {

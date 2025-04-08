@@ -53,6 +53,8 @@ final class MyPageViewReactor: Reactor {
     
     // Action을 Mutation으로 변환
     func mutate(action: Action) -> Observable<Mutation> {
+        print(#fileID, #function, #line, "- ")
+        print(action)
         switch action {
         case .refresh:
             return refreshUserProfile()
@@ -71,6 +73,8 @@ final class MyPageViewReactor: Reactor {
     
     // Mutation을 기반으로 State 업데이트
     func reduce(state: State, mutation: Mutation) -> State {
+        print(#fileID, #function, #line, "- ")
+        print(mutation)
         var newState = state
         
         switch mutation {
@@ -89,42 +93,101 @@ final class MyPageViewReactor: Reactor {
     
     // 사용자 프로필 새로고침
     private func refreshUserProfile() -> Observable<Mutation> {
+        print("refreshUserProfile 시작")
+        
         let startLoading = Observable.just(Mutation.setLoading(true))
-        // TODO: remove userService or authService
+        
         let refreshProfile = userService.getMyProfile()
             .map { user -> Mutation in
+                print("User 매핑 중")
                 return .setUser(user)
             }
             .catch { error -> Observable<Mutation> in
+                print("Error in profile: \(error)")
                 let errorMessage = (error as? AuthError)?.localizedDescription ?? error.localizedDescription
                 return .just(.setError(errorMessage))
             }
         
         let endLoading = Observable.just(Mutation.setLoading(false))
+            .do(onNext: { _ in print("endLoading 실행됨") })
         
-        return .concat(startLoading, refreshProfile, endLoading)
+        // 더 안전한 방식으로 Observable 체인 구성
+        return Observable.concat([
+            startLoading,
+            refreshProfile,
+            endLoading
+        ])
+        .catch { error -> Observable<Mutation> in
+            print("refreshUserProfile 에러 발생: \(error)")
+            return .concat([
+                .just(.setError("프로필 로드 중 오류 발생")),
+                .just(.setLoading(false))
+            ])
+        }
+        .do(onNext: { print("Final mutation: \($0)") },
+            onError: { print("Final error: \($0)") },
+            onCompleted: { print("refreshUserProfile 완료") })
     }
+    
+//    private func refreshUserProfile() -> Observable<Mutation> {
+//        
+//        let startLoading = Observable.just(Mutation.setLoading(true))
+//        
+//        let refreshProfile = userService.getMyProfile()
+//            .map { user -> Mutation in
+//                return .setUser(user)
+//            }
+//            .catch { error -> Observable<Mutation> in
+//                let errorMessage = (error as? AuthError)?.localizedDescription ?? error.localizedDescription
+//                return .just(.setError(errorMessage))
+//            }
+//        
+//        let endLoading = Observable.just(Mutation.setLoading(false))
+//        
+//        return .concat(startLoading, refreshProfile, endLoading)
+//    }
     
     // 로그아웃 수행
     private func performLogout() -> Observable<Mutation> {
+        print("로그아웃 프로세스 시작")
+        
         let startLoading = Observable.just(Mutation.setLoading(true))
+            .do(onNext: { _ in print("로딩 상태 true로 설정") })
         
         let logout = authService.logout()
+            .do(onNext: { success in print("로그아웃 결과: \(success)") },
+                onError: { error in print("로그아웃 API 오류: \(error)") })
             .map { success -> Mutation in
+                print("로그아웃 결과를 Mutation으로 변환")
                 if success {
+                    print("로그아웃 성공, 사용자 null로 설정")
                     return .setUser(nil)
                 } else {
+                    print("로그아웃 실패 (success=false)")
                     return .setError("로그아웃에 실패했습니다.")
                 }
             }
             .catch { error -> Observable<Mutation> in
-                let errorMessage = (error as? AuthError)?.localizedDescription ?? error.localizedDescription
-                return .just(.setError(errorMessage))
+                print("로그아웃 중 오류 발생: \(error)")
+                // 오류 발생해도 로컬에서는 로그아웃 처리
+                return .just(.setUser(nil))
             }
+            // 중요: 이 작업에 타임아웃 추가
+            .timeout(DispatchTimeInterval.seconds(10), scheduler: MainScheduler.instance)
         
         let endLoading = Observable.just(Mutation.setLoading(false))
+            .do(onNext: { _ in print("로딩 상태 false로 설정") })
         
-        return .concat(startLoading, logout, endLoading)
+        // 더 안전한 concat 사용 및 완료 보장
+        return Observable.concat([startLoading, logout, endLoading])
+            .catch { error -> Observable<Mutation> in
+                print("로그아웃 시퀀스 오류: \(error)")
+                // 항상 시퀀스 완료
+                return .concat([
+                    .just(.setUser(nil)),
+                    .just(.setLoading(false))
+                ])
+            }
     }
     
     // 계정 삭제 수행

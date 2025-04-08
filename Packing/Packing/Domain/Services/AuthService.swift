@@ -196,18 +196,25 @@ class AuthService: NSObject, AuthServiceProtocol {
     }
     
     func logout() -> Observable<Bool> {
+        print("Logout API 호출")
+        
         return apiClient.request(APIEndpoint.logout)
-            .map { (response: APIResponse<TokenData>) -> Bool in
+            .timeout(DispatchTimeInterval.seconds(5), scheduler: MainScheduler.instance) // 5초 타임아웃 추가
+            .map { (response: APIResponse<Bool>) -> Bool in
+                print("Logout API 응답 성공: \(response.success)")
                 // 토큰과 사용자 정보 삭제
                 self.tokenStorage.clearTokens()
                 self.userManager.clearCurrentUser()
                 return response.success
             }
             .catch { error in
-                if let apiError = error as? NetworkError {
-                    throw AuthError.apiError(apiError)
-                }
-                throw error
+                print("Logout API 오류: \(error)")
+                // API 호출이 실패하더라도 로컬에서는 로그아웃 처리
+                self.tokenStorage.clearTokens()
+                self.userManager.clearCurrentUser()
+                
+                // 로컬 로그아웃 성공으로 true 반환
+                return .just(true)
             }
     }
     

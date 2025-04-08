@@ -250,13 +250,11 @@ class MyPageViewController: UIViewController, View {
     }
     
     private func setupTableView() {
-        // TODO: 왜 안됐는지 트러블 슈팅 (behavior vs ... subject랑 관련있나?)
-//        tableView.rx.setDelegate(self)
-//            .disposed(by: disposeBag)
-        tableView.delegate = self
-        tableView.dataSource = self
-//
-        // 테이블뷰 데이터 소스 바인딩은 bind 메서드에서 수행
+        tableView.dataSource = self // Keep this for data
+
+        // Use rx.setDelegate instead of direct assignment
+        tableView.rx.setDelegate(self)
+            .disposed(by: disposeBag)
     }
     
     // MARK: - ReactorKit Binding
@@ -309,19 +307,32 @@ class MyPageViewController: UIViewController, View {
             })
             .disposed(by: disposeBag)
         
-        // 로그아웃/회원탈퇴 성공 시 로그인 화면으로 이동
         reactor.state
             .map { $0.user }
-            .distinctUntilChanged { $0?.id == $1?.id }
+            .distinctUntilChanged { $0?.id == $1?.id } // ID로 비교
             .filter { $0 == nil }
+            .do(onNext: { _ in print("사용자가 null이 되었습니다. 로그인 화면으로 이동합니다.") })
+            .observe(on: MainScheduler.instance) // 메인 스레드에서 UI 업데이트
             .subscribe(onNext: { [weak self] _ in
                 self?.navigateToLogin()
+            })
+            .disposed(by: disposeBag)
+        
+        reactor.state
+            .map { $0.isLoading }
+            .debounce(.seconds(10), scheduler: MainScheduler.instance)
+            .filter { $0 == true } // 10초 후에도 로딩 중이면 진행
+            .subscribe(onNext: { [weak self] _ in
+                print("로딩이 10초 이상 지속됩니다. 강제로 로딩 상태를 해제합니다.")
+                self?.showAlert(message: "서버 응답이 느립니다. 다시 시도해 주세요.")
+                self?.loadingIndicator.stopAnimating()
             })
             .disposed(by: disposeBag)
     }
     
     private func bindTableView() {
         // 테이블뷰 셀 선택 이벤트
+        print(#fileID, #function, #line, "- ")
         tableView.rx.itemSelected
             .subscribe(onNext: { [weak self] indexPath in
                 self?.tableView.deselectRow(at: indexPath, animated: true)

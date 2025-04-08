@@ -28,6 +28,7 @@ class UserManager {
     }
     
     func clearCurrentUser() {
+        print(#fileID, #function, #line, "- ")
         currentUser = nil
     }
     

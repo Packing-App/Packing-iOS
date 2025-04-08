@@ -29,19 +29,30 @@ class UserService: UserServiceProtocol {
     }
     
     func getMyProfile() -> Observable<User> {
+        print("getMyProfile 호출됨")
+        
+        // 타임아웃 추가로 무한 대기 방지
         return apiClient.request(APIEndpoint.getMyProfile)
+            .timeout(DispatchTimeInterval.seconds(5), scheduler: MainScheduler.instance)
+            .do(onNext: { _ in print("API 응답 받음") },
+                onError: { error in print("API 에러 발생: \(error)") },
+                onCompleted: { print("API 호출 완료") })
             .map { (response: APIResponse<UserResponse>) -> User in
+                print("응답 매핑 시작")
                 guard let data = response.data else {
+                    print("응답에 데이터 없음")
                     throw NetworkError.invalidResponse
                 }
                 
-                // 사용자 정보 저장
+                print("사용자 정보 얻음: \(data.user.name)")
                 self.userManager.setCurrentUser(data.user)
                 
                 return data.user
             }
-            .catch { error in
-                throw error
+            .catch { error -> Observable<User> in
+                print("getMyProfile 에러 처리: \(error)")
+                // 중요: throw error 대신 Observable.error 사용
+                return Observable.error(error)
             }
     }
     

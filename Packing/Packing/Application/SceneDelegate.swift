@@ -10,17 +10,10 @@ import UIKit
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
-//    private var appCoordinator: AppCoordinator?
     
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         Thread.sleep(forTimeInterval: 2.0)
         guard let windowScene = (scene as? UIWindowScene) else { return }
-        
-//        let window = UIWindow(windowScene: windowScene)
-//        self.window = window
-//        appCoordinator = AppCoordinator(window: window)
-//        appCoordinator?.start()
-        
         
         window = UIWindow(frame: UIScreen.main.bounds)
         
@@ -44,33 +37,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.windowScene = windowScene
          
     }
-/*
-    // 소셜 로그인 콜백 URL 처리
-    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
-        if let url = URLContexts.first?.url, url.scheme == "packingapp" {
-            // 딥링크 처리
-            _ = AuthService.shared.handleDeepLink(url)
-                .subscribe(onNext: { tokenData in
-                    print("로그인 성공: \(tokenData.user.name)")
-                    
-                    // MyPage로 이동
-                    let userService = UserService()
-                    let authService = AuthService.shared
-                    let myPageReactor = MyPageReactor(userService: userService, authService: authService)
-                    let myPageVC = MyPageViewController()
-                    myPageVC.reactor = myPageReactor
-                    
-                    // 루트 뷰 컨트롤러로 설정 (로그인 스택 제거)
-                    let navigationController = UINavigationController(rootViewController: myPageVC)
-                    navigationController.isNavigationBarHidden = false
-                    self.window?.rootViewController = navigationController
-                }, onError: { error in
-                    print("로그인 오류: \(error.localizedDescription)")
-                })
-        }
-    }
-    */
-
+    
     func sceneDidDisconnect(_ scene: UIScene) {
         // Called as the scene is being released by the system.
         // This occurs shortly after the scene enters the background, or when its session is discarded.

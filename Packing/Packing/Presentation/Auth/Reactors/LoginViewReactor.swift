@@ -10,7 +10,7 @@ import RxSwift
 import RxCocoa
 
 final class LoginViewReactor: Reactor {
-    // 액션 정의 - 실제로 사용되는 액션만 포함
+    
     enum Action {
         case emailLogin
     }

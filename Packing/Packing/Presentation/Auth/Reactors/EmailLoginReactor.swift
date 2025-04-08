@@ -11,6 +11,7 @@ import RxSwift
 import RxCocoa
 
 class EmailLoginReactor: Reactor {
+    
     enum Action {
         case updateEmail(String)
         case updatePassword(String)

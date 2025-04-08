@@ -200,14 +200,6 @@ class LoginViewController: UIViewController, View {
         return button
     }
     
-//    @objc private func didTapEmailLoginButton(_ sender: UIButton) {
-//        print(#fileID, #function, #line, "- ")
-//        
-//        let emailLoginVC = EmailLoginViewController()
-//        self.navigationController?.isNavigationBarHidden = false
-//        self.navigationController?.pushViewController(emailLoginVC, animated: true)
-//    }
-    
     // View 프로토콜 요구사항
     typealias Reactor = LoginViewReactor
     var disposeBag = DisposeBag()

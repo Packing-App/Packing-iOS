@@ -24,7 +24,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 //            let myPageViewReactor = MyPageViewReactor()
 //            rootViewController = MyPageViewController(reactor: myPageViewReactor)
 //        } else {
-            rootViewController = LoginViewController()
+        rootViewController = LoginViewController()
 //        }
 
         // navigation Controller

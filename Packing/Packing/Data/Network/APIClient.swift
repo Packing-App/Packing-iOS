@@ -103,8 +103,13 @@ class APIClient {
                     }
                     
                 case 401:
-                    // 인증 오류, 토큰 갱신 시도
-                    self.refreshTokenAndRetry(endpoint: endpoint, observer: observer)
+//                    // 로그인 API인 경우 바로 에러 반환
+//                    if endpoint.path.contains("/login") {
+                        observer.onError(NetworkError.unauthorized)
+//                    } else {
+//                        // 다른 API의 경우 토큰 갱신 시도
+//                        self.refreshTokenAndRetry(endpoint: endpoint, observer: observer)
+//                    }
                     
                 case 404:
                     observer.onError(NetworkError.notFound)

@@ -107,11 +107,11 @@ class AuthService: NSObject, AuthServiceProtocol {
                 
                 return data
             }
-            .catch { error in
+            .catch { error -> Observable<TokenData> in
                 if let apiError = error as? NetworkError {
-                    throw AuthError.apiError(apiError)
+                    return Observable.error(AuthError.apiError(apiError))
                 }
-                throw error
+                return Observable.error(error)
             }
     }
     

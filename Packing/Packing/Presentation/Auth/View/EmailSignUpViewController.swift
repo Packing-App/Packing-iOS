@@ -2,12 +2,18 @@
 //  EmailSignUpViewController.swift
 //  Packing
 //
-//  Created by 이융의 on 4/2/25.
+//  Created by 이융의 on 4/8/25.
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 class EmailSignUpViewController: UIViewController {
+    
+    // MARK: - Properties
+    private let viewModel: EmailSignUpViewModel
+    private let disposeBag = DisposeBag()
     
     // MARK: - UI COMPONENTS
     private lazy var scrollView: UIScrollView = {
@@ -56,7 +62,6 @@ class EmailSignUpViewController: UIViewController {
         textField.borderStyle = .roundedRect
         textField.delegate = self
         textField.tag = 0
-        textField.addTarget(self, action: #selector(textFieldDidChange(_:)), for: .editingChanged)
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
     }()
@@ -79,7 +84,6 @@ class EmailSignUpViewController: UIViewController {
     }()
     
     // MARK: - Password Section
-    
     private lazy var passwordLabel: UILabel = {
         let label = UILabel()
         label.text = "비밀번호를 입력하세요."
@@ -93,12 +97,8 @@ class EmailSignUpViewController: UIViewController {
         textField.placeholder = "영문, 숫자를 조합한 8~20 글자"
         textField.isSecureTextEntry = true
         textField.borderStyle = .roundedRect
-        
-        // textField Delegate
         textField.delegate = self
         textField.tag = 1
-        textField.addTarget(self, action: #selector(textFieldDidChange(_:)), for: .editingChanged)
-        
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
     }()
@@ -121,7 +121,6 @@ class EmailSignUpViewController: UIViewController {
     }()
     
     // MARK: - Password Confirm Section
-    
     private lazy var confirmPasswordLabel: UILabel = {
         let label = UILabel()
         label.text = "비밀번호를 다시 입력하세요."
@@ -136,11 +135,8 @@ class EmailSignUpViewController: UIViewController {
         textField.isSecureTextEntry = true
         textField.isUserInteractionEnabled = true
         textField.borderStyle = .roundedRect
-        
         textField.delegate = self
         textField.tag = 2
-        textField.addTarget(self, action: #selector(textFieldDidChange(_:)), for: .editingChanged)
-        
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
     }()
@@ -163,7 +159,6 @@ class EmailSignUpViewController: UIViewController {
     }()
     
     // MARK: - Name Section
-    
     private lazy var nameLabel: UILabel = {
         let label = UILabel()
         label.text = "이름(별명)을 입력하세요."
@@ -179,7 +174,6 @@ class EmailSignUpViewController: UIViewController {
         textField.borderStyle = .roundedRect
         textField.delegate = self
         textField.tag = 3
-        textField.addTarget(self, action: #selector(textFieldDidChange(_:)), for: .editingChanged)
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
     }()
@@ -202,32 +196,45 @@ class EmailSignUpViewController: UIViewController {
     }()
     
     // MARK: - Next Button Section
-    
     private lazy var nextButton: UIBarButtonItem = {
-        let button = UIBarButtonItem(title: "다음", style: .done, target: self, action: #selector(nextButtonTapped))
+        let button = UIBarButtonItem(title: "다음", style: .done, target: nil, action: nil)
         button.isEnabled = false
         return button
     }()
     
-    // MARK: - PROPERTIES
+    // MARK: - Loading Indicator
+    private lazy var loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.hidesWhenStopped = true
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        return indicator
+    }()
     
-    private var isValidEmail = false
-    private var isValidPassword = false
-    private var isValidConfirmPassword = false
-    private var isValidName = false
-
+    // MARK: - Initialization
+    
+    init(viewModel: EmailSignUpViewModel = EmailSignUpViewModel()) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     // MARK: - LIFE CYCLE
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupKeyboardHandling()
+        bindViewModel()
     }
     
+    // MARK: - UI Setup
+    
     private func setupUI() {
-//        self.navigationItem.title = "회원가입"
+        self.navigationItem.title = "회원가입"
         self.navigationItem.rightBarButtonItem = nextButton
-        title = "회원가입"
         
         view.backgroundColor = .systemBackground
         
@@ -238,6 +245,7 @@ class EmailSignUpViewController: UIViewController {
         // Add content to contentView
         contentView.addSubview(logoImageView)
         contentView.addSubview(mainStackView)
+        contentView.addSubview(loadingIndicator)
         
         // Setup email Section
         emailStackView.addArrangedSubview(emailLabel)
@@ -263,7 +271,7 @@ class EmailSignUpViewController: UIViewController {
         [emailStackView, passwordStackView, confirmPasswordStackView, nameStackView].forEach { stack in
             mainStackView.addArrangedSubview(stack)
         }
-                
+        
         // Constraints
         NSLayoutConstraint.activate([
             // ScrollView
@@ -271,14 +279,14 @@ class EmailSignUpViewController: UIViewController {
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-
+            
             // ContentView
             contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
-
+            
             // Logo
             logoImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 40),
             logoImageView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
@@ -290,140 +298,149 @@ class EmailSignUpViewController: UIViewController {
             mainStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 24),
             mainStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -24),
             mainStackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -24),
-
+            
             // TextFields (height)
             emailTextField.heightAnchor.constraint(equalToConstant: 48),
             passwordTextField.heightAnchor.constraint(equalToConstant: 48),
             confirmPasswordTextField.heightAnchor.constraint(equalToConstant: 48),
             nameTextField.heightAnchor.constraint(equalToConstant: 48),
+            
+            // Loading Indicator
+            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
     }
     
     private func setupKeyboardHandling() {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         view.addGestureRecognizer(tapGesture)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
-    // MARK: - ACTIONS
+    @objc private func keyboardWillShow(notification: NSNotification) {
+        if let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
+            scrollView.contentInset.bottom = keyboardSize.height
+            scrollView.verticalScrollIndicatorInsets.bottom = keyboardSize.height
+        }
+    }
+    
+    @objc private func keyboardWillHide(notification: NSNotification) {
+        scrollView.contentInset.bottom = 0
+        scrollView.verticalScrollIndicatorInsets.bottom = 0
+    }
+    
+    // MARK: - ViewModel Binding
+    
+    private func bindViewModel() {
+        // Input
+        let input = EmailSignUpViewModel.Input(
+            email: emailTextField.rx.text.orEmpty.asObservable(),
+            password: passwordTextField.rx.text.orEmpty.asObservable(),
+            confirmPassword: confirmPasswordTextField.rx.text.orEmpty.asObservable(),
+            name: nameTextField.rx.text.orEmpty.asObservable()
+//            nextButtonTap: nextButton.rx.tap.asObservable()
+        )
+        
+        // Output
+        let output = viewModel.transform(input: input)
+        
+        // 이메일 유효성 바인딩
+        output.isEmailValid
+            .drive(onNext: { [weak self] isValid in
+                self?.emailErrorLabel.isHidden = isValid || self?.emailTextField.text?.isEmpty ?? true
+            })
+            .disposed(by: disposeBag)
+        
+        output.emailErrorMessage
+            .drive(emailErrorLabel.rx.text)
+            .disposed(by: disposeBag)
+        
+        // 비밀번호 유효성 바인딩
+        output.isPasswordValid
+            .drive(onNext: { [weak self] isValid in
+                self?.passwordErrorLabel.isHidden = isValid || self?.passwordTextField.text?.isEmpty ?? true
+            })
+            .disposed(by: disposeBag)
+        
+        output.passwordErrorMessage
+            .drive(passwordErrorLabel.rx.text)
+            .disposed(by: disposeBag)
+        
+        // 비밀번호 확인 유효성 바인딩
+        output.isConfirmPasswordValid
+            .drive(onNext: { [weak self] isValid in
+                self?.confirmPasswordErrorLabel.isHidden = isValid || self?.confirmPasswordTextField.text?.isEmpty ?? true
+            })
+            .disposed(by: disposeBag)
+        
+        output.confirmPasswordErrorMessage
+            .drive(confirmPasswordErrorLabel.rx.text)
+            .disposed(by: disposeBag)
+        
+        // 이름 유효성 바인딩
+        output.isNameValid
+            .drive(onNext: { [weak self] isValid in
+                self?.nameErrorLabel.isHidden = isValid || self?.nameTextField.text?.isEmpty ?? true
+            })
+            .disposed(by: disposeBag)
+        
+        output.nameErrorMessage
+            .drive(nameErrorLabel.rx.text)
+            .disposed(by: disposeBag)
+        
+        // 다음 버튼 활성화 상태 바인딩
+        output.isNextButtonEnabled
+            .drive(nextButton.rx.isEnabled)
+            .disposed(by: disposeBag)
+        
+        // 로딩 상태 바인딩
+        output.isLoading
+            .drive(loadingIndicator.rx.isAnimating)
+            .disposed(by: disposeBag)
+        
+        // 에러 메시지 바인딩
+        output.errorMessage
+            .drive(onNext: { [weak self] message in
+                self?.showAlert(message: message)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func showAlert(message: String) {
+        let alert = UIAlertController(title: "알림", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
     
     @objc private func dismissKeyboard() {
         view.endEditing(true)
     }
-    
-    @objc private func nextButtonTapped() {
-        print(#fileID, #function, #line, "- ")
-        
-        guard let email = emailTextField.text,
-              let password = passwordTextField.text,
-              let userName = nameTextField.text else {
-            return
-        }
-        
-        let verificationVC = EmailVerificationViewController(email: email, password: password, userName: userName)
-        self.navigationController?.isNavigationBarHidden = false
-        navigationController?.pushViewController(verificationVC, animated: true)
-        
-    }
-    
-    @objc private func textFieldDidChange(_ textField: UITextField) {
-        switch textField.tag {
-        case 0: // Email
-            if let email = textField.text, !email.isEmpty {
-                isValidEmail = validateEmail(email: email)
-                emailErrorLabel.isHidden = isValidEmail
-                emailErrorLabel.text = isValidEmail ? "" : "유효한 이메일 주소를 입력하세요."
-            } else {
-                isValidEmail = false
-                emailErrorLabel.isHidden = true
-            }
-            
-        case 1: // Password
-            if let password = textField.text, !password.isEmpty {
-                isValidPassword = validatePassword(password: password)
-                passwordErrorLabel.isHidden = isValidPassword
-                passwordErrorLabel.text = isValidPassword ? "" : "영문, 숫자를 조합한 8~20자리를 입력하세요."
-                
-                // Validate confirm password again if it's not empty
-                if let confirmPassword = confirmPasswordTextField.text, !confirmPassword.isEmpty {
-                    isValidConfirmPassword = validatePasswordMatch()
-                    confirmPasswordErrorLabel.isHidden = isValidConfirmPassword
-                    confirmPasswordErrorLabel.text = isValidConfirmPassword ? "" : "비밀번호가 일치하지 않습니다."
-                }
-                
-            } else {
-                    isValidPassword = false
-                    passwordErrorLabel.isHidden = true
-            }
-        case 2: // Confirm Password
-            if let confirmPassword = textField.text, !confirmPassword.isEmpty {
-                isValidConfirmPassword = validatePasswordMatch()
-                confirmPasswordErrorLabel.isHidden = isValidConfirmPassword
-                confirmPasswordErrorLabel.text = isValidConfirmPassword ? "" : "비밀번호가 일치하지 않습니다."
-            } else {
-                isValidConfirmPassword = false
-                confirmPasswordErrorLabel.isHidden = true
-            }
-        case 3: // Name
-            if let name = textField.text, !name.isEmpty {
-                isValidName = validateName(name: name)
-                if name.count > 20 {
-                    nameErrorLabel.isHidden = false
-                    nameErrorLabel.text = "이름은 20자 이내로 입력해주세요."
-                } else {
-                    nameErrorLabel.isHidden = true
-                }
-            } else {
-                isValidName = false
-                nameErrorLabel.isHidden = true
-            }
-        default: break
-        }
-        
-        updateNextButtonState()
-    }
-    
-    // MARK: - VALIDATION
-    
-    // Email Validation
-    private func validateEmail(email: String) -> Bool {
-        let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
-        let emailPredicate = NSPredicate(format:"SELF MATCHES %@", emailRegEx)
-        return emailPredicate.evaluate(with: email)
-    }
-    
-    // Password Validation
-    private func validatePassword(password: String) -> Bool {
-        // Password must contain letters and numbers, and be 8-20 characters long
-        // Special characters are allowed but not required
-        let passwordRegEx = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d\\W_]{8,20}$"
-        let passwordPredicate = NSPredicate(format: "SELF MATCHES %@", passwordRegEx)
-        return passwordPredicate.evaluate(with: password)
-    }
-    
-    private func validatePasswordMatch() -> Bool {
-        return passwordTextField.text == confirmPasswordTextField.text && !passwordTextField.text!.isEmpty
-    }
-    
-    // Name Validation
-    private func validateName(name: String) -> Bool {
-        return !name.isEmpty && name.count <= 20
-    }
-    
-    private func updateNextButtonState() {
-        let isFormValid = isValidEmail && isValidPassword && isValidConfirmPassword && isValidName
-        nextButton.isEnabled = isFormValid
-    }
 }
 
-// MARK: - UI TEXTFIELD DELEGATE
+// MARK: - UITextFieldDelegate
 extension EmailSignUpViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         switch textField.tag {
         case 0: passwordTextField.becomeFirstResponder()
         case 1: confirmPasswordTextField.becomeFirstResponder()
         case 2: nameTextField.becomeFirstResponder()
+        case 3:
+            textField.resignFirstResponder()
             if nextButton.isEnabled {
-                nextButtonTapped()
+                if let email = self.emailTextField.text, let password = self.passwordTextField.text, let name = self.nameTextField.text {
+                    let verificationViewModel = EmailVerificationViewModel(
+                        email: email,
+                        password: password,
+                        name: name,
+                        authService: viewModel.authService
+                    )
+                    let verificationVC = EmailVerificationViewController(viewModel: verificationViewModel)
+                    navigationController?.pushViewController(verificationVC, animated: true)
+                }
             }
         default: textField.resignFirstResponder()
         }
@@ -431,8 +448,7 @@ extension EmailSignUpViewController: UITextFieldDelegate {
     }
 }
 
-// MARK: - PREVIEW
-
+// MARK: - Preview
 #Preview {
     let viewController = EmailSignUpViewController()
     let navigationController = UINavigationController(rootViewController: viewController)

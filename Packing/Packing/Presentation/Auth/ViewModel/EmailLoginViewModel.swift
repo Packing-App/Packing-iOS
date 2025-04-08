@@ -57,11 +57,10 @@ class EmailLoginViewModel {
         // 로그인 버튼 탭 이벤트 처리
         input.loginTap
             .withLatestFrom(Observable.combineLatest(input.email, input.password))
-            .do(onNext: { _ in
-                isLoadingRelay.accept(true)
-            })
             .flatMapLatest { [weak self] email, password -> Observable<Result<TokenData, AuthError>> in
                 guard let self = self else { return .empty() }
+                
+                isLoadingRelay.accept(true)
                 
                 return self.authService.login(email: email, password: password)
                     .map { Result<TokenData, AuthError>.success($0) }
@@ -72,14 +71,12 @@ class EmailLoginViewModel {
                             return .just(.failure(.loginFailed))
                         }
                     }
+                    .do(onNext: { _ in
+                        isLoadingRelay.accept(false)
+                    }, onError: { _ in
+                        isLoadingRelay.accept(false)
+                    })
             }
-            .do(onNext: { _ in
-                isLoadingRelay.accept(false)
-            }, onError: { _ in
-                isLoadingRelay.accept(false)
-            }, onCompleted: {
-                isLoadingRelay.accept(false)
-            })
             .subscribe(onNext: { result in
                 switch result {
                 case .success(let tokenData):

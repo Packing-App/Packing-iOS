@@ -2,20 +2,25 @@
 //  EmailVerificationViewController.swift
 //  Packing
 //
-//  Created by 이융의 on 4/2/25.
+//  Created by 이융의 on 4/8/25.
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
 
 class EmailVerificationViewController: UIViewController {
     
+    // MARK: - Properties
+    
+    private let viewModel: EmailVerificationViewModel
+    private let disposeBag = DisposeBag()
+    
     // MARK: - UI COMPONENTS
-    // EMAIL VERIFICATION CODE SECTION
     
     private lazy var verificationHeaderStack: UIStackView = {
         let stack = UIStackView()
         stack.axis = .horizontal
-//        stack.alignment = .center
         stack.distribution = .equalSpacing
         stack.spacing = 10
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -34,7 +39,6 @@ class EmailVerificationViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle("재전송", for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 13)
-        button.addTarget(self, action: #selector(resendButtonTapped), for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -45,8 +49,6 @@ class EmailVerificationViewController: UIViewController {
         textField.borderStyle = .roundedRect
         textField.keyboardType = .numberPad
         textField.delegate = self
-        textField.tag = 4
-        textField.addTarget(self, action: #selector(textFieldDidChange(_:)), for: .editingChanged)
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
     }()
@@ -60,6 +62,14 @@ class EmailVerificationViewController: UIViewController {
         return label
     }()
     
+    private lazy var verificationStatusLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .systemBlue
+        label.font = .systemFont(ofSize: 12, weight: .medium)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
     private lazy var verificationStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
@@ -68,44 +78,43 @@ class EmailVerificationViewController: UIViewController {
         return stackView
     }()
     
-    private lazy var nextButton: UIBarButtonItem = {
-        let button = UIBarButtonItem(title: "완료", style: .done, target: self, action: #selector(nextButtonTapped))
+    private lazy var completeButton: UIBarButtonItem = {
+        let button = UIBarButtonItem(title: "완료", style: .done, target: nil, action: nil)
         button.isEnabled = false
         return button
     }()
-
-    // MARK: - PROPERTIES
     
-    private let userEmail: String
-    private let userPassword: String
-    private let userName: String
+    private lazy var loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.hidesWhenStopped = true
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        return indicator
+    }()
     
-    private var isValidCode = false
+    // MARK: - Initialization
     
-    // MARK: - INIT
-    
-    init(email: String, password: String, userName: String) {
-        self.userEmail = email
-        self.userPassword = password
-        self.userName = userName
+    init(viewModel: EmailVerificationViewModel) {
+        self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
     
-    // 이 뷰 컨트롤러는 스토리보드가 아닌 코드로만 생성되도록
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    // MARK: - LIFE CYCLE
+    // MARK: - Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupKeyboardHandling()
+        bindViewModel()
     }
     
+    // MARK: - UI Setup
+    
     private func setupUI() {
-        self.navigationItem.rightBarButtonItem = nextButton
+        self.navigationItem.rightBarButtonItem = completeButton
         title = "이메일 인증"
         view.backgroundColor = .systemBackground
         
@@ -115,8 +124,10 @@ class EmailVerificationViewController: UIViewController {
         verificationStackView.addArrangedSubview(verificationHeaderStack)
         verificationStackView.addArrangedSubview(verificationTextField)
         verificationStackView.addArrangedSubview(verificationErrorLabel)
+        verificationStackView.addArrangedSubview(verificationStatusLabel)
         
         view.addSubview(verificationStackView)
+        view.addSubview(loadingIndicator)
         
         NSLayoutConstraint.activate([
             verificationStackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
@@ -124,18 +135,11 @@ class EmailVerificationViewController: UIViewController {
             verificationStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             
             verificationTextField.heightAnchor.constraint(equalToConstant: 48),
-            resendButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 30)
+            resendButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 50),
+            
+            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
-    }
-        
-    // MARK: - ACTIONS
-    
-    // Code Validation
-    private func validateCode(code: String) -> Bool {
-        // 간단한 검증: 6자리 숫자인지 확인
-        let codeRegex = "^[0-9]{6}$"
-        let codePredicate = NSPredicate(format: "SELF MATCHES %@", codeRegex)
-        return codePredicate.evaluate(with: code)
     }
     
     private func setupKeyboardHandling() {
@@ -143,81 +147,133 @@ class EmailVerificationViewController: UIViewController {
         view.addGestureRecognizer(tapGesture)
     }
     
+    // MARK: - ViewModel Binding
+    
+    private func bindViewModel() {
+        // Input
+        let input = EmailVerificationViewModel.Input(
+            verificationCode: verificationTextField.rx.text.orEmpty.asObservable(),
+            resendButtonTap: resendButton.rx.tap.asObservable(),
+            completeButtonTap: completeButtonTap.asObservable() // ✅ Relay로 대체
+        )
+        
+        // Output
+        let output = viewModel.transform(input: input)
+        
+        // 인증 코드 유효성 바인딩
+        output.isCodeValid
+            .drive(onNext: { [weak self] isValid in
+                self?.verificationErrorLabel.isHidden = isValid || self?.verificationTextField.text?.isEmpty ?? true
+            })
+            .disposed(by: disposeBag)
+        
+        output.codeErrorMessage
+            .drive(verificationErrorLabel.rx.text)
+            .disposed(by: disposeBag)
+        
+        // 완료 버튼 활성화 상태 바인딩
+        output.isCompleteButtonEnabled
+            .drive(completeButton.rx.isEnabled)
+            .disposed(by: disposeBag)
+        
+        // 로딩 상태 바인딩
+        output.isLoading
+            .drive(loadingIndicator.rx.isAnimating)
+            .disposed(by: disposeBag)
+        
+        // 인증 메시지 바인딩
+        output.verificationMessage
+            .drive(onNext: { [weak self] message in
+                self?.verificationStatusLabel.text = message
+                self?.verificationStatusLabel.isHidden = message == nil
+            })
+            .disposed(by: disposeBag)
+        
+        // 재전송 버튼 활성화 상태 바인딩
+        output.resendButtonEnabled
+            .drive(resendButton.rx.isEnabled)
+            .disposed(by: disposeBag)
+        
+        output.resendButtonEnabled
+            .map { $0 ? 1.0 : 0.5 }
+            .drive(resendButton.rx.alpha)
+            .disposed(by: disposeBag)
+        
+        // 회원가입 결과 바인딩
+        output.signUpResult
+            .drive(onNext: { [weak self] result in
+                switch result {
+                case .success(let user):
+                    self?.showSignUpSuccessAlert(user: user)
+                case .failure:
+                    // 에러는 errorMessage에서 처리
+                    break
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        // 에러 메시지 바인딩
+        output.errorMessage
+            .drive(onNext: { [weak self] message in
+                self?.showAlert(title: "오류", message: message)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func showSignUpSuccessAlert(user: User) {
+        let alert = UIAlertController(
+            title: "회원가입 성공",
+            message: "\(user.name)님, 회원가입이 완료되었습니다!",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
+            self?.navigateToMainScreen()
+        })
+        
+        present(alert, animated: true)
+    }
+    
+    private func navigateToMainScreen() {
+        // 회원가입 완료 후 메인 화면으로 이동
+        // 여기에 메인 화면 이동 코드 추가
+        navigationController?.popToRootViewController(animated: true)
+    }
+    
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
+    
     @objc private func dismissKeyboard() {
         view.endEditing(true)
     }
     
-    @objc private func nextButtonTapped() {
-        print(#fileID, #function, #line, "- ")
-        
-        print(userEmail, userPassword, userName)
-    }
-    
-    @objc private func textFieldDidChange(_ textField: UITextField) {
-        if let code = textField.text, !code.isEmpty {
-            isValidCode = validateCode(code: code)
-            
-            if code.isEmpty {
-                verificationErrorLabel.isHidden = true
-            } else if !isValidCode {
-                verificationErrorLabel.text = "6자리 숫자를 입력해주세요."
-                verificationErrorLabel.textColor = .systemRed
-                verificationErrorLabel.isHidden = false
-            } else {
-                verificationErrorLabel.isHidden = true
-            }
-            
-            nextButton.isEnabled = isValidCode
-        }
-    }
-    
-    @objc private func resendButtonTapped() {
-        // 인증번호 재전송 로직
-        print("인증번호 재전송 요청됨")
-        
-        // 재전송 버튼 일시적으로 비활성화
-        resendButton.isEnabled = false
-        
-        // 애니메이션 효과와 함께 3초 후 다시 활성화
-        UIView.animate(withDuration: 0.3) {
-            self.resendButton.alpha = 0.5
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            self.resendButton.isEnabled = true
-            UIView.animate(withDuration: 0.3) {
-                self.resendButton.alpha = 1.0
-            }
-        }
-        
-        // 사용자에게 알림
-        verificationErrorLabel.text = "인증번호가 재전송되었습니다."
-        verificationErrorLabel.textColor = .systemBlue
-        verificationErrorLabel.isHidden = false
-        
-        // 3초 후 알림 숨기기
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            if self.verificationErrorLabel.textColor == .systemBlue {
-                self.verificationErrorLabel.isHidden = true
-            }
-        }
-    }
+    private let completeButtonTap = PublishRelay<Void>()
 }
 
-
+// MARK: - UITextFieldDelegate
 extension EmailVerificationViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
-        if nextButton.isEnabled {
-            nextButtonTapped()
+        if completeButton.isEnabled {
+            completeButtonTap.accept(())
         }
         return true
     }
 }
 
-// MARK: - PREVIEW
+// MARK: - Preview
 #Preview {
-    let viewController = EmailVerificationViewController(email: "123", password: "123", userName: "123")
+    let viewModel = EmailVerificationViewModel(
+        email: "test@example.com",
+        password: "password123",
+        name: "테스트 사용자"
+    )
+    let viewController = EmailVerificationViewController(viewModel: viewModel)
     let navigationController = UINavigationController(rootViewController: viewController)
     return navigationController
 }

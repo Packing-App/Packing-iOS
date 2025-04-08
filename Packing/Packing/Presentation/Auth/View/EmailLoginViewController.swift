@@ -169,14 +169,20 @@ class EmailLoginViewController: UIViewController {
             .drive(loadingIndicator.rx.isAnimating)
             .disposed(by: disposeBag)
         
+        // 버튼 활성화/비활성화 상태에 따른 alpha 값 조정
+        output.isLoginEnabled
+            .map { $0 ? 1.0 : 0.5 }
+            .drive(logInButton.rx.alpha)
+            .disposed(by: disposeBag)
+        
         // 로그인 결과 바인딩
         output.loginResult
             .drive(onNext: { [weak self] result in
                 switch result {
-                case .success(let user):
+                case .success:
                     self?.navigateToMainScreen()
                 case .failure:
-                    // 에러는 errorMessage에서만 처리하도록 변경
+                    // 에러는 errorMessage에서 처리
                     break
                 }
             })
@@ -200,13 +206,15 @@ class EmailLoginViewController: UIViewController {
     // MARK: - Navigation
     
     private func navigateToMainScreen() {
-//        let myPageViewModel = MyPageViewModel(?
+//        let myPageViewModel = MyPageViewModel()
+//        let myPageViewController = MyPageViewController(viewModel: myPageViewModel)
+//        navigationController?.setViewControllers([myPageViewController], animated: true)
     }
     
     private func navigateToSignUp() {
-//        let signUpViewModel = EmailSignUpViewModel()
-//        let signUpViewController = EmailSignUpViewController(viewModel: signUpViewModel)
-//        navigationController?.pushViewController(signUpViewController, animated: true)
+        let signUpViewModel = EmailSignUpViewModel()
+        let signUpViewController = EmailSignUpViewController(viewModel: signUpViewModel)
+        navigationController?.pushViewController(signUpViewController, animated: true)
     }
     
     // MARK: - Helper Methods

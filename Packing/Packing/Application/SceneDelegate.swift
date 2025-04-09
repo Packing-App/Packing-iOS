@@ -20,12 +20,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let userManager = UserManager.shared
         let rootViewController: UIViewController
         
-//        if userManager.currentUser != nil {
-//            let myPageViewReactor = MyPageViewReactor()
-//            rootViewController = MyPageViewController(reactor: myPageViewReactor)
-//        } else {
-        rootViewController = LoginViewController()
-//        }
+        if userManager.currentUser != nil {
+            rootViewController = MyPageViewController()
+        } else {
+            rootViewController = LoginViewController()
+        }
 
         // navigation Controller
         let navigationController = UINavigationController(rootViewController: rootViewController)

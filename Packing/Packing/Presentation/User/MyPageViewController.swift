@@ -8,7 +8,6 @@
 import UIKit
 import RxSwift
 import RxCocoa
-import ReactorKit
 
 enum ProfileMenuItem: String, CaseIterable {
     case connectedAccount = "연결된 계정" // (just display)
@@ -32,8 +31,7 @@ enum ProfileMenuItem: String, CaseIterable {
     }
 }
 
-
-class MyPageViewController: UIViewController, View {
+class MyPageViewController: UIViewController {
     
     // MARK: - UI COMPONENTS
     
@@ -89,7 +87,6 @@ class MyPageViewController: UIViewController, View {
         button.setTitle("수정", for: .normal)
         button.setTitleColor(.systemBlue, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 16)
-        //        button.addTarget(self, action: #selector(editProfileButtonTapped), for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -112,17 +109,17 @@ class MyPageViewController: UIViewController, View {
     
     // MARK: - PROPERTIES
     
-    typealias Reactor = MyPageViewReactor
-    var disposeBag = DisposeBag()
-    
+    private let viewModel: ProfileViewModel
     private let menuItems = ProfileMenuItem.allCases
     private var tableViewHeightConstraint: NSLayoutConstraint?
+    private let disposeBag = DisposeBag()
     
     // MARK: - Initialize
     
-    init(reactor: MyPageViewReactor) {
+    init(viewModel: ProfileViewModel? = nil) {
+        // 뷰모델이 제공되지 않았다면 새로 생성
+        self.viewModel = viewModel ?? ProfileViewModel()
         super.init(nibName: nil, bundle: nil)
-        self.reactor = reactor
     }
     
     required init?(coder: NSCoder) {
@@ -135,13 +132,18 @@ class MyPageViewController: UIViewController, View {
         super.viewDidLoad()
         setupUI()
         setupTableView()
+        bindViewModel()
+        setupActions()
+        
+        // 로딩 시간 감시 타이머 설정
+        setupLoadingTimeoutObservable()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         // 화면이 나타날 때마다 최신 사용자 정보 로드
-        reactor?.action.onNext(.refresh)
+        viewModel.refreshProfile()
     }
     
     override func viewDidLayoutSubviews() {
@@ -162,18 +164,6 @@ class MyPageViewController: UIViewController, View {
     private func setupUI() {
         title = "내 프로필"
         view.backgroundColor = .systemGray6
-        
-        //        if let imageName = user.profileImage, !imageName.isEmpty, let image = UIImage(named: imageName) {
-        //            profileImageView.image = image
-        //        } else {
-        //            profileImageView.image = UIImage(systemName: "person.circle.fill")
-        //            profileImageView.tintColor = .white
-        //        }
-        
-        //        nameLabel.text = user.name
-        //        bioLabel.text = user.intro
-        
-        
         
         // 스크롤뷰 설정
         view.addSubview(scrollView)
@@ -250,89 +240,58 @@ class MyPageViewController: UIViewController, View {
     }
     
     private func setupTableView() {
-        tableView.dataSource = self // Keep this for data
-
-        // Use rx.setDelegate instead of direct assignment
         tableView.rx.setDelegate(self)
             .disposed(by: disposeBag)
+        
+        // RxSwift를 사용한 테이블뷰 데이터 소스 바인딩
+        Observable.just(menuItems)
+            .bind(to: tableView.rx.items(cellIdentifier: "cell", cellType: UITableViewCell.self)) { [weak self] (row, menuItem, cell) in
+                guard let self = self else { return }
+                
+                var content = cell.defaultContentConfiguration()
+                content.text = menuItem.rawValue
+                
+                // Configure cell based on menu item
+                switch menuItem {
+                case .connectedAccount:
+                    if let user = self.viewModel.user.value {
+                        content.secondaryText = self.getSocialTypeName(for: user.socialType)
+                        let socialIconView = UIImageView(frame: CGRect(x: 0, y: 0, width: 24, height: 24))
+                        socialIconView.contentMode = .scaleAspectFit
+                        socialIconView.image = self.getSocialTypeImage(for: user.socialType)
+                        cell.accessoryView = socialIconView
+                    }
+                    cell.selectionStyle = .none
+                case .versionInfo:
+                    content.secondaryText = self.getAppVersion()
+                    cell.accessoryView = nil
+                    cell.accessoryType = .none
+                    cell.selectionStyle = .none
+                    
+                case .developerInfo, .privacy, .legal:
+                    cell.accessoryView = nil
+                    cell.accessoryType = .disclosureIndicator
+                    
+                case .logout, .deleteId:
+                    content.textProperties.color = .systemRed
+                    cell.accessoryView = nil
+                    cell.accessoryType = .none
+                }
+                
+                cell.contentConfiguration = content
+            }
+            .disposed(by: disposeBag)
     }
     
-    // MARK: - ReactorKit Binding
-    
-    func bind(reactor: MyPageViewReactor) {
-        bindActions(reactor)
-        bindState(reactor)
-        bindTableView()
-    }
-    
-    
-    private func bindActions(_ reactor: MyPageViewReactor) {
+    private func setupActions() {
         // 프로필 편집 버튼 액션
         editProfileButton.rx.tap
-            .map { Reactor.Action.editProfile }
-            .bind(to: reactor.action)
-            .disposed(by: disposeBag)
-        
-        // 프로필 편집 화면으로 이동 (별도 처리)
-        editProfileButton.rx.tap
-            .subscribe(onNext: { [weak self] _ in
+            .subscribe(onNext: { [weak self] in
                 self?.navigateToEditProfile()
             })
             .disposed(by: disposeBag)
-    }
-    
-    private func bindState(_ reactor: MyPageViewReactor) {
-        // 사용자 정보 바인딩
-        reactor.state
-            .map { $0.user }
-            .distinctUntilChanged()
-            .subscribe(onNext: { [weak self] user in
-                self?.updateUserInfo(user)
-            })
-            .disposed(by: disposeBag)
         
-        // 로딩 상태 바인딩
-        reactor.state
-            .map { $0.isLoading }
-            .distinctUntilChanged()
-            .bind(to: loadingIndicator.rx.isAnimating)
-            .disposed(by: disposeBag)
-        
-        // 에러 메시지 바인딩
-        reactor.state
-            .compactMap { $0.errorMessage }
-            .distinctUntilChanged()
-            .subscribe(onNext: { [weak self] message in
-                self?.showAlert(message: message)
-            })
-            .disposed(by: disposeBag)
-        
-        reactor.state
-            .map { $0.user }
-            .distinctUntilChanged { $0?.id == $1?.id } // ID로 비교
-            .filter { $0 == nil }
-            .do(onNext: { _ in print("사용자가 null이 되었습니다. 로그인 화면으로 이동합니다.") })
-            .observe(on: MainScheduler.instance) // 메인 스레드에서 UI 업데이트
-            .subscribe(onNext: { [weak self] _ in
-                self?.navigateToLogin()
-            })
-            .disposed(by: disposeBag)
-        
-        reactor.state
-            .map { $0.isLoading }
-            .debounce(.seconds(10), scheduler: MainScheduler.instance)
-            .filter { $0 == true } // 10초 후에도 로딩 중이면 진행
-            .subscribe(onNext: { [weak self] _ in
-                print("로딩이 10초 이상 지속됩니다. 강제로 로딩 상태를 해제합니다.")
-                self?.showAlert(message: "서버 응답이 느립니다. 다시 시도해 주세요.")
-                self?.loadingIndicator.stopAnimating()
-            })
-            .disposed(by: disposeBag)
-    }
-    
-    private func bindTableView() {
-        // 테이블뷰 셀 선택 이벤트
-        print(#fileID, #function, #line, "- ")
+        // 테이블뷰 아이템 선택 액션
         tableView.rx.itemSelected
             .subscribe(onNext: { [weak self] indexPath in
                 self?.tableView.deselectRow(at: indexPath, animated: true)
@@ -341,19 +300,76 @@ class MyPageViewController: UIViewController, View {
             .disposed(by: disposeBag)
     }
     
-    // MARK: - UI Updates
-    private func updateUserInfo(_ user: User?) {
-        print(#fileID, #function, #line, "- ")
-        guard let user = user else { return }
+    private func bindViewModel() {
+        // 사용자 정보 바인딩
+        viewModel.user
+            .observe(on: MainScheduler.instance)
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] user in
+                if let user = user {
+                    self?.updateUserInfo(user)
+                }
+            })
+            .disposed(by: disposeBag)
         
+        // 로그인 화면 이동 바인딩
+        viewModel.shouldNavigateToLogin
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] _ in
+                self?.navigateToLogin()
+            })
+            .disposed(by: disposeBag)
+        
+        // 로딩 상태 바인딩
+        viewModel.isLoading
+            .observe(on: MainScheduler.instance)
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] isLoading in
+                if isLoading {
+                    self?.loadingIndicator.startAnimating()
+                } else {
+                    self?.loadingIndicator.stopAnimating()
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        // 에러 메시지 바인딩
+        viewModel.errorMessage
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] message in
+                self?.showAlert(message: message)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // 로딩 타임아웃 설정 (10초 이상 로딩 시 강제 종료)
+    private func setupLoadingTimeoutObservable() {
+        viewModel.isLoading
+            .debounce(.seconds(10), scheduler: MainScheduler.instance)
+            .filter { $0 == true } // 10초 후에도 로딩 중인 경우만 필터링
+            .subscribe(onNext: { [weak self] _ in
+                print("로딩이 10초 이상 지속됩니다. 강제로 로딩 상태를 해제합니다.")
+                self?.loadingIndicator.stopAnimating()
+                self?.showAlert(message: "서버 응답이 느립니다. 다시 시도해 주세요.")
+                self?.viewModel.isLoading.accept(false)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - UI Updates
+    
+    private func updateUserInfo(_ user: User) {
         // 프로필 이미지 설정
         if let imageURL = user.profileImage, !imageURL.isEmpty {
-            // 여기서는 간단하게 처리했지만, 실제로는 이미지 로딩 라이브러리(Kingfisher 등) 사용 권장
             if let image = UIImage(named: imageURL) {
                 profileImageView.image = image
             } else {
-                // URL에서 이미지 로드 로직 (생략)
+                // URL에서 이미지 로드 로직 (간단하게 처리)
                 profileImageView.image = UIImage(systemName: "person.circle.fill")
+                
+                // 실제 코드에서는 이미지 로딩 라이브러리 사용 권장
+                // 예: Kingfisher, SDWebImage 등
+                // imageView.kf.setImage(with: URL(string: imageURL))
             }
         } else {
             profileImageView.image = UIImage(systemName: "person.circle.fill")
@@ -373,13 +389,15 @@ class MyPageViewController: UIViewController, View {
         print("프로필 편집 화면으로 이동")
         
         // 실제 구현 시 아래와 같이 처리
-        // let editProfileVC = EditProfileViewController(reactor: EditProfileViewReactor(user: reactor?.currentState.user))
+        // let editProfileViewModel = EditProfileViewModel(user: viewModel.user.value)
+        // let editProfileVC = EditProfileViewController(viewModel: editProfileViewModel)
         // navigationController?.pushViewController(editProfileVC, animated: true)
     }
     
     private func navigateToLogin() {
-        // 로그아웃 or 계정 삭제 후 로그인 화면으로 이동
+        print("로그인 화면으로 이동")
         
+        // 진짜 LoginViewController를 생성
         let loginViewController = LoginViewController()
         
         // 루트 뷰 컨트롤러로 설정하여 뒤로가기를 방지
@@ -427,7 +445,8 @@ class MyPageViewController: UIViewController, View {
         
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         alert.addAction(UIAlertAction(title: "로그아웃", style: .destructive) { [weak self] _ in
-            self?.reactor?.action.onNext(.logout)
+            print("로그아웃 시작")
+            self?.viewModel.logout()
         })
         
         present(alert, animated: true)
@@ -442,7 +461,8 @@ class MyPageViewController: UIViewController, View {
         
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         alert.addAction(UIAlertAction(title: "탈퇴하기", style: .destructive) { [weak self] _ in
-            self?.reactor?.action.onNext(.deleteAccount)
+            print("회원 탈퇴 시작")
+            self?.viewModel.deleteAccount()
         })
         
         present(alert, animated: true)
@@ -453,52 +473,8 @@ class MyPageViewController: UIViewController, View {
         alert.addAction(UIAlertAction(title: "확인", style: .default))
         present(alert, animated: true)
     }
-}
-
-// MARK: - UITableViewDelegate, UITableViewDataSource
-
-extension MyPageViewController: UITableViewDelegate, UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return menuItems.count
-    }
     
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
-        let menuItem = menuItems[indexPath.row]
-        
-        var content = cell.defaultContentConfiguration()
-        content.text = menuItem.rawValue
-        
-        // Configure cell based on menu item
-        switch menuItem {
-        case .connectedAccount:
-            if let user = reactor?.currentState.user {
-                content.secondaryText = getSocialTypeName(for: user.socialType)
-                let socialIconView = UIImageView(frame: CGRect(x: 0, y: 0, width: 24, height: 24))
-                socialIconView.contentMode = .scaleAspectFit
-                socialIconView.image = getSocialTypeImage(for: user.socialType)
-                cell.accessoryView = socialIconView
-            }
-            cell.selectionStyle = .none
-        case .versionInfo:
-            content.secondaryText = getAppVersion()
-            cell.accessoryView = nil
-            cell.accessoryType = .none
-            cell.selectionStyle = .none
-            
-        case .developerInfo, .privacy, .legal:
-            cell.accessoryView = nil
-            cell.accessoryType = .disclosureIndicator
-            
-        case .logout, .deleteId:
-            content.textProperties.color = .systemRed
-            cell.accessoryView = nil
-            cell.accessoryType = .none
-        }
-        
-        cell.contentConfiguration = content
-        return cell
-    }
+    // MARK: - Helper Methods
     
     private func getSocialTypeImage(for type: LoginType) -> UIImage? {
         switch type {
@@ -535,12 +511,28 @@ extension MyPageViewController: UITableViewDelegate, UITableViewDataSource {
     }
 }
 
+// MARK: - UITableViewDelegate
+extension MyPageViewController: UITableViewDelegate {
+    // 테이블뷰 Delegate 메서드가 필요한 경우 여기에 구현
+}
 
 // MARK: - PREVIEW
 
 #Preview {
-    let viewReactor = MyPageViewReactor()
-    let viewController = MyPageViewController(reactor: viewReactor)
+    let mockUser = User(
+        id: "123",
+        name: "홍길동",
+        email: "hong@example.com",
+        profileImage: nil,
+        intro: "안녕하세요! 반갑습니다.",
+        socialType: .kakao,
+        socialId: "kakao_123",
+        pushNotificationEnabled: true,
+        isEmailVerified: true
+    )
+    
+    let viewModel = ProfileViewModel(user: mockUser)
+    let viewController = MyPageViewController(viewModel: viewModel)
     let navigationViewController = UINavigationController(rootViewController: viewController)
     return navigationViewController
 }

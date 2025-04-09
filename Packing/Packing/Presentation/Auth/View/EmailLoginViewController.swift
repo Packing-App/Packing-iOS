@@ -206,9 +206,17 @@ class EmailLoginViewController: UIViewController {
     // MARK: - Navigation
     
     private func navigateToMainScreen() {
-//        let myPageViewModel = MyPageViewModel()
-//        let myPageViewController = MyPageViewController(viewModel: myPageViewModel)
-//        navigationController?.setViewControllers([myPageViewController], animated: true)
+        // 진짜 LoginViewController를 생성
+        let myPageViewController = MyPageViewController()
+        
+        // 루트 뷰 컨트롤러로 설정하여 뒤로가기를 방지
+        if let window = UIApplication.shared.windows.first {
+            window.rootViewController = UINavigationController(rootViewController: myPageViewController)
+            window.makeKeyAndVisible()
+            
+            // animation (optional)
+            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+        }
     }
     
     private func navigateToSignUp() {

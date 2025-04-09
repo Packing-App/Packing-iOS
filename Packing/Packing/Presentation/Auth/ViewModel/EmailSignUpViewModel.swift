@@ -18,7 +18,7 @@ class EmailSignUpViewModel {
         let password: Observable<String>
         let confirmPassword: Observable<String>
         let name: Observable<String>
-//        let nextButtonTap: Observable<Void>
+        let nextButtonTap: Observable<Void>
     }
     
     struct Output {

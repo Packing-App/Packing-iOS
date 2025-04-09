@@ -339,8 +339,8 @@ class EmailSignUpViewController: UIViewController {
             email: emailTextField.rx.text.orEmpty.asObservable(),
             password: passwordTextField.rx.text.orEmpty.asObservable(),
             confirmPassword: confirmPasswordTextField.rx.text.orEmpty.asObservable(),
-            name: nameTextField.rx.text.orEmpty.asObservable()
-//            nextButtonTap: nextButton.rx.tap.asObservable()
+            name: nameTextField.rx.text.orEmpty.asObservable(),
+            nextButtonTap: nextButtonTap.asObservable()
         )
         
         // Output
@@ -406,6 +406,31 @@ class EmailSignUpViewController: UIViewController {
                 self?.showAlert(message: message)
             })
             .disposed(by: disposeBag)
+        
+        // 다음 버튼 탭 이벤트 - 이메일 인증 화면으로 이동
+        nextButton.rx.tap
+            .subscribe(onNext: { [weak self] _ in
+                guard let self = self,
+                      let email = self.emailTextField.text,
+                      let password = self.passwordTextField.text,
+                      let name = self.nameTextField.text else { return }
+                
+                self.navigateToEmailVerification(email: email, password: password, name: name)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - Navigation
+    
+    private func navigateToEmailVerification(email: String, password: String, name: String) {
+        let verificationViewModel = EmailVerificationViewModel(
+            email: email,
+            password: password,
+            name: name,
+            authService: viewModel.authService
+        )
+        let verificationVC = EmailVerificationViewController(viewModel: verificationViewModel)
+        navigationController?.pushViewController(verificationVC, animated: true)
     }
     
     // MARK: - Helper Methods
@@ -419,6 +444,8 @@ class EmailSignUpViewController: UIViewController {
     @objc private func dismissKeyboard() {
         view.endEditing(true)
     }
+    
+    private let nextButtonTap = PublishRelay<Void>()
 }
 
 // MARK: - UITextFieldDelegate
@@ -431,16 +458,7 @@ extension EmailSignUpViewController: UITextFieldDelegate {
         case 3:
             textField.resignFirstResponder()
             if nextButton.isEnabled {
-                if let email = self.emailTextField.text, let password = self.passwordTextField.text, let name = self.nameTextField.text {
-                    let verificationViewModel = EmailVerificationViewModel(
-                        email: email,
-                        password: password,
-                        name: name,
-                        authService: viewModel.authService
-                    )
-                    let verificationVC = EmailVerificationViewController(viewModel: verificationViewModel)
-                    navigationController?.pushViewController(verificationVC, animated: true)
-                }
+                nextButtonTap.accept(())
             }
         default: textField.resignFirstResponder()
         }

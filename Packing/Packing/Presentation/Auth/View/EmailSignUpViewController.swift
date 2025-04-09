@@ -418,6 +418,10 @@ class EmailSignUpViewController: UIViewController {
                 )
             })
             .disposed(by: disposeBag)
+        
+        nextButton.rx.tap
+            .bind(to: nextButtonTap)
+            .disposed(by: disposeBag)
     }
     
     // MARK: - Navigation

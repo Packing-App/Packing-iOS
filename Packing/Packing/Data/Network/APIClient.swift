@@ -60,7 +60,7 @@ class APIClient {
                 if let token = self.tokenManager.accessToken {
                     request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
                 } else {
-                    observer.onError(NetworkError.unauthorized)
+                    observer.onError(NetworkError.unauthorized(nil))
                     return Disposables.create()
                 }
             }
@@ -101,15 +101,17 @@ class APIClient {
                     } catch let error {
                         observer.onError(NetworkError.decodingFailed(error))
                     }
-                    
                 case 401:
-//                    // 로그인 API인 경우 바로 에러 반환
-//                    if endpoint.path.contains("/login") {
-                        observer.onError(NetworkError.unauthorized)
-//                    } else {
-//                        // 다른 API의 경우 토큰 갱신 시도
-//                        self.refreshTokenAndRetry(endpoint: endpoint, observer: observer)
-//                    }
+                    if let data = data {
+                        do {
+                            let errorResponse = try JSONDecoder().decode(ErrorResponse.self, from: data)
+                            observer.onError(NetworkError.unauthorized(errorResponse.message))
+                        } catch {
+                            observer.onError(NetworkError.unauthorized(nil))
+                        }
+                    } else {
+                        observer.onError(NetworkError.unauthorized(nil))
+                    }
                     
                 case 404:
                     observer.onError(NetworkError.notFound)
@@ -154,7 +156,7 @@ class APIClient {
         observer: AnyObserver<T>
     ) {
         guard let refreshToken = tokenManager.refreshToken else {
-            observer.onError(NetworkError.unauthorized)
+            observer.onError(NetworkError.unauthorized(nil))
             return
         }
         
@@ -181,7 +183,7 @@ class APIClient {
         }, onError: { [weak self] error in
             // 토큰 갱신 실패, 로그아웃 필요
             self?.tokenManager.clearTokens()
-            observer.onError(NetworkError.unauthorized)
+            observer.onError(NetworkError.unauthorized(nil))
         })
         .disposed(by: DisposeBag())
     }
@@ -206,7 +208,7 @@ class APIClient {
             if let token = self.tokenManager.accessToken {
                 request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             } else {
-                observer.onError(NetworkError.unauthorized)
+                observer.onError(NetworkError.unauthorized(nil))
                 return Disposables.create()
             }
             
@@ -256,8 +258,16 @@ class APIClient {
                     }
                     
                 case 401:
-                    observer.onError(NetworkError.unauthorized)
-                    
+                    if let data = data {
+                        do {
+                            let errorResponse = try JSONDecoder().decode(ErrorResponse.self, from: data)
+                            observer.onError(NetworkError.unauthorized(errorResponse.message))
+                        } catch {
+                            observer.onError(NetworkError.unauthorized(nil))
+                        }
+                    } else {
+                        observer.onError(NetworkError.unauthorized(nil))
+                    }
                 default:
                     if let data = data {
                         do {

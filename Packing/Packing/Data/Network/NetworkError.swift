@@ -13,7 +13,7 @@ enum NetworkError: Error, LocalizedError {
     case invalidResponse
     case decodingFailed(Error)
     case serverError(String)
-    case unauthorized
+    case unauthorized(String?)
     case notFound
     case networkError
     case unknown
@@ -30,8 +30,8 @@ enum NetworkError: Error, LocalizedError {
             return "디코딩 실패: \(error.localizedDescription)"
         case .serverError(let message):
             return message
-        case .unauthorized:
-            return "인증이 필요합니다."
+        case .unauthorized(let message):
+            return message ?? "권한이 없습니다."
         case .notFound:
             return "리소스를 찾을 수 없습니다."
         case .networkError:

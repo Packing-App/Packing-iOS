@@ -229,7 +229,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     
     func refreshToken() -> Observable<String> {
         guard let refreshToken = tokenStorage.refreshToken else {
-            return Observable.error(AuthError.apiError(.unauthorized))
+            return Observable.error(AuthError.apiError(.unauthorized(nil)))
         }
         
         return apiClient.request(APIEndpoint.refreshToken(refreshToken: refreshToken))

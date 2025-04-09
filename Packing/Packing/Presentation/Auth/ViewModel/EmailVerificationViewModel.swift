@@ -49,9 +49,6 @@ class EmailVerificationViewModel {
         self.password = password
         self.name = name
         self.authService = authService
-        
-        // 초기화 직후 자동으로 인증 코드 발송
-        sendVerificationCode()
     }
     
     // MARK: - Transform
@@ -197,7 +194,7 @@ class EmailVerificationViewModel {
         return codePredicate.evaluate(with: code)
     }
     
-    private func sendVerificationCode() {
+    private func reSendVerificationCode() {
         // 초기 인증 코드 발송
         authService.resendVerificationCode(email: email)
             .subscribe(onNext: { _ in

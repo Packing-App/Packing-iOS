@@ -173,4 +173,14 @@ class EmailSignUpViewModel {
         let passwordPredicate = NSPredicate(format: "SELF MATCHES %@", passwordRegex)
         return passwordPredicate.evaluate(with: password)
     }
+    
+    private func registerUser(name: String, email: String, password: String) {
+        authService.registerUser(name: name, email: email, password: password)
+            .subscribe(onNext: { _ in
+                print("회원 가입 성공. 이메일 인증을 완료해주세요.")
+            }, onError: { error in
+                print("회원 가입 실패. \(error.localizedDescription)")
+            })
+            .disposed(by: disposeBag)
+    }
 }

@@ -37,6 +37,7 @@ class EmailVerificationViewModel {
     let email: String
     let password: String
     let name: String
+    let tokenData: TokenData
     let authService: AuthServiceProtocol
     
     private let verificationCodeSubject = BehaviorRelay<String>(value: "")
@@ -44,10 +45,11 @@ class EmailVerificationViewModel {
     
     // MARK: - Initialization
     
-    init(email: String, password: String, name: String, authService: AuthServiceProtocol = AuthService.shared) {
+    init(email: String, password: String, name: String, tokenData: TokenData, authService: AuthServiceProtocol = AuthService.shared) {
         self.email = email
         self.password = password
         self.name = name
+        self.tokenData = tokenData
         self.authService = authService
     }
     
@@ -125,45 +127,32 @@ class EmailVerificationViewModel {
             })
             .disposed(by: disposeBag)
         
-        // 회원가입 완료 버튼 이벤트 처리
+        // 이메일 인증 완료 버튼 이벤트 처리
         input.completeButtonTap
             .withLatestFrom(verificationCodeSubject)
             .do(onNext: { _ in
                 isLoadingRelay.accept(true)
             })
-            .flatMapLatest { [weak self] code -> Observable<Result<Bool, AuthError>> in
+            .flatMapLatest { [weak self] code -> Observable<Result<User, AuthError>> in
                 guard let self = self else { return .empty() }
                 
                 return self.authService.verifyEmail(email: self.email, code: code)
-                    .map { Result<Bool, AuthError>.success($0) }
-                    .catch { error -> Observable<Result<Bool, AuthError>> in
-                        let authError = error as? AuthError ?? AuthError.loginFailed
-                        return Observable.just(Result<Bool, AuthError>.failure(authError))
+                    .map { _ -> Result<User, AuthError> in
+                        // 이메일 인증 성공 - tokenData에서 가져온 사용자 정보 반환
+                        return .success(self.tokenData.user)
                     }
-            }
-            .flatMapLatest { [weak self] result -> Observable<Result<TokenData, AuthError>> in
-                guard let self = self else { return .empty() }
-                
-                switch result {
-                case .success:
-                    return self.authService.registerUser(name: self.name, email: self.email, password: self.password)
-                        .map { Result<TokenData, AuthError>.success($0) }
-                        .catch { error -> Observable<Result<TokenData, AuthError>> in
-                            let authError = error as? AuthError ?? AuthError.loginFailed
-                            return Observable.just(Result<TokenData, AuthError>.failure(authError))
-                        }
-                    
-                case .failure(let error):
-                    return Observable.just(Result<TokenData, AuthError>.failure(error))
-                }
+                    .catch { error -> Observable<Result<User, AuthError>> in
+                        let authError = error as? AuthError ?? AuthError.loginFailed
+                        return Observable.just(.failure(authError))
+                    }
             }
             .do(onNext: { _ in
                 isLoadingRelay.accept(false)
             })
             .subscribe(onNext: { result in
                 switch result {
-                case .success(let tokenData):
-                    signUpResultRelay.accept(.success(tokenData.user))
+                case .success(let user):
+                    signUpResultRelay.accept(.success(user))
                 case .failure(let error):
                     signUpResultRelay.accept(.failure(error))
                     errorMessageRelay.accept(error.localizedDescription)
@@ -174,7 +163,7 @@ class EmailVerificationViewModel {
         // 출력값 구성
         return Output(
             isCodeValid: isCodeValid.asDriver(onErrorJustReturn: false),
-            codeErrorMessage: codeErrorMessage.asDriver(onErrorJustReturn: nil as String? ),
+            codeErrorMessage: codeErrorMessage.asDriver(onErrorJustReturn: nil as String?),
             isCompleteButtonEnabled: isCompleteButtonEnabled.asDriver(onErrorJustReturn: false),
             
             isLoading: isLoadingRelay.asDriver(),
@@ -192,16 +181,5 @@ class EmailVerificationViewModel {
         let codeRegex = "^[0-9]{6}$"
         let codePredicate = NSPredicate(format: "SELF MATCHES %@", codeRegex)
         return codePredicate.evaluate(with: code)
-    }
-    
-    private func reSendVerificationCode() {
-        // 초기 인증 코드 발송
-        authService.resendVerificationCode(email: email)
-            .subscribe(onNext: { _ in
-                print("인증 코드 발송 성공")
-            }, onError: { error in
-                print("인증 코드 발송 실패: \(error.localizedDescription)")
-            })
-            .disposed(by: disposeBag)
     }
 }

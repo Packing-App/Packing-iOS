@@ -154,7 +154,7 @@ class EmailVerificationViewController: UIViewController {
         let input = EmailVerificationViewModel.Input(
             verificationCode: verificationTextField.rx.text.orEmpty.asObservable(),
             resendButtonTap: resendButton.rx.tap.asObservable(),
-            completeButtonTap: completeButtonTap.asObservable() // ✅ Relay로 대체
+            completeButtonTap: completeButton.rx.tap.asObservable()
         )
         
         // Output
@@ -251,9 +251,9 @@ class EmailVerificationViewController: UIViewController {
     @objc private func dismissKeyboard() {
         view.endEditing(true)
     }
-    
-    private let completeButtonTap = PublishRelay<Void>()
 }
+
+private let completeButtonTap = PublishRelay<Void>()
 
 // MARK: - UITextFieldDelegate
 extension EmailVerificationViewController: UITextFieldDelegate {
@@ -271,7 +271,12 @@ extension EmailVerificationViewController: UITextFieldDelegate {
     let viewModel = EmailVerificationViewModel(
         email: "test@example.com",
         password: "password123",
-        name: "테스트 사용자"
+        name: "테스트 사용자",
+        tokenData: TokenData(
+            accessToken: "test_token",
+            refreshToken: "test_refresh_token",
+            user: User.exampleUser
+        )
     )
     let viewController = EmailVerificationViewController(viewModel: viewModel)
     let navigationController = UINavigationController(rootViewController: viewController)

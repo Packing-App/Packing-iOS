@@ -38,6 +38,9 @@ class EmailSignUpViewModel {
         
         let isLoading: Driver<Bool>
         let errorMessage: Driver<String>
+        
+        // 회원가입 성공 결과를 전달하는 output driver
+        let registerSuccess: Driver<(String, String, String, TokenData)>
     }
     
     // MARK: - Dependencies
@@ -63,6 +66,10 @@ class EmailSignUpViewModel {
         // 상태 관리를 위한 Relay
         let isLoadingRelay = BehaviorRelay<Bool>(value: false)
         let errorMessageRelay = PublishRelay<String>()
+        
+        // PublishRelay: 에러 이벤트 방출안함. '완료'되는 것이 아닌, 항상 활성 상태 유지 (새로운 회원가입 시도 가능)
+        // PublishRelay는 onNext,onError,onCompleted가 아니라, accept 를 통해 새 값을 발행 가능
+        let registerSuccessRelay = PublishRelay<(String, String, String, TokenData)>()
         
         // 이메일, 비밀번호, 이름 구독 및 저장
         input.email
@@ -138,6 +145,43 @@ class EmailSignUpViewModel {
             return isEmailValid && isPasswordValid && isConfirmPasswordValid && isNameValid
         }
         
+        // 다음 버튼 클릭 처리 - 서버에 회원가입 요청.(중요)
+        input.nextButtonTap
+            .withLatestFrom(Observable.combineLatest(
+                emailSubject, passwordSubject, nameSubject
+            ))
+            .do(onNext: { _ in isLoadingRelay.accept(true) })
+            .flatMapLatest { [weak self] (email, password, name) -> Observable<Result<TokenData, AuthError>> in
+                guard let self = self else { return .empty() }
+                
+                return self.authService.registerUser(name: name, email: email, password: password)
+                    .map { Result<TokenData, AuthError>.success($0) }
+                    .catch { error -> Observable<Result<TokenData, AuthError>> in
+                        let authError = error as? AuthError ?? AuthError.loginFailed
+                        return Observable.just(.failure(authError))
+                    }
+            }
+            .do(onNext: { _ in isLoadingRelay.accept(false) })
+            .subscribe(onNext: { [weak self] result in
+                guard let self = self else { return }
+                
+                switch result {
+                case .success(let tokenData):
+                    // 회원가입 성공 - 이메일, 비밀번호, 이름과 함께 토큰 데이터 전달
+                    registerSuccessRelay.accept((
+                        self.emailSubject.value,
+                        self.passwordSubject.value,
+                        self.nameSubject.value,
+                        tokenData
+                    ))
+                case .failure(let error):
+                    // 회원가입 실패 - 에러 메시지 전달
+                    errorMessageRelay.accept(error.localizedDescription)
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        
         // 출력값 구성
         return Output(
             isEmailValid: isEmailValid.asDriver(onErrorJustReturn: false),
@@ -155,7 +199,8 @@ class EmailSignUpViewModel {
             isNextButtonEnabled: isNextButtonEnabled.asDriver(onErrorJustReturn: false),
             
             isLoading: isLoadingRelay.asDriver(),
-            errorMessage: errorMessageRelay.asDriver(onErrorJustReturn: "알 수 없는 오류가 발생했습니다.")
+            errorMessage: errorMessageRelay.asDriver(onErrorJustReturn: "알 수 없는 오류가 발생했습니다."),
+            registerSuccess: registerSuccessRelay.asDriver(onErrorJustReturn: ("", "", "", TokenData(accessToken: "", refreshToken: "", user: User.exampleUser)))
         )
     }
     
@@ -172,15 +217,5 @@ class EmailSignUpViewModel {
         let passwordRegex = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d\\W_]{8,20}$"
         let passwordPredicate = NSPredicate(format: "SELF MATCHES %@", passwordRegex)
         return passwordPredicate.evaluate(with: password)
-    }
-    
-    private func registerUser(name: String, email: String, password: String) {
-        authService.registerUser(name: name, email: email, password: password)
-            .subscribe(onNext: { _ in
-                print("회원 가입 성공. 이메일 인증을 완료해주세요.")
-            }, onError: { error in
-                print("회원 가입 실패. \(error.localizedDescription)")
-            })
-            .disposed(by: disposeBag)
     }
 }

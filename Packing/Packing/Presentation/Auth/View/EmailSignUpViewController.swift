@@ -407,26 +407,27 @@ class EmailSignUpViewController: UIViewController {
             })
             .disposed(by: disposeBag)
         
-        // 다음 버튼 탭 이벤트 - 이메일 인증 화면으로 이동
-        nextButton.rx.tap
-            .subscribe(onNext: { [weak self] _ in
-                guard let self = self,
-                      let email = self.emailTextField.text,
-                      let password = self.passwordTextField.text,
-                      let name = self.nameTextField.text else { return }
-                
-                self.navigateToEmailVerification(email: email, password: password, name: name)
+        // 회원가입 성공 시 이메일 인증 화면으로 이동
+        output.registerSuccess
+            .drive(onNext: { [weak self] (email, password, name, tokenData) in
+                self?.navigateToEmailVerification(
+                    email: email,
+                    password: password,
+                    name: name,
+                    tokenData: tokenData
+                )
             })
             .disposed(by: disposeBag)
     }
     
     // MARK: - Navigation
     
-    private func navigateToEmailVerification(email: String, password: String, name: String) {
+    private func navigateToEmailVerification(email: String, password: String, name: String, tokenData: TokenData) {
         let verificationViewModel = EmailVerificationViewModel(
             email: email,
             password: password,
             name: name,
+            tokenData: tokenData,
             authService: viewModel.authService
         )
         let verificationVC = EmailVerificationViewController(viewModel: verificationViewModel)

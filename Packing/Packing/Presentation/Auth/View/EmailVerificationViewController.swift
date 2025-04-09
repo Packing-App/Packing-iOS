@@ -111,6 +111,28 @@ class EmailVerificationViewController: UIViewController {
         bindViewModel()
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        if isMovingFromParent && !isVerificationSuccessful {
+            deleteAccount()
+        }
+    }
+
+    private func deleteAccount() {
+        viewModel.authService.deleteAccount()
+            .subscribe(
+                onNext: { success in
+                    print("계정 삭제 완료: \(success)")
+                },
+                onError: { error in
+                    print("계정 삭제 실패: \(error.localizedDescription)")
+                }
+            )
+            .disposed(by: disposeBag)
+    }
+    private var isVerificationSuccessful = false
+
     // MARK: - UI Setup
     
     private func setupUI() {
@@ -223,6 +245,8 @@ class EmailVerificationViewController: UIViewController {
     // MARK: - Helper Methods
     
     private func showSignUpSuccessAlert(user: User) {
+        isVerificationSuccessful = true
+
         let alert = UIAlertController(
             title: "회원가입 성공",
             message: "\(user.name)님, 회원가입이 완료되었습니다!",

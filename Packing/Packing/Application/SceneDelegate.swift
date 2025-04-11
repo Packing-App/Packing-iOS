@@ -36,7 +36,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
     
     // 탭바 컨트롤러 설정 메서드
-    private func setupTabBarController() {
+    public func setupTabBarController() {
         let tabBarController = UITabBarController()
         
         // 홈 탭

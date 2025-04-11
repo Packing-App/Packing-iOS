@@ -206,16 +206,12 @@ class EmailLoginViewController: UIViewController {
     // MARK: - Navigation
     
     private func navigateToMainScreen() {
-        // 진짜 LoginViewController를 생성
-        let myPageViewController = MyPageViewController()
-        
-        // 루트 뷰 컨트롤러로 설정하여 뒤로가기를 방지
-        if let window = UIApplication.shared.windows.first {
-            window.rootViewController = UINavigationController(rootViewController: myPageViewController)
-            window.makeKeyAndVisible()
+        if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate {
+            sceneDelegate.setupTabBarController()
             
-            // animation (optional)
-            UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+            if let window = sceneDelegate.window {
+                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
+            }
         }
     }
     

@@ -12,7 +12,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
     
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        Thread.sleep(forTimeInterval: 2.0)
+        Thread.sleep(forTimeInterval: 1.0)
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
         window = UIWindow(frame: UIScreen.main.bounds)
@@ -27,14 +27,73 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         }
 
         // navigation Controller
-        let navigationController = UINavigationController(rootViewController: rootViewController)
-        navigationController.isNavigationBarHidden = true
+        let navigationController = UINavigationController(rootViewController: HomeViewController())
+//        navigationController.isNavigationBarHidden = true
         
         window?.rootViewController = navigationController
         window?.makeKeyAndVisible()
         window?.windowScene = windowScene
          
     }
+    
+    
+    //    private lazy var homeTabButton: UIButton = {
+    //        let button = UIButton(type: .system)
+    //        button.setImage(UIImage(systemName: "house.fill"), for: .normal)
+    //        button.tintColor = .main
+    //        button.translatesAutoresizingMaskIntoConstraints = false
+    //
+    //        let label = UILabel()
+    //        label.text = "홈"
+    //        label.font = .systemFont(ofSize: 12)
+    //        label.textColor = .main
+    //        label.textAlignment = .center
+    //        label.translatesAutoresizingMaskIntoConstraints = false
+    //
+    //        button.addSubview(label)
+    //
+    //        NSLayoutConstraint.activate([
+    //            label.topAnchor.constraint(equalTo: button.centerYAnchor, constant: 10),
+    //            label.centerXAnchor.constraint(equalTo: button.centerXAnchor),
+    //            label.widthAnchor.constraint(equalToConstant: 40)
+    //        ])
+    //
+    //        return button
+    //    }()
+    //
+    //    private lazy var profileTabButton: UIButton = {
+    //        let button = UIButton(type: .system)
+    //        button.setImage(UIImage(systemName: "person"), for: .normal)
+    //        button.tintColor = .lightGray
+    //        button.translatesAutoresizingMaskIntoConstraints = false
+    //
+    //        let label = UILabel()
+    //        label.text = "마이"
+    //        label.font = .systemFont(ofSize: 12)
+    //        label.textColor = .lightGray
+    //        label.textAlignment = .center
+    //        label.translatesAutoresizingMaskIntoConstraints = false
+    //
+    //        button.addSubview(label)
+    //
+    //        NSLayoutConstraint.activate([
+    //            label.topAnchor.constraint(equalTo: button.centerYAnchor, constant: 10),
+    //            label.centerXAnchor.constraint(equalTo: button.centerXAnchor),
+    //            label.widthAnchor.constraint(equalToConstant: 40)
+    //        ])
+    //
+    //        return button
+    //    }()
+//    private lazy var tabBar: UIView = {
+//        let view = UIView()
+//        view.backgroundColor = .white
+//        view.layer.shadowColor = UIColor.black.withAlphaComponent(0.1).cgColor
+//        view.layer.shadowOffset = CGSize(width: 0, height: -2)
+//        view.layer.shadowRadius = 4
+//        view.layer.shadowOpacity = 0.5
+//        view.translatesAutoresizingMaskIntoConstraints = false
+//        return view
+//    }()
     
     func sceneDidDisconnect(_ scene: UIScene) {
         // Called as the scene is being released by the system.

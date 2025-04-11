@@ -12,28 +12,65 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
     
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        Thread.sleep(forTimeInterval: 1.0)
+        Thread.sleep(forTimeInterval: 1.0) // 스플래시 화면 표시 시간
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
         window = UIWindow(frame: UIScreen.main.bounds)
         
         let userManager = UserManager.shared
-        let rootViewController: UIViewController
         
+        // 로그인 상태에 따라 다른 화면으로 이동
         if userManager.currentUser != nil {
-            rootViewController = MyPageViewController()
+            // 로그인된 상태 - 탭바 컨트롤러 설정
+            setupTabBarController()
         } else {
-            rootViewController = LoginViewController()
+            // 로그인되지 않은 상태 - 로그인 화면으로 이동
+            let loginViewController = LoginViewController()
+            let navigationController = UINavigationController(rootViewController: loginViewController)
+            navigationController.isNavigationBarHidden = true
+            window?.rootViewController = navigationController
         }
-
-        // navigation Controller
-        let navigationController = UINavigationController(rootViewController: HomeViewController())
-//        navigationController.isNavigationBarHidden = true
         
-        window?.rootViewController = navigationController
         window?.makeKeyAndVisible()
         window?.windowScene = windowScene
-         
+    }
+    
+    // 탭바 컨트롤러 설정 메서드
+    private func setupTabBarController() {
+        let tabBarController = UITabBarController()
+        
+        // 홈 탭
+        let homeViewController = HomeViewController()
+        let homeNavigationController = UINavigationController(rootViewController: homeViewController)
+        homeViewController.title = "내 여행"
+        homeNavigationController.tabBarItem = UITabBarItem(
+            title: "내 여행",
+            image: UIImage(systemName: "house"),
+            selectedImage: UIImage(systemName: "house.fill")
+        )
+        
+        // 마이페이지 탭
+        let myPageViewController = MyPageViewController()
+        let myPageNavigationController = UINavigationController(rootViewController: myPageViewController)
+        myPageViewController.title = "프로필"
+        myPageNavigationController.tabBarItem = UITabBarItem(
+            title: "프로필",
+            image: UIImage(systemName: "person"),
+            selectedImage: UIImage(systemName: "person.fill")
+        )
+        
+        // 탭바에 네비게이션 컨트롤러 추가
+        tabBarController.viewControllers = [homeNavigationController, myPageNavigationController]
+        
+        // iOS 15 이상에서 탭바 스타일 설정
+        if #available(iOS 15.0, *) {
+            let appearance = UITabBarAppearance()
+            appearance.configureWithDefaultBackground()
+            tabBarController.tabBar.standardAppearance = appearance
+            tabBarController.tabBar.scrollEdgeAppearance = appearance
+        }
+        
+        window?.rootViewController = tabBarController
     }
     
     

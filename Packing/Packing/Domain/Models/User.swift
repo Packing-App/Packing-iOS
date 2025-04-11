@@ -52,4 +52,9 @@ extension User {
         pushNotificationEnabled: true,
         isEmailVerified: true
     )
+    
+    static let examples: [User] = [
+        User(id: UUID().uuidString, name: "로로", email: "", profileImage: "", intro: "", socialType: .apple, socialId: "", pushNotificationEnabled: false, isEmailVerified: false),
+    ]
+    static let currentUser = examples[0]
 }

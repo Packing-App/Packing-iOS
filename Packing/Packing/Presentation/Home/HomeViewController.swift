@@ -11,6 +11,18 @@ class HomeViewController: UIViewController {
     
     // MARK: - UI COMPONENTS
     
+    private lazy var scrollView: UIScrollView = {
+        let scrollView = UIScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        return scrollView
+    }()
+    
+    private lazy var contentView: UIView = {
+        let contentView = UIView()
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        return contentView
+    }()
+    
     private lazy var navigationTitleLabel: UILabel = {
         let label = UILabel()
         let attachmentString = NSMutableAttributedString(string: "")
@@ -94,8 +106,8 @@ class HomeViewController: UIViewController {
         return button
     }()
     
-    // My Travel Plan
-    private lazy var myTravelPlansView: UIView = {
+    // My Travel Plan Section
+    private lazy var myTravelPlansSectionView: UIView = {
         let view = UIView()
         view.backgroundColor = .white
         view.layer.cornerRadius = 20
@@ -107,7 +119,7 @@ class HomeViewController: UIViewController {
         return view
     }()
     
-    private lazy var myTravelPlansLabel: UILabel = {
+    private lazy var myTravelPlansSectionLabel: UILabel = {
         let label = UILabel()
         label.text = "라라님의 여행 계획"
         label.font = .systemFont(ofSize: 18, weight: .semibold)
@@ -145,6 +157,18 @@ class HomeViewController: UIViewController {
     
     
     // Templates Section
+    private lazy var templatesSectionView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .white
+        view.layer.cornerRadius = 20
+        view.layer.shadowColor = UIColor.black.withAlphaComponent(0.05).cgColor
+        view.layer.shadowOffset = CGSize(width: 0, height: 2)
+        view.layer.shadowRadius = 5
+        view.layer.shadowOpacity = 1
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
     private lazy var templatesSectionLabel: UILabel = {
         let label = UILabel()
         label.text = "테마별 여행 준비물 모음"
@@ -177,19 +201,9 @@ class HomeViewController: UIViewController {
     
     // MARK: - DATA
     
-    private let travelPlans = Journey.exampleJourneys
+    private let travelPlans = Journey.examples
     
-    private let themeTemplates = [
-        TravelThemeTemplate(themeName: "수상 스포츠", image: "waterSports"),
-        TravelThemeTemplate(themeName: "자전거 타기", image: "cycling"),
-        TravelThemeTemplate(themeName: "캠핑", image: "camping"),
-        TravelThemeTemplate(themeName: "피크닉", image: "picnic"),
-        TravelThemeTemplate(themeName: "등산", image: "hiking"),
-        TravelThemeTemplate(themeName: "스키", image: "skiing"),
-        TravelThemeTemplate(themeName: "낚시", image: "fishing"),
-        TravelThemeTemplate(themeName: "쇼핑", image: "shopping"),
-        TravelThemeTemplate(themeName: "테마파크", image: "themepark")
-    ]
+    private let themeTemplates = ThemeTemplate.examples
     
     // MARK: - LIFECYCLE
     
@@ -212,68 +226,97 @@ class HomeViewController: UIViewController {
         self.navigationItem.leftBarButtonItem = UIBarButtonItem.init(customView: navigationTitleLabel)
         self.navigationItem.rightBarButtonItem = UIBarButtonItem.init(customView: notificationButton)
         
-        view.addSubview(planeImageView)
-        view.addSubview(planeCloudImageView)
-        view.addSubview(titleLabel)
-        view.addSubview(planeCloudTwoImageView)
-        view.addSubview(addNewJourneyButton)
-        view.addSubview(myTravelPlansView)
-        myTravelPlansView.addSubview(myTravelPlansLabel)
-        myTravelPlansView.addSubview(seeAllButton)
-        myTravelPlansView.addSubview(travelPlansCollectionView)
-        view.addSubview(templatesSectionLabel)
-        view.addSubview(templatesCollectionView)
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        
+        contentView.addSubview(planeImageView)
+        contentView.addSubview(planeCloudImageView)
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(planeCloudTwoImageView)
+        contentView.addSubview(addNewJourneyButton)
+        contentView.addSubview(myTravelPlansSectionView)
+        contentView.addSubview(templatesSectionView)
+        
+        myTravelPlansSectionView.addSubview(myTravelPlansSectionLabel)
+        myTravelPlansSectionView.addSubview(seeAllButton)
+        myTravelPlansSectionView.addSubview(travelPlansCollectionView)
+        
+        templatesSectionView.addSubview(templatesSectionLabel)
+        templatesSectionView.addSubview(templatesCollectionView)
         
         NSLayoutConstraint.activate([
-            planeImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 40),
-            planeImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
+            // ScrollView
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            // ContentView
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            
+//            // Important: Make sure content view's bottom constraint connects to the last element
+            contentView.bottomAnchor.constraint(equalTo: templatesSectionView.bottomAnchor, constant: 0),
+            
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
+            
+            planeImageView.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor, constant: 40),
+            planeImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -30),
             planeImageView.widthAnchor.constraint(equalToConstant: 80),
             planeImageView.heightAnchor.constraint(equalToConstant: 40),
             
-            planeCloudImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 40),
-            planeCloudImageView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
+            planeCloudImageView.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor, constant: 40),
+            planeCloudImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -30),
             planeCloudImageView.widthAnchor.constraint(equalToConstant: 80),
             planeCloudImageView.heightAnchor.constraint(equalToConstant: 40),
             
-            titleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            titleLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             titleLabel.topAnchor.constraint(equalTo: planeImageView.bottomAnchor, constant: 20),
-            titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 30),
-            titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30),
+            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 30),
+            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -30),
             
-            planeCloudTwoImageView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 30),
+            planeCloudTwoImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 30),
             planeCloudTwoImageView.topAnchor.constraint(equalTo: titleLabel.topAnchor, constant: -10),
             planeCloudTwoImageView.widthAnchor.constraint(equalToConstant: 50),
             planeCloudTwoImageView.heightAnchor.constraint(equalToConstant: 20),
             
-            addNewJourneyButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            addNewJourneyButton.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             addNewJourneyButton.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
-            addNewJourneyButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
-            addNewJourneyButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
+            addNewJourneyButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 40),
+            addNewJourneyButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -40),
             
-            myTravelPlansView.topAnchor.constraint(equalTo: addNewJourneyButton.bottomAnchor, constant: 40),
-            myTravelPlansView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 0),
-            myTravelPlansView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: 0),
+            // myTravelPlansSection
+            myTravelPlansSectionView.topAnchor.constraint(equalTo: addNewJourneyButton.bottomAnchor, constant: 40),
+            myTravelPlansSectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 0),
+            myTravelPlansSectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: 0),
             
-            myTravelPlansLabel.topAnchor.constraint(equalTo: myTravelPlansView.topAnchor, constant: 20),
-            myTravelPlansLabel.leadingAnchor.constraint(equalTo: myTravelPlansView.leadingAnchor, constant: 20),
+            myTravelPlansSectionLabel.topAnchor.constraint(equalTo: myTravelPlansSectionView.topAnchor, constant: 20),
+            myTravelPlansSectionLabel.leadingAnchor.constraint(equalTo: myTravelPlansSectionView.leadingAnchor, constant: 20),
             
-            seeAllButton.centerYAnchor.constraint(equalTo: myTravelPlansLabel.centerYAnchor),
-            seeAllButton.trailingAnchor.constraint(equalTo: myTravelPlansView.trailingAnchor, constant: -20),
+            seeAllButton.centerYAnchor.constraint(equalTo: myTravelPlansSectionLabel.centerYAnchor),
+            seeAllButton.trailingAnchor.constraint(equalTo: myTravelPlansSectionView.trailingAnchor, constant: -20),
             
-            travelPlansCollectionView.topAnchor.constraint(equalTo: myTravelPlansLabel.bottomAnchor, constant: 15),
-            travelPlansCollectionView.leadingAnchor.constraint(equalTo: myTravelPlansView.leadingAnchor),
-            travelPlansCollectionView.trailingAnchor.constraint(equalTo: myTravelPlansView.trailingAnchor),
-            travelPlansCollectionView.heightAnchor.constraint(equalToConstant: 200),
-            travelPlansCollectionView.bottomAnchor.constraint(equalTo: myTravelPlansView.bottomAnchor, constant: -10),
+            travelPlansCollectionView.topAnchor.constraint(equalTo: myTravelPlansSectionLabel.bottomAnchor, constant: 15),
+            travelPlansCollectionView.leadingAnchor.constraint(equalTo: myTravelPlansSectionView.leadingAnchor),
+            travelPlansCollectionView.trailingAnchor.constraint(equalTo: myTravelPlansSectionView.trailingAnchor),
+            travelPlansCollectionView.heightAnchor.constraint(greaterThanOrEqualToConstant: 200),
+            travelPlansCollectionView.bottomAnchor.constraint(equalTo: myTravelPlansSectionView.bottomAnchor, constant: -10),
             
-            templatesSectionLabel.topAnchor.constraint(equalTo: myTravelPlansView.bottomAnchor, constant: 30),
-            templatesSectionLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            // TemplatesSection
+            templatesSectionView.topAnchor.constraint(equalTo: myTravelPlansSectionView.bottomAnchor, constant: 10),
+            templatesSectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 0),
+            templatesSectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: 0),
+            
+            templatesSectionLabel.topAnchor.constraint(equalTo: templatesSectionView.topAnchor, constant: 20),
+            templatesSectionLabel.leadingAnchor.constraint(equalTo: templatesSectionView.leadingAnchor, constant: 20),
             
             templatesCollectionView.topAnchor.constraint(equalTo: templatesSectionLabel.bottomAnchor, constant: 15),
-            templatesCollectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            templatesCollectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            templatesCollectionView.heightAnchor.constraint(equalToConstant: 450),
-            
+            templatesCollectionView.leadingAnchor.constraint(equalTo: templatesSectionView.leadingAnchor, constant: 20),
+            templatesCollectionView.trailingAnchor.constraint(equalTo: templatesSectionView.trailingAnchor, constant: -20),
+            templatesCollectionView.heightAnchor.constraint(greaterThanOrEqualToConstant: 450),
+            templatesCollectionView.bottomAnchor.constraint(equalTo: templatesSectionView.bottomAnchor, constant: -10)
         ])
     }
     
@@ -379,7 +422,7 @@ class TravelPlanCell: UICollectionViewCell {
             imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
             imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            imageView.heightAnchor.constraint(equalToConstant: 150),
+            imageView.heightAnchor.constraint(equalToConstant: 120),
             
             titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 8),
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -392,9 +435,9 @@ class TravelPlanCell: UICollectionViewCell {
     }
     
     func configure(with plan: Journey) {
-        imageView.image = UIImage(named: plan.imageUrl)
+        imageView.image = UIImage(named: plan.imageUrl ?? "")
         titleLabel.text = plan.title
-        dateLabel.text = plan.startDate
+        dateLabel.text = plan.startDate.description
     }
 }
 
@@ -445,8 +488,8 @@ class TemplateCell: UICollectionViewCell {
             
             imageView.centerXAnchor.constraint(equalTo: circleView.centerXAnchor),
             imageView.centerYAnchor.constraint(equalTo: circleView.centerYAnchor),
-            imageView.widthAnchor.constraint(equalToConstant: 60),
-            imageView.heightAnchor.constraint(equalToConstant: 60),
+            imageView.widthAnchor.constraint(equalToConstant: 100),
+            imageView.heightAnchor.constraint(equalToConstant: 100),
             
             titleLabel.topAnchor.constraint(equalTo: circleView.bottomAnchor, constant: 8),
             titleLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
@@ -455,9 +498,9 @@ class TemplateCell: UICollectionViewCell {
         ])
     }
     
-    func configure(with template: TravelThemeTemplate) {
+    func configure(with template: ThemeTemplate) {
         imageView.image = UIImage(named: template.image)
-        titleLabel.text = template.themeName
+        titleLabel.text = template.themeName.displayName
     }
 }
 
@@ -468,13 +511,7 @@ class TemplateCell: UICollectionViewCell {
     return navigationViewController
 }
 
-//
-// Extensions.swift
-//
-
 import UIKit
-
-// Add these extensions to your project
 
 // MARK: - UIColor Extension
 extension UIColor {
@@ -553,109 +590,6 @@ extension UIImage {
         return UIGraphicsGetImageFromCurrentImageContext() ?? self
     }
 }
-
-//
-//  ScrollViewImplementation.swift
-//  Packing
-//
-
-import UIKit
-
-// Add this code to make the entire view scrollable
-
-extension HomeViewController {
-    
-    func setupScrollView() {
-        // Create a scroll view
-        let scrollView = UIScrollView()
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        
-        // Create a content view to hold all content
-        let contentView = UIView()
-        contentView.translatesAutoresizingMaskIntoConstraints = false
-        
-        // Add scroll view to main view (after setting up gradient)
-        view.addSubview(scrollView)
-        scrollView.addSubview(contentView)
-        
-        // Configure scroll view constraints
-        NSLayoutConstraint.activate([
-            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            
-            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
-            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
-            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
-        ])
-        
-        // Add all your UI elements to contentView instead of view
-        // Move existing constraints to reference contentView instead of view
-        
-        contentView.addSubview(planeImageView)
-        contentView.addSubview(planeCloudImageView)
-        contentView.addSubview(titleLabel)
-        contentView.addSubview(planeCloudTwoImageView)
-        contentView.addSubview(addNewJourneyButton)
-        contentView.addSubview(myTravelPlansView)
-        contentView.addSubview(templatesSectionLabel)
-        contentView.addSubview(templatesCollectionView)
-        
-        // Update constraints to reference contentView
-        NSLayoutConstraint.activate([
-            planeImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 40),
-            planeImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -30),
-            planeImageView.widthAnchor.constraint(equalToConstant: 80),
-            planeImageView.heightAnchor.constraint(equalToConstant: 40),
-            
-            planeCloudImageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 40),
-            planeCloudImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -30),
-            planeCloudImageView.widthAnchor.constraint(equalToConstant: 80),
-            planeCloudImageView.heightAnchor.constraint(equalToConstant: 40),
-            
-            titleLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            titleLabel.topAnchor.constraint(equalTo: planeImageView.bottomAnchor, constant: 20),
-            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 30),
-            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -30),
-            
-            planeCloudTwoImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 30),
-            planeCloudTwoImageView.topAnchor.constraint(equalTo: titleLabel.topAnchor, constant: -10),
-            planeCloudTwoImageView.widthAnchor.constraint(equalToConstant: 50),
-            planeCloudTwoImageView.heightAnchor.constraint(equalToConstant: 20),
-            
-            addNewJourneyButton.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            addNewJourneyButton.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
-            addNewJourneyButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 40),
-            addNewJourneyButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -40),
-            
-            myTravelPlansView.topAnchor.constraint(equalTo: addNewJourneyButton.bottomAnchor, constant: 40),
-            myTravelPlansView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 0),
-            myTravelPlansView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: 0),
-            
-            templatesSectionLabel.topAnchor.constraint(equalTo: myTravelPlansView.bottomAnchor, constant: 30),
-            templatesSectionLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            
-            templatesCollectionView.topAnchor.constraint(equalTo: templatesSectionLabel.bottomAnchor, constant: 15),
-            templatesCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            templatesCollectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
-            templatesCollectionView.heightAnchor.constraint(equalToConstant: 450),
-            
-            // Important: Make sure content view's bottom constraint connects to the last element
-            contentView.bottomAnchor.constraint(equalTo: templatesCollectionView.bottomAnchor, constant: 30)
-        ])
-    }
-}
-
-
-//
-//  AnimationEffects.swift
-//  Packing
-//
-
-import UIKit
 
 // Add these animations to enhance the user experience
 

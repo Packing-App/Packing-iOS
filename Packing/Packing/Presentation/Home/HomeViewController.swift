@@ -225,7 +225,6 @@ class HomeViewController: UIViewController {
     private func setupUI() {
         self.navigationItem.leftBarButtonItem = UIBarButtonItem.init(customView: navigationTitleLabel)
         self.navigationItem.rightBarButtonItem = UIBarButtonItem.init(customView: notificationButton)
-        
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         
@@ -373,7 +372,14 @@ extension HomeViewController: UICollectionViewDataSource {
 // MARK: - UICollectionViewDelegate
 extension HomeViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        // Handle selection
+        if collectionView == travelPlansCollectionView {
+            let selectedJourney = travelPlans[indexPath.row]
+            
+            let detailVC = JourneyDetailViewController()
+            detailVC.journey = selectedJourney
+            
+            navigationController?.pushViewController(detailVC, animated: true)
+        }
     }
 }
 
@@ -423,6 +429,7 @@ class TravelPlanCell: UICollectionViewCell {
             imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             imageView.heightAnchor.constraint(equalToConstant: 120),
+//            imageView.widthAnchor.constraint(equalToConstant: 100),
             
             titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 8),
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -459,7 +466,7 @@ class TemplateCell: UICollectionViewCell {
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 14)
+        label.font = .systemFont(ofSize: 13, weight: .semibold)
         label.textColor = .black
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -590,6 +597,8 @@ extension UIImage {
         return UIGraphicsGetImageFromCurrentImageContext() ?? self
     }
 }
+
+
 
 // Add these animations to enhance the user experience
 

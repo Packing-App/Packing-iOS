@@ -52,6 +52,22 @@ struct Journey: Identifiable, Codable {
 extension Journey {
     static let examples: [Journey] = [
         Journey(
+            id: "journey3",
+            creatorId: User.currentUser.id,
+            title: "후지산 등반",
+            transportType: .train,
+            origin: "도쿄",
+            destination: "일본 후지산",
+            startDate: DateFormatter.journeyDateFormatter.date(from: "2024-04-10")!,
+            endDate: DateFormatter.journeyDateFormatter.date(from: "2024-04-15")!,
+            theme: .mountain,
+            imageUrl: "journey_fujisan",
+            isPrivate: false,
+            participants: [User.currentUser.id, User.exampleUser.id,User.exampleUser2.id],
+            createdAt: Date(),
+            updatedAt: Date()
+        ),
+        Journey(
             id: "journey1",
             creatorId: User.currentUser.id,
             title: "플리트비체 국립공원 탐험",
@@ -79,23 +95,7 @@ extension Journey {
             theme: .waterSports,
             imageUrl: "journey_danang",
             isPrivate: false,
-            participants: [User.currentUser.id],
-            createdAt: Date(),
-            updatedAt: Date()
-        ),
-        Journey(
-            id: "journey3",
-            creatorId: User.currentUser.id,
-            title: "후지산 등반",
-            transportType: .train,
-            origin: "도쿄",
-            destination: "일본 후지산",
-            startDate: DateFormatter.journeyDateFormatter.date(from: "2024-04-10")!,
-            endDate: DateFormatter.journeyDateFormatter.date(from: "2024-04-15")!,
-            theme: .mountain,
-            imageUrl: "journey_fujisan",
-            isPrivate: false,
-            participants: [User.currentUser.id],
+            participants: [User.currentUser.id, User.exampleUser.id],
             createdAt: Date(),
             updatedAt: Date()
         ),

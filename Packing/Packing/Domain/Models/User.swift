@@ -52,6 +52,17 @@ extension User {
         pushNotificationEnabled: true,
         isEmailVerified: true
     )
+    static let exampleUser2 = User(
+        id: UUID().uuidString,
+        name: "라라",
+        email: "rsdbddml@gmail.com",
+        profileImage: "demoUserProfileImage",
+        intro: "세계일주를 꿈꾸는 라라, 두 번째 여행 시작!",
+        socialType: .naver,
+        socialId: "dbddml631@naver.com",
+        pushNotificationEnabled: true,
+        isEmailVerified: true
+    )
     
     static let examples: [User] = [
         User(id: UUID().uuidString, name: "로로", email: "", profileImage: "", intro: "", socialType: .apple, socialId: "", pushNotificationEnabled: false, isEmailVerified: false),

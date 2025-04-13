@@ -45,9 +45,6 @@ enum TravelTheme: String, Codable, CaseIterable {
     case shopping = "shopping"
     case themepark = "themepark"
     case other = "other"
-    //    case beach = "beach"
-    //    case city = "city"
-//    case hiking = "hiking"
     
     var displayName: String {
         switch self {
@@ -61,11 +58,6 @@ enum TravelTheme: String, Codable, CaseIterable {
         case .skiing: return "스키"
         case .picnic: return "피크닉"
         case .other: return "기타"
-            /*
-             case .beach: return "해변"
-             case .city: return "도시"
-             case .hiking: return "하이킹"
-             */
         }
     }
     
@@ -163,11 +155,19 @@ extension Item {
 
 // 예시 테마 템플릿 데이터
 extension ThemeTemplate {
+    
     static let examples: [ThemeTemplate] = [
-        ThemeTemplate(id: "theme3", themeName: .camping, image: "theme_camping", items: Item.campingItems),
-        ThemeTemplate(id: "theme4", themeName: .skiing, image: "theme_skiing", items: Item.skiingItems),
-        ThemeTemplate(id: "theme6", themeName: .shopping, image: "theme_shopping", items: Item.shoppingItems),
-        ThemeTemplate(id: "theme7", themeName: .waterSports, image: "waterSports", items: Item.waterSportsItems)
+        ThemeTemplate(id: "theme1", themeName: .waterSports, image: "waterSports", items: Item.campingItems),
+        ThemeTemplate(id: "theme2", themeName: .cycling, image: "cycling", items: Item.skiingItems),
+        ThemeTemplate(id: "theme3", themeName: .camping, image: "camping", items: Item.shoppingItems),
+        
+        ThemeTemplate(id: "theme4", themeName: .picnic, image: "picnic", items: Item.waterSportsItems),
+        ThemeTemplate(id: "theme5", themeName: .mountain, image: "mountain", items: Item.waterSportsItems),
+        ThemeTemplate(id: "theme6", themeName: .skiing, image: "skiing", items: Item.waterSportsItems),
+        
+        ThemeTemplate(id: "theme7", themeName: .fishing, image: "fishing", items: Item.waterSportsItems),
+        ThemeTemplate(id: "theme8", themeName: .shopping, image: "shopping", items: Item.waterSportsItems),
+        ThemeTemplate(id: "theme9", themeName: .themepark, image: "themepark", items: Item.waterSportsItems),
     ]
     
     static func templateFor(theme: TravelTheme) -> ThemeTemplate {

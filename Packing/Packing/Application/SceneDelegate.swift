@@ -42,7 +42,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // 홈 탭
         let homeViewController = HomeViewController()
         let homeNavigationController = UINavigationController(rootViewController: homeViewController)
-        homeViewController.title = "내 여행"
         homeNavigationController.tabBarItem = UITabBarItem(
             title: "내 여행",
             image: UIImage(systemName: "house"),

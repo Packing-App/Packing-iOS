@@ -142,42 +142,60 @@ class PlanProgressBar: UIView {
     }()
     
     private func setupUI() {
-        self.addSubview(progressLine)
-        self.addSubview(transportIcon)
-        self.addSubview(infoIcon)
-        self.addSubview(themeIcon)
-        self.addSubview(completeIcon)
-        self.addSubview(transportText)
-        self.addSubview(infoText)
-        self.addSubview(themeText)
-        self.addSubview(completeText)
+        // 뷰 계층 구조 추가
+        addSubview(progressLine)
+        addSubview(transportIcon)
+        addSubview(infoIcon)
+        addSubview(themeIcon)
+        addSubview(completeIcon)
+        addSubview(transportText)
+        addSubview(infoText)
+        addSubview(themeText)
+        addSubview(completeText)
         
+        // 스택 뷰를 사용하여 아이콘 균등 배치 문제 해결
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.distribution = .equalSpacing
+        stackView.spacing = 60
+        stackView.alignment = .center
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 스택 뷰에 아이콘 추가
+        stackView.addArrangedSubview(transportIcon)
+        stackView.addArrangedSubview(infoIcon)
+        stackView.addArrangedSubview(themeIcon)
+        stackView.addArrangedSubview(completeIcon)
+        
+        addSubview(stackView)
+        
+        // 레이아웃 설정
         NSLayoutConstraint.activate([
+            // 스택 뷰 레이아웃
+            stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 40),
+            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -40),
+            stackView.centerYAnchor.constraint(equalTo: centerYAnchor),
+            
+            // 프로그레스 라인 레이아웃
             progressLine.heightAnchor.constraint(equalToConstant: 1),
-            progressLine.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 48),
-            progressLine.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -48),
+            progressLine.leadingAnchor.constraint(equalTo: transportIcon.centerXAnchor, constant: 8),
+            progressLine.trailingAnchor.constraint(equalTo: completeIcon.centerXAnchor, constant: -8),
             progressLine.centerYAnchor.constraint(equalTo: centerYAnchor),
             
+            // 아이콘 크기 설정
             transportIcon.heightAnchor.constraint(equalToConstant: 20),
             transportIcon.widthAnchor.constraint(equalToConstant: 20),
-            transportIcon.centerXAnchor.constraint(equalTo: leadingAnchor, constant: 32),
-            transportIcon.centerYAnchor.constraint(equalTo: progressLine.centerYAnchor),
             
             infoIcon.heightAnchor.constraint(equalToConstant: 20),
             infoIcon.widthAnchor.constraint(equalToConstant: 20),
-            infoIcon.centerXAnchor.constraint(equalTo: leadingAnchor, constant: progressLine.frame.width / 3),
-            infoIcon.centerYAnchor.constraint(equalTo: progressLine.centerYAnchor),
             
             themeIcon.heightAnchor.constraint(equalToConstant: 20),
             themeIcon.widthAnchor.constraint(equalToConstant: 20),
-            themeIcon.centerXAnchor.constraint(equalTo: leadingAnchor, constant: progressLine.frame.width * 2 / 3),
-            themeIcon.centerYAnchor.constraint(equalTo: progressLine.centerYAnchor),
             
             completeIcon.heightAnchor.constraint(equalToConstant: 20),
             completeIcon.widthAnchor.constraint(equalToConstant: 20),
-            completeIcon.centerXAnchor.constraint(equalTo: trailingAnchor, constant: -32),
-            completeIcon.centerYAnchor.constraint(equalTo: progressLine.centerYAnchor),
             
+            // 텍스트 레이아웃
             transportText.centerXAnchor.constraint(equalTo: transportIcon.centerXAnchor),
             transportText.topAnchor.constraint(equalTo: transportIcon.bottomAnchor, constant: 5),
             
@@ -211,33 +229,33 @@ class PlanProgressBar: UIView {
         switch progress {
         case 0:
             animateIconChange(icon: transportIcon, newImage: UIImage(systemName: "smallcircle.filled.circle")?.withTintColor(progressBlue, renderingMode: .alwaysOriginal), backgroundColor: .white)
-            animateIconChange(icon: infoIcon, newImage: UIImage(systemName: "circle")?.withTintColor(progressGray, renderingMode: .alwaysOriginal), backgroundColor: UIColor(named: "BGSecondary"))
-            animateIconChange(icon: themeIcon, newImage: UIImage(systemName: "circle")?.withTintColor(progressGray, renderingMode: .alwaysOriginal), backgroundColor: UIColor(named: "BGSecondary"))
-            animateIconChange(icon: completeIcon, newImage: UIImage(systemName: "circle")?.withTintColor(progressGray, renderingMode: .alwaysOriginal), backgroundColor: UIColor(named: "BGSecondary"))
+            animateIconChange(icon: infoIcon, newImage: UIImage(systemName: "circle")?.withTintColor(progressGray, renderingMode: .alwaysOriginal), backgroundColor: .systemBackground)
+            animateIconChange(icon: themeIcon, newImage: UIImage(systemName: "circle")?.withTintColor(progressGray, renderingMode: .alwaysOriginal), backgroundColor: .systemBackground)
+            animateIconChange(icon: completeIcon, newImage: UIImage(systemName: "circle")?.withTintColor(progressGray, renderingMode: .alwaysOriginal), backgroundColor: .systemBackground)
 
-            animateTextColorChange(label: transportText, newColor: UIColor(named: "LabelsPrimary"))
+            animateTextColorChange(label: transportText, newColor: UIColor.label)
             animateTextColorChange(label: infoText, newColor: progressDeactivateGray)
             animateTextColorChange(label: themeText, newColor: progressDeactivateGray)
             animateTextColorChange(label: completeText, newColor: progressDeactivateGray)
         case 1:
             animateIconChange(icon: transportIcon, newImage: UIImage(systemName: "checkmark.circle.fill")?.withTintColor(progressBlue, renderingMode: .alwaysOriginal), backgroundColor: .white)
             animateIconChange(icon: infoIcon, newImage: UIImage(systemName: "smallcircle.filled.circle")?.withTintColor(progressBlue, renderingMode: .alwaysOriginal), backgroundColor: .white)
-            animateIconChange(icon: themeIcon, newImage: UIImage(systemName: "circle")?.withTintColor(progressGray, renderingMode: .alwaysOriginal), backgroundColor: UIColor(named: "BGSecondary"))
-            animateIconChange(icon: completeIcon, newImage: UIImage(systemName: "circle")?.withTintColor(progressGray, renderingMode: .alwaysOriginal), backgroundColor: UIColor(named: "BGSecondary"))
+            animateIconChange(icon: themeIcon, newImage: UIImage(systemName: "circle")?.withTintColor(progressGray, renderingMode: .alwaysOriginal), backgroundColor: .systemBackground)
+            animateIconChange(icon: completeIcon, newImage: UIImage(systemName: "circle")?.withTintColor(progressGray, renderingMode: .alwaysOriginal), backgroundColor: .systemBackground)
 
             animateTextColorChange(label: transportText, newColor: progressDeactivateGray)
-            animateTextColorChange(label: infoText, newColor: UIColor(named: "LabelsPrimary"))
+            animateTextColorChange(label: infoText, newColor: UIColor.label)
             animateTextColorChange(label: themeText, newColor: progressDeactivateGray)
             animateTextColorChange(label: completeText, newColor: progressDeactivateGray)
         case 2:
             animateIconChange(icon: transportIcon, newImage: UIImage(systemName: "checkmark.circle.fill")?.withTintColor(progressBlue, renderingMode: .alwaysOriginal), backgroundColor: .white)
             animateIconChange(icon: infoIcon, newImage: UIImage(systemName: "checkmark.circle.fill")?.withTintColor(progressBlue, renderingMode: .alwaysOriginal), backgroundColor: .white)
             animateIconChange(icon: themeIcon, newImage: UIImage(systemName: "smallcircle.filled.circle")?.withTintColor(progressBlue, renderingMode: .alwaysOriginal), backgroundColor: .white)
-            animateIconChange(icon: completeIcon, newImage: UIImage(systemName: "circle")?.withTintColor(progressGray, renderingMode: .alwaysOriginal), backgroundColor: UIColor(named: "BGSecondary"))
+            animateIconChange(icon: completeIcon, newImage: UIImage(systemName: "circle")?.withTintColor(progressGray, renderingMode: .alwaysOriginal), backgroundColor: .systemBackground)
 
             animateTextColorChange(label: transportText, newColor: progressDeactivateGray)
             animateTextColorChange(label: infoText, newColor: progressDeactivateGray)
-            animateTextColorChange(label: themeText, newColor: UIColor(named: "LabelsPrimary"))
+            animateTextColorChange(label: themeText, newColor: UIColor.label)
             animateTextColorChange(label: completeText, newColor: progressDeactivateGray)
         case 3:
             animateIconChange(icon: transportIcon, newImage: UIImage(systemName: "checkmark.circle.fill")?.withTintColor(progressBlue, renderingMode: .alwaysOriginal), backgroundColor: .white)
@@ -268,5 +286,5 @@ class PlanProgressBar: UIView {
 
 // MARK: - PREVIEW
 #Preview {
-    PlanProgressBar(progress: 1)
+    PlanProgressBar(progress: 4)
 }

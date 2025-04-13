@@ -286,5 +286,5 @@ class PlanProgressBar: UIView {
 
 // MARK: - PREVIEW
 #Preview {
-    PlanProgressBar(progress: 4)
+    PlanProgressBar(progress: 1)
 }

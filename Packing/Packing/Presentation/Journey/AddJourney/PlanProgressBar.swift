@@ -1,5 +1,5 @@
 //
-//  AddJourneyViewController.swift
+//  PlanProgressBar.swift
 //  Packing
 //
 //  Created by 이융의 on 4/13/25.

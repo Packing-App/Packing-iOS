@@ -42,13 +42,11 @@ class HomeViewController: UIViewController {
         return label
     }()
     
-    private lazy var notificationButton: UIButton = {
-        let button = UIButton(type: .custom)
+    private let notificationButton: UIButton = {
+        let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "bell"), for: .normal)
         button.tintColor = .white
-        button.imageView?.contentMode = .scaleAspectFit
-        button.imageView?.preferredSymbolConfiguration = .init(pointSize: 18, weight: .regular)
-        
+        button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
     
@@ -212,6 +210,7 @@ class HomeViewController: UIViewController {
         setupUI()
         configureNavigationBar()
         setupGradientBackground()
+        setupAllAnimations()
     }
     
     override func viewDidLayoutSubviews() {
@@ -674,20 +673,28 @@ extension HomeViewController {
     
     // Add reactive button feedback
     func setupButtonFeedback() {
-        addNewJourneyButton.addTarget(self, action: #selector(buttonTouchDown(_:)), for: .touchDown)
-        addNewJourneyButton.addTarget(self, action: #selector(buttonTouchUp(_:)), for: [.touchUpInside, .touchUpOutside, .touchCancel])
+//        addNewJourneyButton.addTarget(self, action: #selector(buttonTouchDown(_:)), for: .touchDown)
+        addNewJourneyButton.addTarget(self, action: #selector(buttonTouchUp(_:)), for: .touchUpInside)
     }
     
-    @objc private func buttonTouchDown(_ sender: UIButton) {
-        UIView.animate(withDuration: 0.1) {
-            sender.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        }
-    }
+//    @objc private func buttonTouchDown(_ sender: UIButton) {
+//        UIView.animate(withDuration: 0.1) {
+//            sender.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+//        }
+//    }
     
     @objc private func buttonTouchUp(_ sender: UIButton) {
-        UIView.animate(withDuration: 0.1) {
-            sender.transform = .identity
-        }
+//        UIView.animate(withDuration: 0.1) {
+//            sender.transform = .identity
+//        }
+        let addJourneyVC = AddJourneyViewController()
+        navigationController?.pushViewController(addJourneyVC, animated: true)
+        /*
+         
+             let signUpViewModel = EmailSignUpViewModel()
+             let signUpViewController = EmailSignUpViewController(viewModel: signUpViewModel)
+             navigationController?.pushViewController(signUpViewController, animated: true)
+         */
     }
     
     // Add to viewDidLoad

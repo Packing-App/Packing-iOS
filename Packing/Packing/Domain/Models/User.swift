@@ -11,7 +11,7 @@ struct User: Codable, Equatable {
     let id: String
     let name: String
     let email: String
-    let profileImage: String?
+    var profileImage: String?
     let intro: String?
     let socialType: LoginType
     let socialId: String?

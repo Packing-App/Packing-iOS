@@ -224,6 +224,8 @@ class HomeViewController: UIViewController {
     private func setupUI() {
         self.navigationItem.leftBarButtonItem = UIBarButtonItem.init(customView: navigationTitleLabel)
         self.navigationItem.rightBarButtonItem = UIBarButtonItem.init(customView: notificationButton)
+        self.navigationController?.navigationBar.tintColor = .white
+
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         
@@ -687,7 +689,9 @@ extension HomeViewController {
 //        UIView.animate(withDuration: 0.1) {
 //            sender.transform = .identity
 //        }
-        let addJourneyVC = AddJourneyViewController()
+        
+        let addJourneyVC = JourneyTransportTypeSelectionViewController()
+        addJourneyVC.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(addJourneyVC, animated: true)
         /*
          

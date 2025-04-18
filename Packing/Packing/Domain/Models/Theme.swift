@@ -48,10 +48,10 @@ enum TravelTheme: String, Codable, CaseIterable {
     
     var displayName: String {
         switch self {
-        case .mountain: return "산"
+        case .mountain: return "등산"
         case .camping: return "캠핑"
         case .waterSports: return "수상 스포츠"
-        case .cycling: return "사이클링"
+        case .cycling: return "자전거 타기"
         case .shopping: return "쇼핑"
         case .themepark: return "테마파크"
         case .fishing: return "낚시"

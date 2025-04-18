@@ -1,0 +1,755 @@
+//
+//  JourneyDateSelectionViewController.swift
+//  Packing
+//
+//  Created by 이융의 on 4/14/25.
+//
+
+import UIKit
+
+class JourneyDateSelectionViewController: UIViewController {
+    
+    // MARK: - Properties
+    private lazy var navigationTitleLabel: UILabel = {
+        let label = UILabel()
+        let attachmentString = NSMutableAttributedString(string: "")
+        let imageAttachment: NSTextAttachment = NSTextAttachment()
+        imageAttachment.image = UIImage(named: "logoIconWhite")
+        imageAttachment.bounds = CGRect(x: 0, y: -7, width: 24, height: 24)
+        attachmentString.append(NSAttributedString(attachment: imageAttachment))
+        attachmentString.append(NSAttributedString(string: " PACKING"))
+        label.attributedText = attachmentString
+        label.sizeToFit()
+        
+        label.textAlignment = .center
+        label.font = .systemFont(ofSize: 20, weight: .semibold)
+        label.textColor = .white
+        label.translatesAutoresizingMaskIntoConstraints = false
+        
+        return label
+    }()
+    
+    private let planProgressBar: PlanProgressBar = {
+        let progressBar = PlanProgressBar(progress: 1)
+        progressBar.translatesAutoresizingMaskIntoConstraints = false
+        return progressBar
+    }()
+    
+    private let containerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .white
+        view.layer.cornerRadius = 20
+        view.layer.shadowColor = UIColor.black.cgColor
+        view.layer.shadowOpacity = 0.1
+        view.layer.shadowOffset = CGSize(width: 0, height: 2)
+        view.layer.shadowRadius = 4
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "여행 정보를 입력해주세요"
+        label.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
+        label.textColor = .black
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let departureButton: UIButton = {
+        let button = UIButton(type: .system)
+        
+        // Use UIButtonConfiguration for iOS 15+ compatibility
+        var config = UIButton.Configuration.plain()
+        config.title = "어디서 출발하시나요?"
+        config.baseForegroundColor = .gray
+        config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 50, bottom: 0, trailing: 0)
+        config.background.backgroundColor = .white
+        button.configuration = config
+        
+        button.layer.cornerRadius = 10
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.systemGray5.cgColor
+        button.translatesAutoresizingMaskIntoConstraints = false
+        
+        let planeImage = UIImage(systemName: "airplane.departure")
+        let imageView = UIImageView(image: planeImage)
+        imageView.tintColor = UIColor.main
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        button.addSubview(imageView)
+        
+        NSLayoutConstraint.activate([
+            imageView.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 15),
+            imageView.centerYAnchor.constraint(equalTo: button.centerYAnchor),
+            imageView.widthAnchor.constraint(equalToConstant: 24),
+            imageView.heightAnchor.constraint(equalToConstant: 24)
+        ])
+        
+        return button
+    }()
+    
+    private let destinationButton: UIButton = {
+        let button = UIButton(type: .system)
+        
+        // Use UIButtonConfiguration for iOS 15+ compatibility
+        var config = UIButton.Configuration.plain()
+        config.title = "어디로 떠나시나요?"
+        config.baseForegroundColor = .gray
+        config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 50, bottom: 0, trailing: 0)
+        config.background.backgroundColor = .white
+        button.configuration = config
+        
+        button.layer.cornerRadius = 10
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.systemGray5.cgColor
+        button.translatesAutoresizingMaskIntoConstraints = false
+        
+        let planeImage = UIImage(systemName: "airplane.arrival")
+        let imageView = UIImageView(image: planeImage)
+        imageView.tintColor = UIColor.main
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        button.addSubview(imageView)
+        
+        NSLayoutConstraint.activate([
+            imageView.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 15),
+            imageView.centerYAnchor.constraint(equalTo: button.centerYAnchor),
+            imageView.widthAnchor.constraint(equalToConstant: 24),
+            imageView.heightAnchor.constraint(equalToConstant: 24)
+        ])
+        
+        return button
+    }()
+    
+    private let dateStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.distribution = .fillEqually
+        stackView.spacing = 8
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        return stackView
+    }()
+    
+    private let departureDateButton: UIButton = {
+        let button = UIButton(type: .system)
+        
+        var config = UIButton.Configuration.plain()
+        config.title = "출발 날짜"
+        config.baseForegroundColor = .black
+        config.background.backgroundColor = .white
+        button.configuration = config
+        
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 12)
+        button.tintColor = .gray
+        button.layer.cornerRadius = 10
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.systemGray5.cgColor
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private let arrivalDateButton: UIButton = {
+        let button = UIButton(type: .system)
+        
+        var config = UIButton.Configuration.plain()
+        config.title = "도착 날짜"
+        config.baseForegroundColor = .black
+        config.background.backgroundColor = .white
+        button.configuration = config
+        
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 12)
+        button.tintColor = .gray
+        button.layer.cornerRadius = 10
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.systemGray5.cgColor
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private let monthControlStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.distribution = .equalSpacing
+        stackView.alignment = .center
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        return stackView
+    }()
+    
+    private let previousMonthButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "chevron.left"), for: .normal)
+        button.tintColor = .black
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private let monthYearLabel: UILabel = {
+        let label = UILabel()
+        label.text = "2024년 5월"
+        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let nextMonthButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "chevron.right"), for: .normal)
+        button.tintColor = .black
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private let calendarView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let weekdaysStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .horizontal
+        stackView.distribution = .fillEqually
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        return stackView
+    }()
+    
+    private let nextButton: UIButton = {
+        let button = UIButton(type: .system)
+        
+        var config = UIButton.Configuration.filled()
+        config.title = "다음"
+        config.baseForegroundColor = .white
+        config.background.backgroundColor = .black
+        config.cornerStyle = .medium
+        button.configuration = config
+        
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private var calendarDayButtons = [UIButton]()
+    private var selectedDepartureDate: Date?
+    private var selectedArrivalDate: Date?
+    private var currentMonth = Date()
+    
+    // MARK: - Lifecycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
+        setupCalendar()
+        setupActions()
+    }
+    
+    // MARK: - Setup UI
+    private func setupUI() {
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(customView: navigationTitleLabel)
+
+        view.backgroundColor = .systemGray6
+        
+        // Add progress bar
+        view.addSubview(planProgressBar)
+
+        // Add container view
+        view.addSubview(containerView)
+        
+        // Add components to container
+        containerView.addSubview(titleLabel)
+        containerView.addSubview(departureButton)
+        containerView.addSubview(destinationButton)
+        containerView.addSubview(dateStackView)
+        
+        // Add date buttons to stack
+        dateStackView.addArrangedSubview(departureDateButton)
+        dateStackView.addArrangedSubview(arrivalDateButton)
+        
+        // Add month control
+        containerView.addSubview(monthControlStackView)
+        monthControlStackView.addArrangedSubview(previousMonthButton)
+        monthControlStackView.addArrangedSubview(monthYearLabel)
+        monthControlStackView.addArrangedSubview(nextMonthButton)
+        
+        // Add calendar view
+        containerView.addSubview(calendarView)
+        
+        // Add weekdays stack
+        containerView.addSubview(weekdaysStackView)
+        setupWeekdaysLabels()
+        
+        // Add next button
+        view.addSubview(nextButton)
+        
+        NSLayoutConstraint.activate([
+            // Progress bar constraints
+            planProgressBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            planProgressBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            planProgressBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            planProgressBar.heightAnchor.constraint(equalToConstant: 40),
+            
+            // Container view constraints
+            containerView.topAnchor.constraint(equalTo: planProgressBar.bottomAnchor, constant: 30),
+            containerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            containerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            containerView.heightAnchor.constraint(equalToConstant: 560),
+            
+            // Title label constraints
+            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 20),
+            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            
+            // Departure button constraints
+            departureButton.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
+            departureButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            departureButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            departureButton.heightAnchor.constraint(equalToConstant: 45),
+            
+            // Destination button constraints
+            destinationButton.topAnchor.constraint(equalTo: departureButton.bottomAnchor, constant: 10),
+            destinationButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            destinationButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            destinationButton.heightAnchor.constraint(equalToConstant: 45),
+            
+            // Date stack view constraints
+            dateStackView.topAnchor.constraint(equalTo: destinationButton.bottomAnchor, constant: 15),
+            dateStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            dateStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            dateStackView.heightAnchor.constraint(equalToConstant: 40),
+            
+            // Month control stack view constraints
+            monthControlStackView.topAnchor.constraint(equalTo: dateStackView.bottomAnchor, constant: 20),
+            monthControlStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            monthControlStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            monthControlStackView.heightAnchor.constraint(equalToConstant: 30),
+            
+            // Weekdays stack view constraints
+            weekdaysStackView.topAnchor.constraint(equalTo: monthControlStackView.bottomAnchor, constant: 15),
+            weekdaysStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            weekdaysStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            weekdaysStackView.heightAnchor.constraint(equalToConstant: 30),
+            
+            // Calendar view constraints
+            calendarView.topAnchor.constraint(equalTo: weekdaysStackView.bottomAnchor, constant: 10),
+            calendarView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            calendarView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            calendarView.bottomAnchor.constraint(lessThanOrEqualTo: containerView.bottomAnchor, constant: -20),
+            
+            // Next button constraints
+            nextButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            nextButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            nextButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            nextButton.heightAnchor.constraint(equalToConstant: 50)
+        ])
+    }
+    
+    private func setupWeekdaysLabels() {
+        let weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+        
+        for weekday in weekdays {
+            let label = UILabel()
+            label.text = weekday
+            label.textAlignment = .center
+            label.font = UIFont.systemFont(ofSize: 14)
+            label.textColor = .darkGray
+            weekdaysStackView.addArrangedSubview(label)
+        }
+    }
+    
+    private func setupCalendar() {
+        // Clear any existing calendar buttons
+        for button in calendarDayButtons {
+            button.removeFromSuperview()
+        }
+        calendarDayButtons.removeAll()
+        
+        // Get the current month's calendar info
+        let calendar = Calendar.current
+        let currentYear = calendar.component(.year, from: currentMonth)
+        let currentMonthInt = calendar.component(.month, from: currentMonth)
+        
+        // Update month label
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy년 M월"
+        monthYearLabel.text = dateFormatter.string(from: currentMonth)
+        
+        // Calculate days in month and first weekday
+        let dateComponents = DateComponents(year: currentYear, month: currentMonthInt)
+        guard let firstDayOfMonth = calendar.date(from: dateComponents),
+              let rangeOfDays = calendar.range(of: .day, in: .month, for: firstDayOfMonth) else {
+            return
+        }
+        
+        let numberOfDays = rangeOfDays.count
+        let firstWeekday = calendar.component(.weekday, from: firstDayOfMonth) - 1 // 0-based index for our grid
+        
+        // Create a 7x6 grid for the calendar
+        let buttonSize: CGFloat = (calendarView.bounds.width > 0 ? calendarView.bounds.width : UIScreen.main.bounds.width - 60) / 7
+        let rows = 6 // Max number of rows needed for any month
+        
+        for row in 0..<rows {
+            for col in 0..<7 {
+                let index = row * 7 + col
+                let dayNumber = index - firstWeekday + 1
+                
+                let button = UIButton(type: .system)
+                button.frame = CGRect(
+                    x: CGFloat(col) * buttonSize,
+                    y: CGFloat(row) * buttonSize,
+                    width: buttonSize,
+                    height: buttonSize
+                )
+                
+                // Configure button appearance
+                button.titleLabel?.font = UIFont.systemFont(ofSize: 15)
+                button.layer.cornerRadius = buttonSize / 2
+                button.tag = dayNumber
+                
+                if dayNumber > 0 && dayNumber <= numberOfDays {
+                    button.setTitle("\(dayNumber)", for: .normal)
+                    button.addTarget(self, action: #selector(calendarDayTapped(_:)), for: .touchUpInside)
+                    
+                    // Highlight specific days for demo (May 6 and May 15)
+                    if (dayNumber == 6 && currentMonthInt == 5) {
+                        button.backgroundColor = UIColor.main
+                        button.setTitleColor(.white, for: .normal)
+                    } else if (dayNumber == 15 && currentMonthInt == 5) {
+                        button.backgroundColor = UIColor.main
+                        button.setTitleColor(.white, for: .normal)
+                    } else {
+                        button.setTitleColor(.black, for: .normal)
+                    }
+                    
+                    // Highlight current day
+                    if calendar.isDateInToday(calendar.date(byAdding: .day, value: dayNumber - 1, to: firstDayOfMonth) ?? Date()) {
+                        button.layer.borderWidth = 1
+                        button.layer.borderColor = UIColor.main.cgColor
+                    }
+                } else {
+                    // Empty days
+                    button.setTitle("", for: .normal)
+                    button.isEnabled = false
+                }
+                
+                calendarView.addSubview(button)
+                calendarDayButtons.append(button)
+            }
+        }
+    }
+    
+    private func setupActions() {
+        departureButton.addTarget(self, action: #selector(departureButtonTapped), for: .touchUpInside)
+        destinationButton.addTarget(self, action: #selector(destinationButtonTapped), for: .touchUpInside)
+        previousMonthButton.addTarget(self, action: #selector(previousMonthTapped), for: .touchUpInside)
+        nextMonthButton.addTarget(self, action: #selector(nextMonthTapped), for: .touchUpInside)
+        nextButton.addTarget(self, action: #selector(nextButtonTapped), for: .touchUpInside)
+    }
+    
+    // MARK: - Actions
+    @objc private func departureButtonTapped() {
+        let searchVC = LocationSearchViewController(searchType: .departure)
+        if let sheet = searchVC.sheetPresentationController {
+            sheet.detents = [.medium()]
+            sheet.prefersGrabberVisible = true
+        }
+        present(searchVC, animated: true)
+    }
+    
+    @objc private func destinationButtonTapped() {
+        let searchVC = LocationSearchViewController(searchType: .destination)
+        if let sheet = searchVC.sheetPresentationController {
+            sheet.detents = [.medium()]
+            sheet.prefersGrabberVisible = true
+        }
+        present(searchVC, animated: true)
+    }
+    
+    @objc private func previousMonthTapped() {
+        let calendar = Calendar.current
+        if let newMonth = calendar.date(byAdding: .month, value: -1, to: currentMonth) {
+            currentMonth = newMonth
+            setupCalendar()
+        }
+    }
+    
+    @objc private func nextMonthTapped() {
+        let calendar = Calendar.current
+        if let newMonth = calendar.date(byAdding: .month, value: 1, to: currentMonth) {
+            currentMonth = newMonth
+            setupCalendar()
+        }
+    }
+    
+    @objc private func calendarDayTapped(_ sender: UIButton) {
+        // Get the day from the button tag
+        let dayNumber = sender.tag
+        
+        // Create the selected date
+        let calendar = Calendar.current
+        let year = calendar.component(.year, from: currentMonth)
+        let month = calendar.component(.month, from: currentMonth)
+        
+        var dateComponents = DateComponents()
+        dateComponents.year = year
+        dateComponents.month = month
+        dateComponents.day = dayNumber
+        
+        guard let selectedDate = calendar.date(from: dateComponents) else { return }
+        
+        // If we don't have departure date yet, or if we're starting a new selection
+        if selectedDepartureDate == nil || (selectedDepartureDate != nil && selectedArrivalDate != nil) {
+            // Reset selection
+            selectedDepartureDate = selectedDate
+            selectedArrivalDate = nil
+            
+            // Update UI
+            updateDateButtons()
+            highlightSelectedDates()
+        }
+        // If we have a departure date but no arrival date
+        else if selectedArrivalDate == nil {
+            // If the selected date is before the departure date, swap them
+            if selectedDate < selectedDepartureDate! {
+                selectedArrivalDate = selectedDepartureDate
+                selectedDepartureDate = selectedDate
+            } else {
+                selectedArrivalDate = selectedDate
+            }
+            
+            // Update UI
+            updateDateButtons()
+            highlightSelectedDates()
+        }
+    }
+    
+    private func updateDateButtons() {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yy.MM.dd"
+        
+        if let departureDate = selectedDepartureDate {
+            var config = departureDateButton.configuration
+            config?.title = "출발 \(dateFormatter.string(from: departureDate))"
+            departureDateButton.configuration = config
+        } else {
+            var config = departureDateButton.configuration
+            config?.title = "출발 날짜 선택"
+            departureDateButton.configuration = config
+        }
+        
+        if let arrivalDate = selectedArrivalDate {
+            var config = arrivalDateButton.configuration
+            config?.title = "도착 \(dateFormatter.string(from: arrivalDate))"
+            arrivalDateButton.configuration = config
+        } else {
+            var config = arrivalDateButton.configuration
+            config?.title = "도착 날짜 선택"
+            arrivalDateButton.configuration = config
+        }
+    }
+    
+    private func highlightSelectedDates() {
+        // Reset all buttons
+        for button in calendarDayButtons {
+            if button.isEnabled {
+                button.backgroundColor = .clear
+                button.setTitleColor(.black, for: .normal)
+                button.layer.borderWidth = 0
+            }
+        }
+        
+        // Highlight departure and arrival dates
+        let calendar = Calendar.current
+        
+        if let departureDate = selectedDepartureDate {
+            highlightDate(departureDate, withColor: UIColor.main)
+        }
+        
+        if let arrivalDate = selectedArrivalDate {
+            highlightDate(arrivalDate, withColor: UIColor.main)
+            
+            // Highlight days in between
+            if let departure = selectedDepartureDate {
+                var currentDate = departure
+                while currentDate < arrivalDate {
+                    if let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate) {
+                        if nextDate < arrivalDate {
+                            highlightDate(nextDate, withColor: UIColor.main.withAlphaComponent(0.3))
+                        }
+                        currentDate = nextDate
+                    } else {
+                        break
+                    }
+                }
+            }
+        }
+    }
+    
+    private func highlightDate(_ date: Date, withColor color: UIColor) {
+        let calendar = Calendar.current
+        let day = calendar.component(.day, from: date)
+        let month = calendar.component(.month, from: date)
+        let currentMonth = calendar.component(.month, from: self.currentMonth)
+        
+        // Only highlight if the date is in the current displayed month
+        if month == currentMonth {
+            for button in calendarDayButtons {
+                if button.tag == day {
+                    button.backgroundColor = color
+                    button.setTitleColor(.white, for: .normal)
+                    break
+                }
+            }
+        }
+    }
+    
+    @objc private func nextButtonTapped() {
+        let themeSelectionViewController = JourneyThemeSelectionViewController()
+        navigationController?.pushViewController(themeSelectionViewController, animated: true)
+    }
+}
+
+// MARK: - LocationSearchViewController
+class LocationSearchViewController: UIViewController {
+    
+    enum SearchType {
+        case departure
+        case destination
+    }
+    
+    private let searchType: SearchType
+    
+    // MARK: - UI Elements
+    private let searchBar: UISearchBar = {
+        let searchBar = UISearchBar()
+        searchBar.placeholder = "여행지 검색"
+        searchBar.translatesAutoresizingMaskIntoConstraints = false
+        return searchBar
+    }()
+    
+    private let tableView: UITableView = {
+        let tableView = UITableView()
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        return tableView
+    }()
+    
+    // MARK: - Init
+    init(searchType: SearchType) {
+        self.searchType = searchType
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    // MARK: - Lifecycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
+        configureTableView()
+    }
+    
+    // MARK: - Setup
+    private func setupUI() {
+        view.backgroundColor = .white
+        
+        // Add search bar
+        view.addSubview(searchBar)
+        searchBar.delegate = self
+        
+        // Add table view
+        view.addSubview(tableView)
+        
+        NSLayoutConstraint.activate([
+            searchBar.topAnchor.constraint(equalTo: view.topAnchor, constant: 20),
+            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            
+            tableView.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        
+        let title = searchType == .departure ? "출발지 선택" : "목적지 선택"
+        let titleLabel = UILabel()
+        titleLabel.text = title
+        titleLabel.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        titleLabel.textAlignment = .center
+        titleLabel.frame = CGRect(x: 0, y: 0, width: view.bounds.width, height: 44)
+        
+        tableView.tableHeaderView = titleLabel
+    }
+    
+    private func configureTableView() {
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "locationCell")
+        tableView.delegate = self
+        tableView.dataSource = self
+    }
+}
+
+// MARK: - UISearchBarDelegate
+extension LocationSearchViewController: UISearchBarDelegate {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        // In a real implementation, you would filter your data based on searchText
+        tableView.reloadData()
+    }
+}
+
+// MARK: - UITableViewDelegate, UITableViewDataSource
+extension LocationSearchViewController: UITableViewDelegate, UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 5 // Example data
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "locationCell", for: indexPath)
+        
+        // Example data
+        let locations = searchType == .departure ?
+            ["서울", "부산", "인천", "대구", "제주"] :
+            ["도쿄", "오사카", "파리", "뉴욕", "방콕"]
+        
+        var content = UIListContentConfiguration.cell()
+        content.text = locations[indexPath.row]
+        cell.contentConfiguration = content
+        
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+        // Get the selected location
+        let locations = searchType == .departure ?
+            ["서울", "부산", "인천", "대구", "제주"] :
+            ["도쿄", "오사카", "파리", "뉴욕", "방콕"]
+        let selectedLocation = locations[indexPath.row]
+        
+        // Notify parent controller about the selection
+        // In a real app, you would use a delegate or completion handler
+        dismiss(animated: true)
+    }
+}
+
+#if DEBUG
+import SwiftUI
+
+struct TravelDateSelectionViewControllerPreview: PreviewProvider {
+    static var previews: some View {
+        TravelDateSelectionViewControllerRepresentable()
+            .edgesIgnoringSafeArea(.all)
+    }
+    
+    struct TravelDateSelectionViewControllerRepresentable: UIViewControllerRepresentable {
+        func makeUIViewController(context: Context) -> JourneyDateSelectionViewController {
+            return JourneyDateSelectionViewController()
+        }
+        
+        func updateUIViewController(_ uiViewController: JourneyDateSelectionViewController, context: Context) {
+            // Not needed for this preview
+        }
+    }
+}
+#endif

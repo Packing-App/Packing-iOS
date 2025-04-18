@@ -1,5 +1,5 @@
 //
-//  AddJourneyViewController.swift
+//  JourneyTransportTypeSelectionViewController.swift
 //  Packing
 //
 //  Created by 이융의 on 4/14/25.
@@ -7,7 +7,7 @@
 
 import UIKit
 
-class AddJourneyViewController: UIViewController {
+class JourneyTransportTypeSelectionViewController: UIViewController {
     
     // MARK: - Properties
     private lazy var navigationTitleLabel: UILabel = {
@@ -50,7 +50,7 @@ class AddJourneyViewController: UIViewController {
     private let questionLabel: UILabel = {
         let label = UILabel()
         label.text = "여행을 어떻게 가시나요?"
-        label.font = UIFont.systemFont(ofSize: 20, weight: .medium)
+        label.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
         label.textColor = .black
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -99,7 +99,7 @@ class AddJourneyViewController: UIViewController {
     
     // MARK: - Setup UI
     private func setupUI() {
-        self.navigationItem.leftBarButtonItem = UIBarButtonItem(customView: navigationTitleLabel)        
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(customView: navigationTitleLabel)
         
         view.backgroundColor = .systemGray6
         
@@ -203,7 +203,7 @@ class AddJourneyViewController: UIViewController {
         titleLabel.tag = 1002
         
         NSLayoutConstraint.activate([
-            containerView.heightAnchor.constraint(equalToConstant: 60),
+            containerView.heightAnchor.constraint(equalToConstant: 50),
             
             iconImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             iconImageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
@@ -274,8 +274,8 @@ class AddJourneyViewController: UIViewController {
     }
     
     @objc private func nextButtonTapped() {
-        // Handle next button action
-        print("Next button tapped")
+        let travelDateSelectionViewController = JourneyDateSelectionViewController()
+        navigationController?.pushViewController(travelDateSelectionViewController, animated: true)
     }
     
     @objc private func skipButtonTapped() {

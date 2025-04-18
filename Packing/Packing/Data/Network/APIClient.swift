@@ -8,6 +8,11 @@
 import Foundation
 import RxSwift
 
+protocol APIClientProtocol {
+    func request<T: Decodable>(_ endpoint: APIEndpoint) -> Observable<T>
+    func uploadImage(imageData: Data, endpoint: APIEndpoint) -> Observable<TokenData>
+}
+
 // MARK: - API 모델
 
 struct APIResponse<T: Codable>: Codable {
@@ -31,7 +36,7 @@ struct ErrorResponse: Codable {
     let message: String
 }
 
-class APIClient {
+class APIClient: APIClientProtocol {
     static let shared = APIClient()
     private let session: URLSession
     private let tokenManager: KeyChainTokenStorage

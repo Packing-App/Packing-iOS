@@ -9,6 +9,7 @@ import UIKit
 import ReactorKit
 import RxSwift
 import RxCocoa
+import Kingfisher
 
 final class ProfileViewController: UIViewController, View {
     // MARK: - UI Components
@@ -309,20 +310,29 @@ final class ProfileViewController: UIViewController, View {
     // MARK: - UI Updates
     private func updateUserInfo(_ user: User) {
         // 프로필 이미지 설정
-        if let imageURL = user.profileImage, !imageURL.isEmpty {
-            if let image = UIImage(named: imageURL) {
-                profileImageView.image = image
-            } else {
-                // URL에서 이미지 로드 로직 (간단하게 처리)
-                profileImageView.image = UIImage(systemName: "person.circle.fill")
-                
-                // 실제 코드에서는 이미지 로딩 라이브러리 사용 권장
-                // 예: Kingfisher, SDWebImage 등
-                // imageView.kf.setImage(with: URL(string: imageURL))
-            }
-        } else {
-            profileImageView.image = UIImage(systemName: "person.circle.fill")
+        profileImageView.backgroundColor = .clear
+        guard let imageURL = user.profileImage else {
+//            profileImageView.image = UIImage(systemName: "person.circle.fill")
+            return
         }
+        if let url = URL(string: imageURL), !imageURL.isEmpty {
+//            let pngSerializer = FormatIndicatedCacheSerializer.png
+            profileImageView.kf.indicatorType = .activity
+            profileImageView.kf.setImage(with: url)
+        } else {
+//            profileImageView.image = UIImage(systemName: "person.circle.fill")
+        }
+        /*
+         cell.sampleImageView.kf.indicatorType = .activity
+         
+         let roundCorner = RoundCornerImageProcessor(radius: .widthFraction(0.5), roundingCorners: [.topLeft, .bottomRight])
+         let pngSerializer = FormatIndicatedCacheSerializer.png
+         cell.sampleImageView.kf.setImage(
+             with: url,
+             options: [.processor(roundCorner), .cacheSerializer(pngSerializer)]
+         )
+         cell.sampleImageView.backgroundColor = .clear
+         */
         
         // 이름과 소개 설정
         nameLabel.text = user.name

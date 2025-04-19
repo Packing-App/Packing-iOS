@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CE7BDF582DB3C2E200BCB9D6 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = CE7BDF572DB3C2E200BCB9D6 /* Kingfisher */; };
 		CEBF1A362D9796B900AF1B94 /* ReactorKit in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A352D9796B900AF1B94 /* ReactorKit */; };
 		CEBF1A392D9796D700AF1B94 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A382D9796D700AF1B94 /* SnapKit */; };
 		CEBF1A3E2D97970000AF1B94 /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A3D2D97970000AF1B94 /* RxCocoa */; };
@@ -47,6 +48,7 @@
 			files = (
 				CEBF1A422D97970000AF1B94 /* RxSwift in Frameworks */,
 				CEBF1A402D97970000AF1B94 /* RxRelay in Frameworks */,
+				CE7BDF582DB3C2E200BCB9D6 /* Kingfisher in Frameworks */,
 				CEBF1AC02D9845F600AF1B94 /* KeychainAccess in Frameworks */,
 				CEBF1A392D9796D700AF1B94 /* SnapKit in Frameworks */,
 				CEBF1A362D9796B900AF1B94 /* ReactorKit in Frameworks */,
@@ -99,6 +101,7 @@
 				CEBF1A3F2D97970000AF1B94 /* RxRelay */,
 				CEBF1A412D97970000AF1B94 /* RxSwift */,
 				CEBF1ABF2D9845F600AF1B94 /* KeychainAccess */,
+				CE7BDF572DB3C2E200BCB9D6 /* Kingfisher */,
 			);
 			productName = Packing;
 			productReference = CE797EFE2D91A3EB00EEA5B1 /* Packing.app */;
@@ -133,6 +136,7 @@
 				CEBF1A372D9796D700AF1B94 /* XCRemoteSwiftPackageReference "SnapKit" */,
 				CEBF1A3C2D97970000AF1B94 /* XCRemoteSwiftPackageReference "RxSwift" */,
 				CEBF1ABE2D9845F600AF1B94 /* XCRemoteSwiftPackageReference "KeychainAccess" */,
+				CE7BDF562DB3C2E200BCB9D6 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CE797EFF2D91A3EB00EEA5B1 /* Products */;
@@ -374,6 +378,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		CE7BDF562DB3C2E200BCB9D6 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.3.2;
+			};
+		};
 		CEBF1A342D9796B900AF1B94 /* XCRemoteSwiftPackageReference "ReactorKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ReactorKit/ReactorKit.git";
@@ -409,6 +421,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		CE7BDF572DB3C2E200BCB9D6 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CE7BDF562DB3C2E200BCB9D6 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
+		};
 		CEBF1A352D9796B900AF1B94 /* ReactorKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = CEBF1A342D9796B900AF1B94 /* XCRemoteSwiftPackageReference "ReactorKit" */;

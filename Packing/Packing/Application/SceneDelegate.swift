@@ -49,17 +49,18 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         )
         
         // 마이페이지 탭
-        let myPageViewController = MyPageViewController()
-        let myPageNavigationController = UINavigationController(rootViewController: myPageViewController)
-        myPageViewController.title = "프로필"
-        myPageNavigationController.tabBarItem = UITabBarItem(
+        let profileReactor = ProfileViewReactor()
+        let profileViewController = ProfileViewController(reactor: profileReactor)
+        let profileNavigationController = UINavigationController(rootViewController: profileViewController)
+        profileViewController.title = "프로필"
+        profileNavigationController.tabBarItem = UITabBarItem(
             title: "프로필",
             image: UIImage(systemName: "person"),
             selectedImage: UIImage(systemName: "person.fill")
         )
         
         // 탭바에 네비게이션 컨트롤러 추가
-        tabBarController.viewControllers = [homeNavigationController, myPageNavigationController]
+        tabBarController.viewControllers = [homeNavigationController, profileNavigationController]
         
         // iOS 15 이상에서 탭바 스타일 설정
         if #available(iOS 15.0, *) {

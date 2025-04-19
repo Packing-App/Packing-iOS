@@ -14,8 +14,6 @@ final class ProfileViewReactor: Reactor {
     // 사용자 액션 정의
     enum Action {
         case refreshProfile
-        case updateProfile(name: String, intro: String)
-        case updateProfileImage(UIImage)
         case logout
         case deleteAccount
     }
@@ -24,7 +22,6 @@ final class ProfileViewReactor: Reactor {
     enum Mutation {
         case setLoading(Bool)
         case setProfile(User)
-        case setProfileImage(String)
         case setError(NetworkError?)
         case prepareForLogout
         case prepareForAccountDeletion
@@ -62,42 +59,11 @@ final class ProfileViewReactor: Reactor {
                 userService.getMyProfile()
                     .map { Mutation.setProfile($0) }
                     .catch { error in
-                        if let networkError = error as?
-                            NetworkError {
-                            return
-                                .just(Mutation.setError(networkError))
-                        }
-                        return .just(Mutation.setError(.unknown))
-                    },
-                Observable.just(Mutation.setLoading(false))
-            ])
-        case let .updateProfile(name, intro):
-            return Observable.concat([
-                Observable.just(Mutation.setLoading(true)),
-                userService.updateProfile(name: name, intro: intro)
-                    .map { Mutation.setProfile($0) }
-                    .catch { error in
                         if let networkError = error as? NetworkError {
                             return .just(Mutation.setError(networkError))
                         }
                         return .just(Mutation.setError(.unknown))
                     },
-                
-                Observable.just(Mutation.setLoading(false))
-            ])
-        case let .updateProfileImage(image):
-            return Observable.concat([
-                Observable.just(Mutation.setLoading(true)),
-                
-                userService.updateProfileImage(image: image)
-                    .map { Mutation.setProfileImage($0) }
-                    .catch { error in
-                        if let networkError = error as? NetworkError {
-                            return .just(Mutation.setError(networkError))
-                        }
-                        return .just(Mutation.setError(.unknown))
-                    },
-                
                 Observable.just(Mutation.setLoading(false))
             ])
             
@@ -135,7 +101,6 @@ final class ProfileViewReactor: Reactor {
         }
     }
     
-    
     // 변이(Mutation)를 받아 상태를 변경
     func reduce(state: State, mutation: Mutation) -> State {
         var newState = state
@@ -146,13 +111,6 @@ final class ProfileViewReactor: Reactor {
             
         case let .setProfile(user):
             newState.user = user
-            newState.error = nil
-            
-        case let .setProfileImage(imageUrl):
-            if var user = newState.user {
-                user.profileImage = imageUrl
-                newState.user = user
-            }
             newState.error = nil
             
         case let .setError(error):

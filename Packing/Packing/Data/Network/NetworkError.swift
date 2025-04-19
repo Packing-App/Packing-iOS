@@ -7,7 +7,8 @@
 
 import Foundation
 
-enum NetworkError: Error, LocalizedError {
+
+enum NetworkError: Error, LocalizedError, Equatable {
     case invalidURL
     case requestFailed(Error)
     case invalidResponse
@@ -18,6 +19,33 @@ enum NetworkError: Error, LocalizedError {
     case networkError
     case unknown
     
+    // Equatable 구현
+    static func == (lhs: NetworkError, rhs: NetworkError) -> Bool {
+        switch (lhs, rhs) {
+        case (.invalidURL, .invalidURL),
+             (.invalidResponse, .invalidResponse),
+             (.notFound, .notFound),
+             (.networkError, .networkError),
+             (.unknown, .unknown):
+            return true
+            
+        case let (.requestFailed(lhsError), .requestFailed(rhsError)):
+            return lhsError.localizedDescription == rhsError.localizedDescription
+            
+        case let (.decodingFailed(lhsError), .decodingFailed(rhsError)):
+            return lhsError.localizedDescription == rhsError.localizedDescription
+            
+        case let (.serverError(lhsMessage), .serverError(rhsMessage)):
+            return lhsMessage == rhsMessage
+            
+        case let (.unauthorized(lhsMessage), .unauthorized(rhsMessage)):
+            return lhsMessage == rhsMessage
+            
+        default:
+            return false
+        }
+    }
+
     var localizedDescription: String {
         switch self {
         case .invalidURL:
@@ -41,3 +69,4 @@ enum NetworkError: Error, LocalizedError {
         }
     }
 }
+

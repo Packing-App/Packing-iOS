@@ -10,7 +10,7 @@ import RxSwift
 
 protocol APIClientProtocol {
     func request<T: Decodable>(_ endpoint: APIEndpoint) -> Observable<T>
-    func uploadImage(imageData: Data, endpoint: APIEndpoint) -> Observable<TokenData>
+    func uploadImage(imageData: Data, endpoint: APIEndpoint) -> Observable<ProfileImageResponse>
 }
 
 // MARK: - API 모델
@@ -23,6 +23,10 @@ struct APIResponse<T: Codable>: Codable {
 
 struct UserResponse: Codable {
     let user: User
+}
+
+struct ProfileImageResponse: Codable {
+    let profileImage: String
 }
 
 struct TokenData: Codable, Equatable {
@@ -63,6 +67,7 @@ class APIClient: APIClientProtocol {
             // 인증이 필요한 endpoints에는 token 추가
             if self.requiresAuthentication(endpoint) {
                 if let token = self.tokenManager.accessToken {
+                    print("Current Token: \(token)")
                     request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
                 } else {
                     observer.onError(NetworkError.unauthorized(nil))
@@ -195,7 +200,7 @@ class APIClient: APIClientProtocol {
 
     
     // 멀티파트 폼 데이터 요청 (이미지 업로드용)
-    func uploadImage(imageData: Data, endpoint: APIEndpoint) -> Observable<TokenData> {
+    func uploadImage(imageData: Data, endpoint: APIEndpoint) -> Observable<ProfileImageResponse> {
         return Observable.create { [weak self] observer in
             guard let self = self, let url = endpoint.url() else {
                 observer.onError(NetworkError.invalidURL)
@@ -251,9 +256,9 @@ class APIClient: APIClientProtocol {
                     }
                     
                     do {
-                        let decodedObject = try JSONDecoder().decode(APIResponse<TokenData>.self, from: data)
-                        if let tokenData = decodedObject.data {
-                            observer.onNext(tokenData)
+                        let decodedObject = try JSONDecoder().decode(APIResponse<ProfileImageResponse>.self, from: data)
+                        if let profileImageData = decodedObject.data {
+                            observer.onNext(profileImageData)
                             observer.onCompleted()
                         } else {
                             observer.onError(NetworkError.invalidResponse)

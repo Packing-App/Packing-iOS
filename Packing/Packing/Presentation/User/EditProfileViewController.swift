@@ -187,7 +187,7 @@ final class EditProfileViewController: UIViewController, View {
             profileImageView.image = UIImage(systemName: "person.circle.fill")
         }
         
-        // Action 바인딩
+        // Action 바인딩 ( View에서 Reactor로 Action을 보낸다 )
         nameTextField.rx.text.orEmpty
             .distinctUntilChanged()
             .map { Reactor.Action.updateName($0) }

@@ -81,6 +81,55 @@ enum APIEndpoint: Endpoints {
     case updateProfile(name: String, intro: String)
     case updateProfileImage(imageData: Data)
     
+    // MARK: - JOURNEY ENDPOINTS
+    
+    // 여행 목록 조회
+    case getJourneys
+    
+    // 특정 여행 조회
+    case getJourneyById(id: String)
+    
+    // 새로운 여행 생성
+    case createJourney(
+        title: String,
+        transportType: TransportType,
+        origin: String,
+        destination: String,
+        startDate: Date,
+        endDate: Date,
+        theme: TravelTheme,
+        isPrivate: Bool
+    )
+    
+    // 여행 정보 업데이트
+    case updateJourney(
+        id: String,
+        title: String?,
+        transportType: TransportType?,
+        origin: String?,
+        destination: String?,
+        startDate: Date?,
+        endDate: Date?,
+        theme: TravelTheme?,
+        isPrivate: Bool?
+    )
+    
+    // 여행 삭제
+    case deleteJourney(id: String)
+    
+    // 여행에 참가자 초대
+    case inviteParticipant(journeyId: String, email: String)
+    
+    // 여행 참가자 제거
+    case removeParticipant(journeyId: String, userId: String)
+    
+    // 여행 초대 응답 (수락/거절)
+    case respondToInvitation(notificationId: String, accept: Bool)
+    
+    // 여행 추천 준비물 조회
+    case getRecommendations(journeyId: String)
+    
+    
     // MARK: - PATH
     var path: String {
         switch self {
@@ -118,11 +167,31 @@ enum APIEndpoint: Endpoints {
         case .naverLogin:
             return "/auth/naver"
             
-        // user profile
+            // user profile
         case .getMyProfile, .updateProfile:
             return "/users/me"
         case .updateProfileImage:
             return "/users/me/profile-image"
+            
+            // Journey
+        case .getJourneys:
+            return "/journeys"
+        case .getJourneyById(let id):
+            return "/journeys/\(id)"
+        case .createJourney:
+            return "/journeys"
+        case .updateJourney(let id, _, _, _, _, _, _, _, _):
+            return "/journeys/\(id)"
+        case .deleteJourney(let id):
+            return "/journeys/\(id)"
+        case .inviteParticipant(let journeyId, _):
+            return "/journeys/\(journeyId)/participants"
+        case .removeParticipant(let journeyId, let userId):
+            return "/journeys/\(journeyId)/participants/\(userId)"
+        case .respondToInvitation(let notificationId, _):
+            return "/journeys/invitations/\(notificationId)"
+        case .getRecommendations(let journeyId):
+            return "/journeys/\(journeyId)/recommendations"
         }
     }
     
@@ -144,6 +213,16 @@ enum APIEndpoint: Endpoints {
             return .put
         case .googleLogin, .kakaoLogin, .naverLogin:
             return .get
+            
+            // Journey
+        case .getJourneys, .getJourneyById, .getRecommendations:
+            return .get
+        case .createJourney, .inviteParticipant:
+            return .post
+        case .updateJourney, .respondToInvitation:
+            return .put
+        case .deleteJourney, .removeParticipant:
+            return .delete
         }
     }
     
@@ -194,7 +273,47 @@ enum APIEndpoint: Endpoints {
             return params
         case .updateProfile(let name, let intro):
             return ["name": name, "intro": intro]
-        default: return nil
+            
+            // Journey
+        case .getJourneys, .getJourneyById, .deleteJourney, .getRecommendations, .removeParticipant:
+            return nil
+            
+        case .createJourney(let title, let transportType, let origin, let destination, let startDate, let endDate, let theme, let isPrivate):
+            let dateFormatter = ISO8601DateFormatter()
+            return [
+                "title": title,
+                "transportType": transportType.rawValue,
+                "origin": origin,
+                "destination": destination,
+                "startDate": dateFormatter.string(from: startDate),
+                "endDate": dateFormatter.string(from: endDate),
+                "theme": theme.rawValue,
+                "isPrivate": isPrivate
+            ]
+            
+        case .updateJourney(_, let title, let transportType, let origin, let destination, let startDate, let endDate, let theme, let isPrivate):
+            var params: [String: Any] = [:]
+            let dateFormatter = ISO8601DateFormatter()
+            
+            if let title = title { params["title"] = title }
+            if let transportType = transportType { params["transportType"] = transportType.rawValue }
+            if let origin = origin { params["origin"] = origin }
+            if let destination = destination { params["destination"] = destination }
+            if let startDate = startDate { params["startDate"] = dateFormatter.string(from: startDate) }
+            if let endDate = endDate { params["endDate"] = dateFormatter.string(from: endDate) }
+            if let theme = theme { params["theme"] = theme.rawValue }
+            if let isPrivate = isPrivate { params["isPrivate"] = isPrivate }
+            
+            return params
+            
+        case .inviteParticipant(_, let email):
+            return ["email": email]
+            
+        case .respondToInvitation(_, let accept):
+            return ["accept": accept]
+            
+        default:
+            return nil
         }
     }
 }

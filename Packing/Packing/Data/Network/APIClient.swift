@@ -13,7 +13,7 @@ protocol APIClientProtocol {
     func uploadImage(imageData: Data, endpoint: APIEndpoint) -> Observable<ProfileImageResponse>
 }
 
-// MARK: - API 모델
+// MARK: - API Response 모델
 
 struct APIResponse<T: Codable>: Codable {
     let success: Bool
@@ -35,10 +35,31 @@ struct TokenData: Codable, Equatable {
     let user: User
 }
 
+struct NotificationResponse: Codable {
+    let notification: Notification
+}
+
+struct RecommendationResponse: Codable {
+    let journey: JourneyInfo
+    let categories: [String: RecommendationCategory]
+    
+    struct JourneyInfo: Codable {
+        let title: String
+        let destination: String
+        let startDate: Date
+        let endDate: Date
+        let theme: String
+        let transportType: String
+    }
+}
+
 struct ErrorResponse: Codable {
     let success: Bool
     let message: String
 }
+
+
+// MARK: - APIClient
 
 class APIClient: APIClientProtocol {
     static let shared = APIClient()

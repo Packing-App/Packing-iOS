@@ -7,7 +7,23 @@
 
 import Foundation
 
+// MARK: - Recommendation Models
+
+struct RecommendationCategory: Codable {
+    let name: String
+    let items: [RecommendedItem]
+}
+
+struct RecommendedItem: Codable, Identifiable {
+    var id: String { name }  // 아이템 이름을 ID로 사용
+    let name: String
+    let category: String
+    let isEssential: Bool
+    let count: Int?
+}
+
 // MARK: - PackingItem Model
+
 struct PackingItem: Identifiable, Codable {
     let id: String
     let journeyId: String

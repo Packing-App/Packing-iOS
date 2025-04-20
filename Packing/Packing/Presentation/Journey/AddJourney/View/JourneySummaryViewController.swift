@@ -282,37 +282,44 @@ class JourneySummaryViewController: UIViewController, View {
         // State
         // 여행 모델 정보 표시
         reactor.state.map { $0.transportTypeText }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .bind(to: transportValueLabel.rx.text)
             .disposed(by: disposeBag)
         
         reactor.state.map { $0.themeText }
             .distinctUntilChanged()
+            .observe(on: MainScheduler.instance)
             .bind(to: transportValueLabel.rx.text)
             .disposed(by: disposeBag)
         
         reactor.state.map { $0.destinationText }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .bind(to: themeValueLabel.rx.text)
             .disposed(by: disposeBag)
         
         reactor.state.map { $0.dateRangeText }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .bind(to: dateValueLabel.rx.text)
             .disposed(by: disposeBag)
         
         reactor.state.map { $0.title }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .bind(to: titleTextField.rx.text)
             .disposed(by: disposeBag)
         
         reactor.state.map { $0.isPrivate }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .bind(to: privateSwitch.rx.isOn)
             .disposed(by: disposeBag)
         
         // 로딩 상태 처리
         reactor.state.map { $0.isCreating }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .subscribe(onNext: { [weak self] isCreating in
                 if isCreating {
@@ -327,6 +334,7 @@ class JourneySummaryViewController: UIViewController, View {
         
         // 오류 처리
         reactor.state.map { $0.error }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged { $0?.localizedDescription == $1?.localizedDescription }
             .filter { $0 != nil }
             .subscribe(onNext: { [weak self] error in
@@ -336,6 +344,7 @@ class JourneySummaryViewController: UIViewController, View {
         
         // 여행 생성 완료
         reactor.state.map { $0.shouldComplete }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .filter { $0 }
             .subscribe(onNext: { [weak self] _ in

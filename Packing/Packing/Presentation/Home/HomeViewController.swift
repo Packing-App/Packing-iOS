@@ -9,6 +9,7 @@ import UIKit
 import ReactorKit
 import RxSwift
 import RxCocoa
+import Kingfisher
 
 class HomeViewController: UIViewController, View {
     
@@ -529,7 +530,11 @@ class TravelPlanCell: UICollectionViewCell {
     }
     
     func configure(with plan: Journey) {
-        imageView.image = UIImage(named: plan.imageUrl ?? "")
+        if let url = URL(string: plan.imageUrl ?? "") {
+            imageView.kf.indicatorType = .activity
+            imageView.kf.setImage(with: url)
+        }
+        
         titleLabel.text = plan.title
         dateLabel.text = plan.dateRangeString
     }

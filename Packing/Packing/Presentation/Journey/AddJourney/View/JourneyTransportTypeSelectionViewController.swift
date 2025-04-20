@@ -6,10 +6,17 @@
 //
 
 import UIKit
+import ReactorKit
+import RxSwift
+import RxCocoa
 
-class JourneyTransportTypeSelectionViewController: UIViewController {
+class JourneyTransportTypeSelectionViewController: UIViewController, View {
     
     // MARK: - Properties
+    typealias Reactor = JourneyTransportTypeSelectionReactor
+    
+    var disposeBag = DisposeBag()
+    
     private lazy var navigationTitleLabel: UILabel = {
         let label = UILabel()
         let attachmentString = NSMutableAttributedString(string: "")
@@ -87,6 +94,7 @@ class JourneyTransportTypeSelectionViewController: UIViewController {
         return button
     }()
     
+    private var transportOptionButtons = [UIView]()
     private var selectedTransportOption: UIView?
     
     // MARK: - Lifecycle
@@ -94,7 +102,74 @@ class JourneyTransportTypeSelectionViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         configureTransportOptions()
-        setupActions()
+    }
+    
+    func bind(reactor: Reactor) {
+        // Action
+        // 각 운송 수단 옵션에 대한 탭 이벤트 처리
+        for (index, option) in transportOptionButtons.enumerated() {
+            let tapGesture = UITapGestureRecognizer()
+            option.addGestureRecognizer(tapGesture)
+            option.isUserInteractionEnabled = true
+            
+            tapGesture.rx.event
+                .map { _ in TransportType.allCases[index] }
+                .map { Reactor.Action.selectTransportType($0) }
+                .bind(to: reactor.action)
+                .disposed(by: disposeBag)
+        }
+        
+        // 다음 버튼 탭 처리
+        nextButton.rx.tap
+            .map { Reactor.Action.next }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        // 건너뛰기 버튼 탭 처리
+        skipButton.rx.tap
+            .map { Reactor.Action.skip }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        // State
+        // 선택된 운송 수단에 따라 UI 업데이트
+        reactor.state.map { $0.selectedTransportType }
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] type in
+                guard let self = self, let type = type else { return }
+                
+                if let index = TransportType.allCases.firstIndex(of: type) {
+                    self.updateTransportSelection(at: index)
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        // 다음 버튼 활성화 상태 처리
+        reactor.state.map { $0.canProceed }
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] canProceed in
+                self?.nextButton.isEnabled = canProceed
+                self?.nextButton.backgroundColor = canProceed ? .black : .lightGray
+            })
+            .disposed(by: disposeBag)
+        
+        // 다음 화면으로 이동
+        reactor.state.map { $0.shouldProceed }
+            .distinctUntilChanged()
+            .filter { $0 }
+            .subscribe(onNext: { [weak self] _ in
+                guard let self = self else { return }
+                self.navigateToDateSelection()
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - Navigate to next screen
+    private func navigateToDateSelection() {
+        let dateSelectionReactor = JourneyDateSelectionReactor(parentReactor: reactor!.parentReactor)
+        let dateSelectionVC = JourneyDateSelectionViewController()
+        dateSelectionVC.reactor = dateSelectionReactor
+        navigationController?.pushViewController(dateSelectionVC, animated: true)
     }
     
     // MARK: - Setup UI
@@ -170,6 +245,13 @@ class JourneyTransportTypeSelectionViewController: UIViewController {
         for (icon, title) in transportOptions {
             let optionButton = createTransportOptionButton(icon: icon, title: title)
             transportStackView.addArrangedSubview(optionButton)
+            transportOptionButtons.append(optionButton)
+        }
+        
+        // 이미 선택된 값이 있는 경우 UI 업데이트
+        if let selectedType = reactor?.currentState.selectedTransportType,
+           let index = TransportType.allCases.firstIndex(of: selectedType) {
+            updateTransportSelection(at: index)
         }
     }
     
@@ -215,71 +297,41 @@ class JourneyTransportTypeSelectionViewController: UIViewController {
             titleLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor)
         ])
         
-        // Add tap gesture
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(transportOptionTapped(_:)))
-        containerView.addGestureRecognizer(tapGesture)
-        containerView.isUserInteractionEnabled = true
-        
         return containerView
     }
     
-    private func setupActions() {
-        nextButton.addTarget(self, action: #selector(nextButtonTapped), for: .touchUpInside)
-        skipButton.addTarget(self, action: #selector(skipButtonTapped), for: .touchUpInside)
-    }
-    
-    // MARK: - Actions
-    @objc private func transportOptionTapped(_ sender: UITapGestureRecognizer) {
-        if let selectedView = sender.view {
-            // Reset all options
-            for case let optionView as UIView in transportStackView.arrangedSubviews {
-                optionView.backgroundColor = .white
-                optionView.layer.borderColor = UIColor.systemGray5.cgColor
-                
-                if let iconView = optionView.viewWithTag(1001) as? UIImageView {
-                    iconView.tintColor = UIColor.systemBlue
-                }
-                
-                if let titleLabel = optionView.viewWithTag(1002) as? UILabel {
-                    titleLabel.textColor = .black
-                }
+    private func updateTransportSelection(at index: Int) {
+        // Reset all options
+        for optionView in transportOptionButtons {
+            optionView.backgroundColor = .white
+            optionView.layer.borderColor = UIColor.systemGray5.cgColor
+            
+            if let iconView = optionView.viewWithTag(1001) as? UIImageView {
+                iconView.tintColor = UIColor.systemBlue
             }
             
-            // Highlight selected option
-            selectedView.backgroundColor = UIColor.main
-            selectedView.layer.borderColor = UIColor.main.cgColor
-            
-            if let iconView = selectedView.viewWithTag(1001) as? UIImageView {
-                iconView.tintColor = .white
+            if let titleLabel = optionView.viewWithTag(1002) as? UILabel {
+                titleLabel.textColor = .black
             }
-            
-            if let titleLabel = selectedView.viewWithTag(1002) as? UILabel {
-                titleLabel.textColor = .white
-            }
-            
-            // Store selected option and enable next button
-            selectedTransportOption = selectedView
-            enableNextButton()
         }
-    }
-    
-    private func enableNextButton() {
-        if selectedTransportOption != nil {
-            nextButton.isEnabled = true
-            nextButton.backgroundColor = .black
-        } else {
-            nextButton.isEnabled = false
-            nextButton.backgroundColor = .lightGray
+        
+        // 선택된 인덱스가 범위 내에 있는지 확인
+        guard index >= 0 && index < transportOptionButtons.count else { return }
+        
+        // 선택된 옵션 강조
+        let selectedView = transportOptionButtons[index]
+        selectedView.backgroundColor = UIColor.main
+        selectedView.layer.borderColor = UIColor.main.cgColor
+        
+        if let iconView = selectedView.viewWithTag(1001) as? UIImageView {
+            iconView.tintColor = .white
         }
-    }
-    
-    @objc private func nextButtonTapped() {
-        let travelDateSelectionViewController = JourneyDateSelectionViewController()
-        navigationController?.pushViewController(travelDateSelectionViewController, animated: true)
-    }
-    
-    @objc private func skipButtonTapped() {
-        // Handle skip button action
-        print("Skip button tapped")
+        
+        if let titleLabel = selectedView.viewWithTag(1002) as? UILabel {
+            titleLabel.textColor = .white
+        }
+        
+        // 선택된 옵션 저장
+        selectedTransportOption = selectedView
     }
 }

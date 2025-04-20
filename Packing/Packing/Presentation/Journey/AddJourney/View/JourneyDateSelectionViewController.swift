@@ -6,10 +6,17 @@
 //
 
 import UIKit
+import ReactorKit
+import RxSwift
+import RxCocoa
 
-class JourneyDateSelectionViewController: UIViewController {
+class JourneyDateSelectionViewController: UIViewController, View {
     
     // MARK: - Properties
+    typealias Reactor = JourneyDateSelectionReactor
+    
+    var disposeBag = DisposeBag()
+    
     private lazy var navigationTitleLabel: UILabel = {
         let label = UILabel()
         let attachmentString = NSMutableAttributedString(string: "")
@@ -241,10 +248,200 @@ class JourneyDateSelectionViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupCalendar()
-        setupActions()
     }
     
-    // MARK: - Setup UI
+    func bind(reactor: Reactor) {
+        // Action
+        // 출발지 선택 버튼 탭 처리
+        departureButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.showOriginSearch()
+            })
+            .disposed(by: disposeBag)
+        
+        // 도착지 선택 버튼 탭 처리
+        destinationButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.showDestinationSearch()
+            })
+            .disposed(by: disposeBag)
+        
+        // 날짜 선택 처리
+        previousMonthButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.moveToPreviousMonth()
+            })
+            .disposed(by: disposeBag)
+        
+        nextMonthButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.moveToNextMonth()
+            })
+            .disposed(by: disposeBag)
+        
+        // 다음 버튼 탭 처리
+        nextButton.rx.tap
+            .map { Reactor.Action.next }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        // State
+        // 출발지 업데이트
+        reactor.state.map { $0.origin }
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] origin in
+                var config = self?.departureButton.configuration
+                config?.title = origin.isEmpty ? "어디서 출발하시나요?" : origin
+                config?.baseForegroundColor = origin.isEmpty ? .gray : .black
+                self?.departureButton.configuration = config
+            })
+            .disposed(by: disposeBag)
+        
+        // 도착지 업데이트
+        reactor.state.map { $0.destination }
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] destination in
+                var config = self?.destinationButton.configuration
+                config?.title = destination.isEmpty ? "어디로 떠나시나요?" : destination
+                config?.baseForegroundColor = destination.isEmpty ? .gray : .black
+                self?.destinationButton.configuration = config
+            })
+            .disposed(by: disposeBag)
+        
+        // 날짜 업데이트
+        Observable.combineLatest(
+            reactor.state.map { $0.startDate },
+            reactor.state.map { $0.endDate }
+        )
+        .distinctUntilChanged { prev, next in
+            return prev.0?.timeIntervalSince1970 == next.0?.timeIntervalSince1970 &&
+                   prev.1?.timeIntervalSince1970 == next.1?.timeIntervalSince1970
+        }
+        .subscribe(onNext: { [weak self] startDate, endDate in
+            self?.updateDates(startDate: startDate, endDate: endDate)
+        })
+        .disposed(by: disposeBag)
+        
+        // 다음 버튼 활성화 상태 업데이트
+        reactor.state.map { $0.canProceed }
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] canProceed in
+                var config = self?.nextButton.configuration
+                config?.background.backgroundColor = canProceed ? .black : .lightGray
+                self?.nextButton.configuration = config
+                self?.nextButton.isEnabled = canProceed
+            })
+            .disposed(by: disposeBag)
+        
+        // 오류 메시지 표시
+        reactor.state.map { $0.errorMessage }
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] errorMessage in
+                if let errorMessage = errorMessage {
+                    self?.showAlert(message: errorMessage)
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        // 다음 화면으로 이동
+        reactor.state.map { $0.shouldProceed }
+            .distinctUntilChanged()
+            .filter { $0 }
+            .subscribe(onNext: { [weak self] _ in
+                self?.navigateToThemeSelection()
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - Methods
+    private func showOriginSearch() {
+        let searchVC = LocationSearchViewController(searchType: .departure)
+        searchVC.completion = { [weak self] location in
+            self?.reactor?.action.onNext(.setOrigin(location))
+        }
+        
+        if let sheet = searchVC.sheetPresentationController {
+            sheet.detents = [.medium()]
+            sheet.prefersGrabberVisible = true
+        }
+        
+        present(searchVC, animated: true)
+    }
+    
+    private func showDestinationSearch() {
+        let searchVC = LocationSearchViewController(searchType: .destination)
+        searchVC.completion = { [weak self] location in
+            self?.reactor?.action.onNext(.setDestination(location))
+        }
+        
+        if let sheet = searchVC.sheetPresentationController {
+            sheet.detents = [.medium()]
+            sheet.prefersGrabberVisible = true
+        }
+        
+        present(searchVC, animated: true)
+    }
+    
+    private func moveToPreviousMonth() {
+        let calendar = Calendar.current
+        if let newMonth = calendar.date(byAdding: .month, value: -1, to: currentMonth) {
+            currentMonth = newMonth
+            setupCalendar()
+        }
+    }
+    
+    private func moveToNextMonth() {
+        let calendar = Calendar.current
+        if let newMonth = calendar.date(byAdding: .month, value: 1, to: currentMonth) {
+            currentMonth = newMonth
+            setupCalendar()
+        }
+    }
+    
+    private func updateDates(startDate: Date?, endDate: Date?) {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yy.MM.dd"
+        
+        selectedDepartureDate = startDate
+        selectedArrivalDate = endDate
+        
+        if let departureDate = startDate {
+            var config = departureDateButton.configuration
+            config?.title = "출발 \(dateFormatter.string(from: departureDate))"
+            departureDateButton.configuration = config
+        } else {
+            var config = departureDateButton.configuration
+            config?.title = "출발 날짜 선택"
+            departureDateButton.configuration = config
+        }
+        
+        if let arrivalDate = endDate {
+            var config = arrivalDateButton.configuration
+            config?.title = "도착 \(dateFormatter.string(from: arrivalDate))"
+            arrivalDateButton.configuration = config
+        } else {
+            var config = arrivalDateButton.configuration
+            config?.title = "도착 날짜 선택"
+            arrivalDateButton.configuration = config
+        }
+        
+        highlightSelectedDates()
+    }
+    
+    private func showAlert(message: String) {
+        let alert = UIAlertController(title: "알림", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
+    
+    private func navigateToThemeSelection() {
+        let themeSelectionReactor = JourneyThemeSelectionReactor(parentReactor: reactor!.parentReactor)
+        let themeSelectionVC = JourneyThemeSelectionViewController()
+        themeSelectionVC.reactor = themeSelectionReactor
+        navigationController?.pushViewController(themeSelectionVC, animated: true)
+    }
+    
+    // MARK: - Setup UI & Calendar
     private func setupUI() {
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(customView: navigationTitleLabel)
 
@@ -409,17 +606,7 @@ class JourneyDateSelectionViewController: UIViewController {
                 if dayNumber > 0 && dayNumber <= numberOfDays {
                     button.setTitle("\(dayNumber)", for: .normal)
                     button.addTarget(self, action: #selector(calendarDayTapped(_:)), for: .touchUpInside)
-                    
-                    // Highlight specific days for demo (May 6 and May 15)
-                    if (dayNumber == 6 && currentMonthInt == 5) {
-                        button.backgroundColor = UIColor.main
-                        button.setTitleColor(.white, for: .normal)
-                    } else if (dayNumber == 15 && currentMonthInt == 5) {
-                        button.backgroundColor = UIColor.main
-                        button.setTitleColor(.white, for: .normal)
-                    } else {
-                        button.setTitleColor(.black, for: .normal)
-                    }
+                    button.setTitleColor(.black, for: .normal)
                     
                     // Highlight current day
                     if calendar.isDateInToday(calendar.date(byAdding: .day, value: dayNumber - 1, to: firstDayOfMonth) ?? Date()) {
@@ -436,49 +623,9 @@ class JourneyDateSelectionViewController: UIViewController {
                 calendarDayButtons.append(button)
             }
         }
-    }
-    
-    private func setupActions() {
-        departureButton.addTarget(self, action: #selector(departureButtonTapped), for: .touchUpInside)
-        destinationButton.addTarget(self, action: #selector(destinationButtonTapped), for: .touchUpInside)
-        previousMonthButton.addTarget(self, action: #selector(previousMonthTapped), for: .touchUpInside)
-        nextMonthButton.addTarget(self, action: #selector(nextMonthTapped), for: .touchUpInside)
-        nextButton.addTarget(self, action: #selector(nextButtonTapped), for: .touchUpInside)
-    }
-    
-    // MARK: - Actions
-    @objc private func departureButtonTapped() {
-        let searchVC = LocationSearchViewController(searchType: .departure)
-        if let sheet = searchVC.sheetPresentationController {
-            sheet.detents = [.medium()]
-            sheet.prefersGrabberVisible = true
-        }
-        present(searchVC, animated: true)
-    }
-    
-    @objc private func destinationButtonTapped() {
-        let searchVC = LocationSearchViewController(searchType: .destination)
-        if let sheet = searchVC.sheetPresentationController {
-            sheet.detents = [.medium()]
-            sheet.prefersGrabberVisible = true
-        }
-        present(searchVC, animated: true)
-    }
-    
-    @objc private func previousMonthTapped() {
-        let calendar = Calendar.current
-        if let newMonth = calendar.date(byAdding: .month, value: -1, to: currentMonth) {
-            currentMonth = newMonth
-            setupCalendar()
-        }
-    }
-    
-    @objc private func nextMonthTapped() {
-        let calendar = Calendar.current
-        if let newMonth = calendar.date(byAdding: .month, value: 1, to: currentMonth) {
-            currentMonth = newMonth
-            setupCalendar()
-        }
+        
+        // Highlight selected dates
+        highlightSelectedDates()
     }
     
     @objc private func calendarDayTapped(_ sender: UIButton) {
@@ -503,9 +650,8 @@ class JourneyDateSelectionViewController: UIViewController {
             selectedDepartureDate = selectedDate
             selectedArrivalDate = nil
             
-            // Update UI
-            updateDateButtons()
-            highlightSelectedDates()
+            // Update Reactor state
+            reactor?.action.onNext(.setStartDate(selectedDate))
         }
         // If we have a departure date but no arrival date
         else if selectedArrivalDate == nil {
@@ -513,38 +659,15 @@ class JourneyDateSelectionViewController: UIViewController {
             if selectedDate < selectedDepartureDate! {
                 selectedArrivalDate = selectedDepartureDate
                 selectedDepartureDate = selectedDate
+                
+                // Update Reactor state
+                reactor?.action.onNext(.setDates(start: selectedDate, end: selectedArrivalDate!))
             } else {
                 selectedArrivalDate = selectedDate
+                
+                // Update Reactor state
+                reactor?.action.onNext(.setDates(start: selectedDepartureDate!, end: selectedDate))
             }
-            
-            // Update UI
-            updateDateButtons()
-            highlightSelectedDates()
-        }
-    }
-    
-    private func updateDateButtons() {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yy.MM.dd"
-        
-        if let departureDate = selectedDepartureDate {
-            var config = departureDateButton.configuration
-            config?.title = "출발 \(dateFormatter.string(from: departureDate))"
-            departureDateButton.configuration = config
-        } else {
-            var config = departureDateButton.configuration
-            config?.title = "출발 날짜 선택"
-            departureDateButton.configuration = config
-        }
-        
-        if let arrivalDate = selectedArrivalDate {
-            var config = arrivalDateButton.configuration
-            config?.title = "도착 \(dateFormatter.string(from: arrivalDate))"
-            arrivalDateButton.configuration = config
-        } else {
-            var config = arrivalDateButton.configuration
-            config?.title = "도착 날짜 선택"
-            arrivalDateButton.configuration = config
         }
     }
     
@@ -602,11 +725,6 @@ class JourneyDateSelectionViewController: UIViewController {
             }
         }
     }
-    
-    @objc private func nextButtonTapped() {
-        let themeSelectionViewController = JourneyThemeSelectionViewController()
-        navigationController?.pushViewController(themeSelectionViewController, animated: true)
-    }
 }
 
 // MARK: - LocationSearchViewController
@@ -618,6 +736,7 @@ class LocationSearchViewController: UIViewController {
     }
     
     private let searchType: SearchType
+    var completion: ((String) -> Void)?
     
     // MARK: - UI Elements
     private let searchBar: UISearchBar = {
@@ -692,7 +811,7 @@ class LocationSearchViewController: UIViewController {
 // MARK: - UISearchBarDelegate
 extension LocationSearchViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        // In a real implementation, you would filter your data based on searchText
+        // 실제 구현에서는 검색어에 따라 데이터 필터링
         tableView.reloadData()
     }
 }
@@ -700,13 +819,13 @@ extension LocationSearchViewController: UISearchBarDelegate {
 // MARK: - UITableViewDelegate, UITableViewDataSource
 extension LocationSearchViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 5 // Example data
+        return 5 // 예시 데이터
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "locationCell", for: indexPath)
         
-        // Example data
+        // 예시 데이터
         let locations = searchType == .departure ?
             ["서울", "부산", "인천", "대구", "제주"] :
             ["도쿄", "오사카", "파리", "뉴욕", "방콕"]
@@ -721,35 +840,14 @@ extension LocationSearchViewController: UITableViewDelegate, UITableViewDataSour
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         
-        // Get the selected location
+        // 선택된 위치 정보 가져오기
         let locations = searchType == .departure ?
             ["서울", "부산", "인천", "대구", "제주"] :
             ["도쿄", "오사카", "파리", "뉴욕", "방콕"]
         let selectedLocation = locations[indexPath.row]
         
-        // Notify parent controller about the selection
-        // In a real app, you would use a delegate or completion handler
+        // 콜백으로 선택된 위치 전달
+        completion?(selectedLocation)
         dismiss(animated: true)
     }
 }
-
-#if DEBUG
-import SwiftUI
-
-struct TravelDateSelectionViewControllerPreview: PreviewProvider {
-    static var previews: some View {
-        TravelDateSelectionViewControllerRepresentable()
-            .edgesIgnoringSafeArea(.all)
-    }
-    
-    struct TravelDateSelectionViewControllerRepresentable: UIViewControllerRepresentable {
-        func makeUIViewController(context: Context) -> JourneyDateSelectionViewController {
-            return JourneyDateSelectionViewController()
-        }
-        
-        func updateUIViewController(_ uiViewController: JourneyDateSelectionViewController, context: Context) {
-            // Not needed for this preview
-        }
-    }
-}
-#endif

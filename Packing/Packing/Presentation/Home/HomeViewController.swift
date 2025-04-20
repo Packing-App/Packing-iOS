@@ -732,7 +732,7 @@ extension HomeViewController {
     // Add reactive button feedback
     func setupButtonFeedback() {
 //        addNewJourneyButton.addTarget(self, action: #selector(buttonTouchDown(_:)), for: .touchDown)
-        addNewJourneyButton.addTarget(self, action: #selector(buttonTouchUp(_:)), for: .touchUpInside)
+//        addNewJourneyButton.addTarget(self, action: #selector(buttonTouchUp(_:)), for: .touchUpInside)
     }
     
 //    @objc private func buttonTouchDown(_ sender: UIButton) {
@@ -769,7 +769,7 @@ extension HomeViewController {
         // Setup animations that will be triggered later
         setupCloudAnimation()
         setupAddButtonPulse()
-        setupButtonFeedback()
+//        setupButtonFeedback()
     }
     
     // Add this to your class

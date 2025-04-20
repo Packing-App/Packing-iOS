@@ -6,10 +6,17 @@
 //
 
 import UIKit
+import ReactorKit
+import RxSwift
+import RxCocoa
 
-class JourneySummaryViewController: UIViewController {
+class JourneySummaryViewController: UIViewController, View {
     
     // MARK: - Properties
+    typealias Reactor = JourneySummaryReactor
+    
+    var disposeBag = DisposeBag()
+    
     private lazy var navigationTitleLabel: UILabel = {
         let label = UILabel()
         let attachmentString = NSMutableAttributedString(string: "")
@@ -48,7 +55,7 @@ class JourneySummaryViewController: UIViewController {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
-        imageView.image = UIImage(named: "waterfall") // 예시 이미지
+        imageView.image = UIImage(named: "destination_default") // 기본 이미지
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()
@@ -67,7 +74,7 @@ class JourneySummaryViewController: UIViewController {
     
     private let participantsLabel: UILabel = {
         let label = UILabel()
-        label.text = "파티원 4명"
+        label.text = "파티원 1명"
         label.font = .systemFont(ofSize: 16, weight: .medium)
         label.textColor = .black
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -124,7 +131,7 @@ class JourneySummaryViewController: UIViewController {
     
     private let dateValueLabel: UILabel = {
         let label = UILabel()
-        label.text = "2023.12.01 - 12.07"
+        label.text = "날짜 미설정"
         label.font = .systemFont(ofSize: 16)
         label.textColor = .darkGray
         label.textAlignment = .right
@@ -150,7 +157,7 @@ class JourneySummaryViewController: UIViewController {
     
     private let transportValueLabel: UILabel = {
         let label = UILabel()
-        label.text = "자전거 타기"
+        label.text = "미설정"
         label.font = .systemFont(ofSize: 16)
         label.textColor = .darkGray
         label.textAlignment = .right
@@ -176,10 +183,34 @@ class JourneySummaryViewController: UIViewController {
     
     private let themeValueLabel: UILabel = {
         let label = UILabel()
-        label.text = "크로아티아, 플리트비체"
+        label.text = "미설정"
         label.font = .systemFont(ofSize: 16)
         label.textColor = .darkGray
         label.textAlignment = .right
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let titleTextField: UITextField = {
+        let textField = UITextField()
+        textField.placeholder = "여행 제목을 입력해주세요"
+        textField.borderStyle = .roundedRect
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        return textField
+    }()
+    
+    private let privateSwitch: UISwitch = {
+        let switchControl = UISwitch()
+        switchControl.onTintColor = .main
+        switchControl.translatesAutoresizingMaskIntoConstraints = false
+        return switchControl
+    }()
+    
+    private let privateSwitchLabel: UILabel = {
+        let label = UILabel()
+        label.text = "혼자 여행하기"
+        label.font = .systemFont(ofSize: 14)
+        label.textColor = .darkGray
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -205,12 +236,139 @@ class JourneySummaryViewController: UIViewController {
         return button
     }()
     
+    private let loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.hidesWhenStopped = true
+        indicator.color = .main
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        return indicator
+    }()
+    
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupAvatars()
-        setupActions()
+    }
+    
+    func bind(reactor: Reactor) {
+        // Action
+        // 제목 입력 처리
+        titleTextField.rx.text.orEmpty
+            .distinctUntilChanged()
+            .map { Reactor.Action.setTitle($0) }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        // 비공개 여부 설정 처리
+        privateSwitch.rx.isOn
+            .distinctUntilChanged()
+            .map { Reactor.Action.setIsPrivate($0) }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        // 완료 버튼 탭 처리
+        completeButton.rx.tap
+            .map { Reactor.Action.createJourney }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        // 초대하기 버튼 탭 처리
+        inviteButton.rx.tap
+            .map { Reactor.Action.invite }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        // State
+        // 여행 모델 정보 표시
+        reactor.state.map { $0.transportTypeText }
+            .distinctUntilChanged()
+            .bind(to: transportValueLabel.rx.text)
+            .disposed(by: disposeBag)
+        
+        reactor.state.map { $0.themeText }
+            .distinctUntilChanged()
+            .bind(to: transportValueLabel.rx.text)
+            .disposed(by: disposeBag)
+        
+        reactor.state.map { $0.destinationText }
+            .distinctUntilChanged()
+            .bind(to: themeValueLabel.rx.text)
+            .disposed(by: disposeBag)
+        
+        reactor.state.map { $0.dateRangeText }
+            .distinctUntilChanged()
+            .bind(to: dateValueLabel.rx.text)
+            .disposed(by: disposeBag)
+        
+        reactor.state.map { $0.title }
+            .distinctUntilChanged()
+            .bind(to: titleTextField.rx.text)
+            .disposed(by: disposeBag)
+        
+        reactor.state.map { $0.isPrivate }
+            .distinctUntilChanged()
+            .bind(to: privateSwitch.rx.isOn)
+            .disposed(by: disposeBag)
+        
+        // 로딩 상태 처리
+        reactor.state.map { $0.isCreating }
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] isCreating in
+                if isCreating {
+                    self?.loadingIndicator.startAnimating()
+                    self?.completeButton.isEnabled = false
+                } else {
+                    self?.loadingIndicator.stopAnimating()
+                    self?.completeButton.isEnabled = true
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        // 오류 처리
+        reactor.state.map { $0.error }
+            .distinctUntilChanged { $0?.localizedDescription == $1?.localizedDescription }
+            .filter { $0 != nil }
+            .subscribe(onNext: { [weak self] error in
+                self?.showAlert(title: "오류", message: error?.localizedDescription ?? "알 수 없는 오류가 발생했습니다.")
+            })
+            .disposed(by: disposeBag)
+        
+        // 여행 생성 완료
+        reactor.state.map { $0.shouldComplete }
+            .distinctUntilChanged()
+            .filter { $0 }
+            .subscribe(onNext: { [weak self] _ in
+                self?.completeJourneyCreation()
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - Helper Methods
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
+    
+    private func completeJourneyCreation() {
+        // 생성 완료 후 홈 화면으로 이동
+        showAlert(title: "성공", message: "여행이 성공적으로 생성되었습니다.") { [weak self] _ in
+            guard let self = self else { return }
+            
+            // 네비게이션 스택의 루트 뷰 컨트롤러로 이동하거나 필요한 화면으로 이동
+            if let navigationController = self.navigationController {
+                navigationController.popToRootViewController(animated: true)
+            } else {
+                self.dismiss(animated: true)
+            }
+        }
+    }
+    
+    private func showAlert(title: String, message: String, completion: ((UIAlertAction) -> Void)? = nil) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default, handler: completion))
+        present(alert, animated: true)
     }
     
     // MARK: - Setup UI
@@ -250,11 +408,21 @@ class JourneySummaryViewController: UIViewController {
         themeRowView.addSubview(themeLabel)
         themeRowView.addSubview(themeValueLabel)
         
+        // Add title text field
+        view.addSubview(titleTextField)
+        
+        // Add private switch
+        view.addSubview(privateSwitch)
+        view.addSubview(privateSwitchLabel)
+        
         // Add helper label
         view.addSubview(helperLabel)
         
         // Add complete button
         view.addSubview(completeButton)
+        
+        // Add loading indicator
+        view.addSubview(loadingIndicator)
         
         NSLayoutConstraint.activate([
             // Progress bar constraints
@@ -267,7 +435,7 @@ class JourneySummaryViewController: UIViewController {
             imageContainerView.topAnchor.constraint(equalTo: planProgressBar.bottomAnchor, constant: 30),
             imageContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             imageContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            imageContainerView.heightAnchor.constraint(equalToConstant: 200),
+            imageContainerView.heightAnchor.constraint(equalToConstant: 150),
             
             // Image view constraints
             journeyImageView.topAnchor.constraint(equalTo: imageContainerView.topAnchor),
@@ -339,8 +507,21 @@ class JourneySummaryViewController: UIViewController {
             themeValueLabel.centerYAnchor.constraint(equalTo: themeRowView.centerYAnchor),
             themeValueLabel.trailingAnchor.constraint(equalTo: themeRowView.trailingAnchor, constant: -20),
             
+            // Title text field constraints
+            titleTextField.topAnchor.constraint(equalTo: infoContainerView.bottomAnchor, constant: 20),
+            titleTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            titleTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            titleTextField.heightAnchor.constraint(equalToConstant: 40),
+            
+            // Private switch constraints
+            privateSwitch.topAnchor.constraint(equalTo: titleTextField.bottomAnchor, constant: 15),
+            privateSwitch.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            
+            privateSwitchLabel.centerYAnchor.constraint(equalTo: privateSwitch.centerYAnchor),
+            privateSwitchLabel.trailingAnchor.constraint(equalTo: privateSwitch.leadingAnchor, constant: -10),
+            
             // Helper label constraints
-            helperLabel.topAnchor.constraint(equalTo: infoContainerView.bottomAnchor, constant: 30),
+            helperLabel.topAnchor.constraint(equalTo: privateSwitch.bottomAnchor, constant: 20),
             helperLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
             helperLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
             
@@ -348,7 +529,11 @@ class JourneySummaryViewController: UIViewController {
             completeButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
             completeButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             completeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            completeButton.heightAnchor.constraint(equalToConstant: 50)
+            completeButton.heightAnchor.constraint(equalToConstant: 50),
+            
+            // Loading indicator constraints
+            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
         
         // Add separators between rows
@@ -372,13 +557,9 @@ class JourneySummaryViewController: UIViewController {
     }
     
     private func setupAvatars() {
-        // Sample colors for avatars
-        let colors: [UIColor] = [.systemOrange, .systemRed, .systemGray, .systemBlue]
-        
-        for i in 0..<3 {
-            let avatarView = createAvatarView(color: colors[i])
-            avatarStackView.addArrangedSubview(avatarView)
-        }
+        // 예시 아바타 추가 (사용자 자신)
+        let avatarView = createAvatarView(color: .systemOrange)
+        avatarStackView.addArrangedSubview(avatarView)
     }
     
     private func createAvatarView(color: UIColor) -> UIView {
@@ -395,21 +576,5 @@ class JourneySummaryViewController: UIViewController {
         ])
         
         return avatarView
-    }
-    
-    private func setupActions() {
-        completeButton.addTarget(self, action: #selector(completeButtonTapped), for: .touchUpInside)
-        inviteButton.addTarget(self, action: #selector(inviteButtonTapped), for: .touchUpInside)
-    }
-    
-    // MARK: - Actions
-    @objc private func completeButtonTapped() {
-        // Handle complete button action
-        print("Complete button tapped")
-    }
-    
-    @objc private func inviteButtonTapped() {
-        // Handle invite button action
-        print("Invite button tapped")
     }
 }

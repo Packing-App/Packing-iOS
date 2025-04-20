@@ -4,12 +4,18 @@
 //
 //  Created by 이융의 on 4/17/25.
 //
-import UIKit
 
-class JourneyThemeSelectionViewController: UIViewController {
+import UIKit
+import ReactorKit
+import RxSwift
+import RxCocoa
+
+class JourneyThemeSelectionViewController: UIViewController, View {
     
     // MARK: - Properties
-    var selectedThemes: [TravelTheme] = []
+    typealias Reactor = JourneyThemeSelectionReactor
+    
+    var disposeBag = DisposeBag()
     
     private lazy var navigationTitleLabel: UILabel = {
         let label = UILabel()
@@ -70,15 +76,13 @@ class JourneyThemeSelectionViewController: UIViewController {
         collectionView.isScrollEnabled = false
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.register(ThemeCell.self, forCellWithReuseIdentifier: "ThemeCell")
-        collectionView.dataSource = self
-        collectionView.delegate = self
         
         return collectionView
     }()
     
     private let helperLabel: UILabel = {
         let label = UILabel()
-        label.text = "리라님의 여행에 딱 맞는 준비물을 추천해드릴게요!"
+        label.text = "여행에 딱 맞는 준비물을 추천해드릴게요!"
         label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
         label.textColor = .darkGray
         label.asColor(targetString: "딱 맞는 준비물", color: .main)
@@ -91,20 +95,84 @@ class JourneyThemeSelectionViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle("다음", for: .normal)
         button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = .black
+        button.backgroundColor = .lightGray
         button.layer.cornerRadius = 8
         button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        button.isEnabled = false
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
-    
-    private var themeTemplates: [ThemeTemplate] = ThemeTemplate.examples
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setupActions()
+    }
+    
+    func bind(reactor: Reactor) {
+        // Action
+        // 테마 셀 선택 처리
+        themeCollectionView.rx.itemSelected
+            .map { indexPath in
+                let theme = reactor.currentState.themeTemplates[indexPath.item].themeName
+                return Reactor.Action.selectTheme(theme)
+            }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        // 다음 버튼 탭 처리
+        nextButton.rx.tap
+            .map { Reactor.Action.next }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        // State
+        // 테마 컬렉션뷰 데이터 바인딩
+        reactor.state.map { $0.themeTemplates }
+            .distinctUntilChanged()
+            .bind(to: themeCollectionView.rx.items(cellIdentifier: "ThemeCell", cellType: ThemeCell.self)) { indexPath, template, cell in
+                let isSelected = template.themeName == reactor.currentState.selectedTheme
+                cell.configure(with: template, isSelected: isSelected)
+            }
+            .disposed(by: disposeBag)
+        
+        // 선택된 테마 상태 업데이트
+        reactor.state.map { $0.selectedTheme }
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] _ in
+                self?.themeCollectionView.reloadData()
+            })
+            .disposed(by: disposeBag)
+        
+        // 다음 버튼 활성화 상태 업데이트
+        reactor.state.map { $0.canProceed }
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] canProceed in
+                self?.nextButton.isEnabled = canProceed
+                self?.nextButton.backgroundColor = canProceed ? .black : .lightGray
+            })
+            .disposed(by: disposeBag)
+        
+        // 다음 화면으로 이동
+        reactor.state.map { $0.shouldProceed }
+            .distinctUntilChanged()
+            .filter { $0 }
+            .subscribe(onNext: { [weak self] _ in
+                self?.navigateToJourneySummary()
+            })
+            .disposed(by: disposeBag)
+        
+        // Collection view delegate 설정
+        themeCollectionView.rx.setDelegate(self)
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - Navigation
+    private func navigateToJourneySummary() {
+        let summaryReactor = JourneySummaryReactor(parentReactor: reactor!.parentReactor)
+        let summaryVC = JourneySummaryViewController()
+        summaryVC.reactor = summaryReactor
+        navigationController?.pushViewController(summaryVC, animated: true)
     }
     
     // MARK: - Setup UI
@@ -166,44 +234,6 @@ class JourneyThemeSelectionViewController: UIViewController {
             nextButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
-    
-    private func setupActions() {
-        nextButton.addTarget(self, action: #selector(nextButtonTapped), for: .touchUpInside)
-    }
-    
-    // MARK: - Actions
-    @objc private func nextButtonTapped() {
-        let journeySummaryViewController = JourneySummaryViewController()
-        navigationController?.pushViewController(journeySummaryViewController, animated: true)
-    }
-    
-    // Helper method to toggle theme selection
-    private func toggleThemeSelection(at indexPath: IndexPath) {
-        let theme = themeTemplates[indexPath.item].themeName
-        
-        if let index = selectedThemes.firstIndex(of: theme) {
-            selectedThemes.remove(at: index)
-        } else {
-            selectedThemes.append(theme)
-        }
-        
-        themeCollectionView.reloadItems(at: [indexPath])
-    }
-}
-
-// MARK: - UICollectionViewDataSource
-extension JourneyThemeSelectionViewController: UICollectionViewDataSource {
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return themeTemplates.count
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ThemeCell", for: indexPath) as! ThemeCell
-        let template = themeTemplates[indexPath.item]
-        let isSelected = selectedThemes.contains(template.themeName)
-        cell.configure(with: template, isSelected: isSelected)
-        return cell
-    }
 }
 
 // MARK: - UICollectionViewDelegateFlowLayout
@@ -219,13 +249,6 @@ extension JourneyThemeSelectionViewController: UICollectionViewDelegateFlowLayou
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
         return 10
-    }
-}
-
-// MARK: - UICollectionViewDelegate
-extension JourneyThemeSelectionViewController: UICollectionViewDelegate {
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        toggleThemeSelection(at: indexPath)
     }
 }
 
@@ -254,7 +277,7 @@ class ThemeCell: UICollectionViewCell {
         let view = UIView()
         view.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         view.isHidden = true
-        view.layer.cornerRadius = 50
+        view.layer.cornerRadius = 15
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -320,14 +343,5 @@ class ThemeCell: UICollectionViewCell {
         titleLabel.text = nil
         overlayView.isHidden = true
         checkmarkView.isHidden = true
-    }
-}
-extension UILabel {
-    func asColor(targetString: String, color: UIColor) {
-        let fullText = text ?? ""
-        let attributedString = NSMutableAttributedString(string: fullText)
-        let range = (fullText as NSString).range(of: targetString)
-        attributedString.addAttribute(.foregroundColor, value: color, range: range)
-        attributedText = attributedString
     }
 }

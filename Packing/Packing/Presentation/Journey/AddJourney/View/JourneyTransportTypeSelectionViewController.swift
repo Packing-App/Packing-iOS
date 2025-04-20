@@ -1,10 +1,3 @@
-//
-//  JourneyTransportTypeSelectionViewController.swift
-//  Packing
-//
-//  Created by 이융의 on 4/14/25.
-//
-
 import UIKit
 import ReactorKit
 import RxSwift
@@ -94,7 +87,7 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
         return button
     }()
     
-    private var transportOptionButtons = [UIView]()
+    private var transportOptionViews = [UIView]()
     private var selectedTransportOption: UIView?
     
     // MARK: - Lifecycle
@@ -105,47 +98,40 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
     }
     
     func bind(reactor: Reactor) {
-        // Action
-        // 각 운송 수단 옵션에 대한 탭 이벤트 처리
-        for (index, option) in transportOptionButtons.enumerated() {
-            let tapGesture = UITapGestureRecognizer()
-            option.addGestureRecognizer(tapGesture)
-            option.isUserInteractionEnabled = true
-            
-            tapGesture.rx.event
-                .map { _ in TransportType.allCases[index] }
-                .map { Reactor.Action.selectTransportType($0) }
-                .bind(to: reactor.action)
-                .disposed(by: disposeBag)
-        }
-        
-        // 다음 버튼 탭 처리
+        // 다음 버튼 탭 바인딩
         nextButton.rx.tap
+            .do(onNext: { _ in
+                print(#fileID, #function, #line, "- ")
+                print("다음 버튼 탭됨!")
+            })
             .map { Reactor.Action.next }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
         
-        // 건너뛰기 버튼 탭 처리
+        // 건너뛰기 버튼 탭 바인딩
         skipButton.rx.tap
+            .do(onNext: { _ in
+                print("건너뛰기 버튼 탭됨!")
+            })
             .map { Reactor.Action.skip }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
         
-        // State
+        // State 바인딩
         // 선택된 운송 수단에 따라 UI 업데이트
         reactor.state.map { $0.selectedTransportType }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .subscribe(onNext: { [weak self] type in
-                guard let self = self, let type = type else { return }
-                
-                if let index = TransportType.allCases.firstIndex(of: type) {
-                    self.updateTransportSelection(at: index)
+                if let type = type, let index = TransportType.allCases.firstIndex(of: type) {
+                    self?.updateTransportSelection(at: index)
                 }
             })
             .disposed(by: disposeBag)
         
-        // 다음 버튼 활성화 상태 처리
+        // 다음 버튼 활성화 상태 업데이트
         reactor.state.map { $0.canProceed }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .subscribe(onNext: { [weak self] canProceed in
                 self?.nextButton.isEnabled = canProceed
@@ -153,19 +139,20 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
             })
             .disposed(by: disposeBag)
         
-        // 다음 화면으로 이동
+        // 다음 화면으로 이동 로직
         reactor.state.map { $0.shouldProceed }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .filter { $0 }
             .subscribe(onNext: { [weak self] _ in
-                guard let self = self else { return }
-                self.navigateToDateSelection()
+                self?.navigateToDateSelection()
             })
             .disposed(by: disposeBag)
     }
     
-    // MARK: - Navigate to next screen
+    // MARK: - Navigation
     private func navigateToDateSelection() {
+        // ReactorKit으로 구현된 날짜 선택 화면으로 이동
         let dateSelectionReactor = JourneyDateSelectionReactor(parentReactor: reactor!.parentReactor)
         let dateSelectionVC = JourneyDateSelectionViewController()
         dateSelectionVC.reactor = dateSelectionReactor
@@ -242,17 +229,51 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
             ("ellipsis", "기타")
         ]
         
-        for (icon, title) in transportOptions {
-            let optionButton = createTransportOptionButton(icon: icon, title: title)
-            transportStackView.addArrangedSubview(optionButton)
-            transportOptionButtons.append(optionButton)
+        // TransportType.allCases와 크기가 동일한지 확인
+        assert(transportOptions.count == TransportType.allCases.count, "transportOptions와 TransportType.allCases의 개수가 일치해야 합니다")
+        
+        for (i, (icon, title)) in transportOptions.enumerated() {
+            // transportType을 직접 연결하여 인덱스 문제 방지
+            let transportType = TransportType.allCases[i]
+            
+            // 옵션 뷰 생성
+            let optionView = createTransportOptionButton(icon: icon, title: title)
+            
+            // 태그에 인덱스 저장하여 인덱스 문제 방지
+            optionView.tag = i + 100 // 다른 태그와 충돌 방지를 위해 오프셋 추가
+            
+            // 탭 제스처 추가
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(transportOptionTapped(_:)))
+            optionView.addGestureRecognizer(tapGesture)
+            optionView.isUserInteractionEnabled = true
+            
+            transportStackView.addArrangedSubview(optionView)
+            transportOptionViews.append(optionView)
         }
         
-        // 이미 선택된 값이 있는 경우 UI 업데이트
+        // 초기 선택 상태 적용 (있는 경우)
         if let selectedType = reactor?.currentState.selectedTransportType,
            let index = TransportType.allCases.firstIndex(of: selectedType) {
             updateTransportSelection(at: index)
         }
+    }
+    
+    @objc private func transportOptionTapped(_ sender: UITapGestureRecognizer) {
+        guard let tappedView = sender.view else { return }
+        
+        // 태그에서 인덱스 추출 (오프셋 고려)
+        let index = tappedView.tag - 100
+        
+        print("탭 인식됨: \(index)")
+        
+        // 범위 체크
+        guard index >= 0, index < TransportType.allCases.count else { return }
+        
+        // 타입 가져오기
+        let type = TransportType.allCases[index]
+        
+        // 리액터에 액션 전송
+        reactor?.action.onNext(.selectTransportType(type))
     }
     
     private func createTransportOptionButton(icon: String, title: String) -> UIView {
@@ -280,7 +301,6 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
         containerView.addSubview(titleLabel)
         
         // Store references for later access during selection
-        containerView.tag = 1000
         iconImageView.tag = 1001
         titleLabel.tag = 1002
         
@@ -300,9 +320,10 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
         return containerView
     }
     
+    // 선택된 운송 수단 UI 업데이트
     private func updateTransportSelection(at index: Int) {
-        // Reset all options
-        for optionView in transportOptionButtons {
+        // 모든 옵션 초기화
+        for optionView in transportOptionViews {
             optionView.backgroundColor = .white
             optionView.layer.borderColor = UIColor.systemGray5.cgColor
             
@@ -315,11 +336,11 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
             }
         }
         
-        // 선택된 인덱스가 범위 내에 있는지 확인
-        guard index >= 0 && index < transportOptionButtons.count else { return }
+        // 인덱스가 범위 내에 있는지 확인
+        guard index >= 0, index < transportOptionViews.count else { return }
         
-        // 선택된 옵션 강조
-        let selectedView = transportOptionButtons[index]
+        // 선택된 옵션 강조 표시
+        let selectedView = transportOptionViews[index]
         selectedView.backgroundColor = UIColor.main
         selectedView.layer.borderColor = UIColor.main.cgColor
         
@@ -331,7 +352,6 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
             titleLabel.textColor = .white
         }
         
-        // 선택된 옵션 저장
         selectedTransportOption = selectedView
     }
 }

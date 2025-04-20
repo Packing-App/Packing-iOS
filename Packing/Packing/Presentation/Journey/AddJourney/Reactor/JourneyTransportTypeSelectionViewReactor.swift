@@ -49,6 +49,7 @@ class JourneyTransportTypeSelectionReactor: Reactor {
         switch action {
         case .selectTransportType(let type):
             // 상위 리액터에 변경 사항 전달
+            print(#fileID, #function, #line, "- ")
             parentReactor.action.onNext(.setTransportType(type))
             return .just(.setTransportType(type))
             
@@ -71,6 +72,8 @@ class JourneyTransportTypeSelectionReactor: Reactor {
         
         switch mutation {
         case .setTransportType(let type):
+            print(#fileID, #function, #line, "- ")
+            print(type)
             newState.selectedTransportType = type
             newState.canProceed = true
             

@@ -50,7 +50,7 @@ protocol AuthServiceProtocol {
 class AuthService: NSObject, AuthServiceProtocol {
     static let shared = AuthService()
     
-    private let apiClient = APIClient.shared
+    private let apiClient: APIClientProtocol
     private let tokenStorage = KeyChainTokenStorage.shared
     private let userManager = UserManager.shared
     private let disposeBag = DisposeBag()
@@ -59,8 +59,8 @@ class AuthService: NSObject, AuthServiceProtocol {
     private var socialLoginSubject: PublishSubject<User>?
     private var presentationContext: UIViewController?
     
-    override init() {
-        super.init()
+    init(apiClient: APIClientProtocol = APIClient.shared) {
+        self.apiClient = apiClient
     }
     
     func registerUser(name: String, email: String, password: String) -> Observable<TokenData> {

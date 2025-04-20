@@ -32,17 +32,178 @@ protocol JourneyServiceProtocol {
                       isPrivate: Bool?) -> Observable<Journey>
     
     // 여행 삭제
-    func deleteJourney(id: String) -> Observable<Void>
+    func deleteJourney(id: String) -> Observable<Bool>
     
     // 여행에 참가자 초대
     func inviteParticipant(journeyId: String, email: String) -> Observable<NotificationResponse>
     
     // 여행 참가자 제거
-    func removeParticipant(journeyId: String, userId: String) -> Observable<Void>
+    func removeParticipant(journeyId: String, userId: String) -> Observable<Bool>
     
     // 여행 초대 응답 (수락/거절)
-    func respondToInvitation(notificationId: String, accept: Bool) -> Observable<Void>
+    func respondToInvitation(notificationId: String, accept: Bool) -> Observable<Bool>
     
     // 여행 추천 준비물 조회
     func getRecommendations(journeyId: String) -> Observable<RecommendationResponse>
+}
+
+class JourneyService: JourneyServiceProtocol {
+    private let apiClient: APIClientProtocol
+    
+    init(apiClient: APIClientProtocol = APIClient.shared) {
+        self.apiClient = apiClient
+    }
+    
+    // MARK: - 여행 목록 조회
+    func getJourneys() -> Observable<[Journey]> {
+        return apiClient.request(APIEndpoint.getJourneys)
+            .map { (response: APIResponse<[Journey]>) -> [Journey] in
+                guard let journeys = response.data else {
+                    throw NetworkError.invalidResponse
+                }
+                return journeys
+            }
+            .catch { error in
+                return Observable.error(error)
+            }
+    }
+    
+    // MARK: - 특정 여행 조회
+    func getJourneyById(id: String) -> Observable<Journey> {
+        return apiClient.request(APIEndpoint.getJourneyById(id: id))
+            .map { (response: APIResponse<Journey>) -> Journey in
+                guard let journey = response.data else {
+                    throw NetworkError.invalidResponse
+                }
+                return journey
+            }
+            .catch { error in
+                return Observable.error(error)
+            }
+    }
+    
+    // MARK: - 새로운 여행 생성
+    func createJourney(title: String,
+                      transportType: TransportType,
+                      origin: String,
+                      destination: String,
+                      startDate: Date,
+                      endDate: Date,
+                      theme: TravelTheme,
+                      isPrivate: Bool) -> Observable<Journey> {
+        
+        return apiClient.request(APIEndpoint.createJourney(
+            title: title,
+            transportType: transportType,
+            origin: origin,
+            destination: destination,
+            startDate: startDate,
+            endDate: endDate,
+            theme: theme,
+            isPrivate: isPrivate
+        ))
+        .map { (response: APIResponse<Journey>) -> Journey in
+            guard let journey = response.data else {
+                throw NetworkError.invalidResponse
+            }
+            return journey
+        }
+        .catch { error in
+            return Observable.error(error)
+        }
+    }
+    
+    // MARK: - 여행 정보 업데이트
+    func updateJourney(id: String,
+                      title: String?,
+                      transportType: TransportType?,
+                      origin: String?,
+                      destination: String?,
+                      startDate: Date?,
+                      endDate: Date?,
+                      theme: TravelTheme?,
+                      isPrivate: Bool?) -> Observable<Journey> {
+        
+        return apiClient.request(APIEndpoint.updateJourney(
+            id: id,
+            title: title,
+            transportType: transportType,
+            origin: origin,
+            destination: destination,
+            startDate: startDate,
+            endDate: endDate,
+            theme: theme,
+            isPrivate: isPrivate
+        ))
+        .map { (response: APIResponse<Journey>) -> Journey in
+            guard let journey = response.data else {
+                throw NetworkError.invalidResponse
+            }
+            return journey
+        }
+        .catch { error in
+            return Observable.error(error)
+        }
+    }
+    
+    // MARK: - 여행 삭제
+    func deleteJourney(id: String) -> Observable<Bool> {
+        return apiClient.request(APIEndpoint.deleteJourney(id: id))
+            .map { (response: APIResponse<Bool>) -> Bool in
+                return response.success
+            }
+            .catch { error in
+                return Observable.error(error)
+            }
+    }
+    
+    // MARK: - 여행에 참가자 초대
+    func inviteParticipant(journeyId: String, email: String) -> Observable<NotificationResponse> {
+        return apiClient.request(APIEndpoint.inviteParticipant(journeyId: journeyId, email: email))
+            .map { (response: APIResponse<NotificationResponse>) -> NotificationResponse in
+                guard let notificationResponse = response.data else {
+                    throw NetworkError.invalidResponse
+                }
+                return notificationResponse
+            }
+            .catch { error in
+                return Observable.error(error)
+            }
+    }
+    
+    // MARK: - 여행 참가자 제거
+    func removeParticipant(journeyId: String, userId: String) -> Observable<Bool> {
+        return apiClient.request(APIEndpoint.removeParticipant(journeyId: journeyId, userId: userId))
+            .map { (response: APIResponse<Bool>) -> Bool in
+                return response.success
+            }
+            .catch { error in
+                return Observable.error(error)
+            }
+    }
+    
+    // MARK: - 여행 초대 응답 (수락/거절)
+    func respondToInvitation(notificationId: String, accept: Bool) -> Observable<Bool> {
+        return apiClient.request(APIEndpoint.respondToInvitation(notificationId: notificationId, accept: accept))
+            .map { (response: APIResponse<Bool>) -> Bool in
+                return response.success
+            }
+            .catch { error in
+                return Observable.error(error)
+            }
+    }
+    
+    // MARK: - 여행 추천 준비물 조회
+    func getRecommendations(journeyId: String) -> Observable<RecommendationResponse> {
+        return apiClient.request(APIEndpoint.getRecommendations(journeyId: journeyId))
+            .map { (response: APIResponse<RecommendationResponse>) -> RecommendationResponse in
+                guard let recommendations = response.data else {
+                    throw NetworkError.invalidResponse
+                }
+                return recommendations
+            }
+            .catch { error in
+                return Observable.error(error)
+            }
+    }
 }

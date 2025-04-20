@@ -16,11 +16,11 @@ protocol UserServiceProtocol {
 }
 
 class UserService: UserServiceProtocol {
-    private let apiClient: APIClient
+    private let apiClient: APIClientProtocol
     private let tokenManager: KeyChainTokenStorage
     private let userManager: UserManager
     
-    init(apiClient: APIClient = .shared,
+    init(apiClient: APIClientProtocol = APIClient.shared,
          tokenManager: KeyChainTokenStorage = .shared,
          userManager: UserManager = .shared) {
         self.apiClient = apiClient

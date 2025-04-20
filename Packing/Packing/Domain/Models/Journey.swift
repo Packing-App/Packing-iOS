@@ -153,13 +153,3 @@ extension Journey {
         return "\(startString) ~ \(endString)"
     }
 }
-
-
-// 날짜 포맷터 유틸리티
-extension DateFormatter {
-    static let journeyDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter
-    }()
-}

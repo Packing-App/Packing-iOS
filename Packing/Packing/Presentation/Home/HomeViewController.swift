@@ -531,7 +531,7 @@ class TravelPlanCell: UICollectionViewCell {
     func configure(with plan: Journey) {
         imageView.image = UIImage(named: plan.imageUrl ?? "")
         titleLabel.text = plan.title
-        dateLabel.text = plan.startDate.description
+        dateLabel.text = plan.dateRangeString
     }
 }
 

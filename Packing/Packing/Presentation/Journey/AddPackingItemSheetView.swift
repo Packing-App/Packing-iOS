@@ -53,7 +53,7 @@ struct AddPackingItemSheet: View {
                     Section(header: Text("담당자")) {
                         Picker("담당자", selection: $selectedAssignee) {
                             Text("담당자 미지정").tag(String?.none)
-                            ForEach(journey.participants, id: \.self) { participantId in
+                            ForEach(self.journey.participants.map { $0.id }, id: \.self) { participantId in
                                 let isCreator = participantId == journey.creatorId
                                 Text(isCreator ? "방장" : "참가자")
                                     .tag(participantId as String?)

@@ -10,7 +10,7 @@ import Foundation
 struct User: Codable, Equatable {
     let id: String
     let name: String
-    let email: String
+    let email: String?
     var profileImage: String?
     let intro: String?
     let socialType: LoginType
@@ -19,7 +19,7 @@ struct User: Codable, Equatable {
     let isEmailVerified: Bool?
     
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "_id"
         case name
         case email
         case profileImage

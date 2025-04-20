@@ -10,6 +10,7 @@ import RxSwift
 
 protocol APIClientProtocol {
     func request<T: Decodable>(_ endpoint: APIEndpoint) -> Observable<T>
+    func requestWithDateDecoding<T: Decodable>(_ endpoint: APIEndpoint) -> Observable<T>
     func uploadImage(imageData: Data, endpoint: APIEndpoint) -> Observable<ProfileImageResponse>
 }
 
@@ -148,6 +149,116 @@ class APIClient: APIClientProtocol {
                     observer.onError(NetworkError.notFound)
                     
                 default:    // server error
+                    if let data = data {
+                        do {
+                            let errorResponse = try JSONDecoder().decode(ErrorResponse.self, from: data)
+                            observer.onError(NetworkError.serverError(errorResponse.message))
+                        } catch {
+                            observer.onError(NetworkError.serverError("Server error: \(httpResponse.statusCode)"))
+                        }
+                    } else {
+                        observer.onError(NetworkError.serverError("Server error: \(httpResponse.statusCode)"))
+                    }
+                }
+            }
+            
+            task.resume()
+            
+            return Disposables.create {
+                task.cancel()
+            }
+        }
+    }
+    
+    func requestWithDateDecoding<T: Decodable>(_ endpoint: APIEndpoint) -> Observable<T> {
+        return Observable.create { [weak self] observer in
+            guard let self = self, let url = endpoint.url() else {
+                observer.onError(NetworkError.invalidURL)
+                return Disposables.create()
+            }
+            
+            var request = URLRequest(url: url)
+            request.httpMethod = endpoint.method.rawValue
+            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+            if self.requiresAuthentication(endpoint) {
+                if let token = self.tokenManager.accessToken {
+                    request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                } else {
+                    observer.onError(NetworkError.unauthorized(nil))
+                    return Disposables.create()
+                }
+            }
+            
+            if let params = endpoint.parameters {
+                do {
+                    request.httpBody = try JSONSerialization.data(withJSONObject: params, options: [])
+                } catch {
+                    observer.onError(NetworkError.requestFailed(error))
+                    return Disposables.create()
+                }
+            }
+            
+            let task = self.session.dataTask(with: request) { data, response, error in
+                if let error = error {
+                    observer.onError(NetworkError.requestFailed(error))
+                    return
+                }
+                
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    observer.onError(NetworkError.invalidResponse)
+                    return
+                }
+                
+                switch httpResponse.statusCode {
+                case 200...299:
+                    guard let data = data else {
+                        observer.onError(NetworkError.invalidResponse)
+                        return
+                    }
+                    
+                    do {
+                        // 날짜 디코딩 전략이 설정된 디코더 사용
+                        let decoder = JSONDecoder()
+                        decoder.dateDecodingStrategy = .custom { decoder in
+                            let container = try decoder.singleValueContainer()
+                            let dateString = try container.decode(String.self)
+                            let formatter = ISO8601DateFormatter()
+                            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                            
+                            if let date = formatter.date(from: dateString) {
+                                return date
+                            }
+                            
+                            throw DecodingError.dataCorruptedError(
+                                in: container,
+                                debugDescription: "날짜 형식을 파싱할 수 없습니다: \(dateString)"
+                            )
+                        }
+                        
+                        let decodedObject = try decoder.decode(T.self, from: data)
+                        observer.onNext(decodedObject)
+                        observer.onCompleted()
+                    } catch let error {
+                        observer.onError(NetworkError.decodingFailed(error))
+                    }
+                
+                case 401:
+                    if let data = data {
+                        do {
+                            let errorResponse = try JSONDecoder().decode(ErrorResponse.self, from: data)
+                            observer.onError(NetworkError.unauthorized(errorResponse.message))
+                        } catch {
+                            observer.onError(NetworkError.unauthorized(nil))
+                        }
+                    } else {
+                        observer.onError(NetworkError.unauthorized(nil))
+                    }
+                    
+                case 404:
+                    observer.onError(NetworkError.notFound)
+                    
+                default:
                     if let data = data {
                         do {
                             let errorResponse = try JSONDecoder().decode(ErrorResponse.self, from: data)

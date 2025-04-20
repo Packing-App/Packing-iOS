@@ -42,9 +42,20 @@ struct Journey: Identifiable, Codable {
     let theme: TravelTheme
     let imageUrl: String?
     let isPrivate: Bool
-    let participants: [String]  // 여행 참가자 ID 목록
+    let participants: [User]  // 여행 참가자 ID 목록
     let createdAt: Date
     let updatedAt: Date
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"  // 몽고DB의 _id를 Swift의 id로 매핑
+        case creatorId, title, transportType, origin, destination
+        case startDate, endDate, theme, imageUrl, isPrivate, participants
+        case createdAt, updatedAt
+    }
+}
+
+extension Journey: Equatable {
+    
 }
 
 
@@ -63,7 +74,7 @@ extension Journey {
             theme: .mountain,
             imageUrl: "journey_fujisan",
             isPrivate: false,
-            participants: [User.currentUser.id, User.exampleUser.id,User.exampleUser2.id],
+            participants: [User.currentUser, User.exampleUser,User.exampleUser2],
             createdAt: Date(),
             updatedAt: Date()
         ),
@@ -79,7 +90,7 @@ extension Journey {
             theme: .themepark,
             imageUrl: "journey_plitvice",
             isPrivate: false,
-            participants: [User.currentUser.id],
+            participants: [User.currentUser],
             createdAt: Date(),
             updatedAt: Date()
         ),
@@ -95,7 +106,7 @@ extension Journey {
             theme: .waterSports,
             imageUrl: "journey_danang",
             isPrivate: false,
-            participants: [User.currentUser.id, User.exampleUser.id],
+            participants: [User.currentUser, User.exampleUser],
             createdAt: Date(),
             updatedAt: Date()
         ),
@@ -111,7 +122,7 @@ extension Journey {
             theme: .camping,
             imageUrl: "journey_jeju",
             isPrivate: true,
-            participants: [User.exampleUser.id],
+            participants: [User.exampleUser],
             createdAt: Date(),
             updatedAt: Date()
         )
@@ -121,7 +132,7 @@ extension Journey {
     static var currentUserJourneys: [Journey] {
         return examples.filter {
             $0.creatorId == User.currentUser.id ||
-            $0.participants.contains(User.currentUser.id)
+            $0.participants.contains(User.currentUser)
         }
     }
     

@@ -213,14 +213,14 @@ struct JourneyDetailView: View {
                     // ZStack으로 감싸서 모든 참가자 프로필을 겹치게 표시
                     ZStack(alignment: .leading) {
                         // 먼저 일반 참가자들을 뒤에서부터 렌더링
-                        let regularParticipants = journey.participants.filter { $0 != journey.creatorId }
+                        let regularParticipants = journey.participants.filter { $0.id != journey.creatorId }.map { $0.id }
                         ForEach(Array(regularParticipants.enumerated().reversed()), id: \.element) { index, participantId in
                             ParticipantView(name: "참가자 \(index + 2)", isCreator: false)
                                 .offset(x: CGFloat(index + 1) * 15.0) // 방장 뒤에 배치
                         }
                         
                         // 방장을 맨 앞(맨 왼쪽)에 배치
-                        if journey.participants.contains(journey.creatorId) {
+                        if journey.participants.map { $0.id }.contains(journey.creatorId) {
                             ParticipantView(name: "방장", isCreator: true)
                                 .offset(x: 0) // 맨 앞에 배치
                         }

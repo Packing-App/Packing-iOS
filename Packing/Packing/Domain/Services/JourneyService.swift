@@ -56,14 +56,35 @@ class JourneyService: JourneyServiceProtocol {
     
     // MARK: - 여행 목록 조회
     func getJourneys() -> Observable<[Journey]> {
-        return apiClient.request(APIEndpoint.getJourneys)
+        print(#fileID, #function, #line, "- 여행 목록 조회 시작")
+        return apiClient.requestWithDateDecoding(APIEndpoint.getJourneys)
+            .do(onNext: { response in
+                print("Response 받음: \(response)")
+            })
             .map { (response: APIResponse<[Journey]>) -> [Journey] in
                 guard let journeys = response.data else {
+                    print("응답에 data 필드가 없음")
                     throw NetworkError.invalidResponse
                 }
+                print("여행 목록 디코딩 성공: \(journeys.count)개")
                 return journeys
             }
             .catch { error in
+                print("여행 목록 조회 오류: \(error)ll")
+                if let decodingError = error as? DecodingError {
+                    switch decodingError {
+                    case .typeMismatch(let type, let context):
+                        print("Type mismatch: \(type), path: \(context.codingPath), \(context.debugDescription)")
+                    case .valueNotFound(let type, let context):
+                        print("Value not found: \(type), path: \(context.codingPath), \(context.debugDescription)")
+                    case .keyNotFound(let key, let context):
+                        print("Key not found: \(key), path: \(context.codingPath), \(context.debugDescription)")
+                    case .dataCorrupted(let context):
+                        print("Data corrupted: \(context.debugDescription), path: \(context.codingPath)")
+                    @unknown default:
+                        print("Unknown decoding error: \(decodingError)")
+                    }
+                }
                 return Observable.error(error)
             }
     }

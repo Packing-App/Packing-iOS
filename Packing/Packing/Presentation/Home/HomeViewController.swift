@@ -6,8 +6,13 @@
 //
 
 import UIKit
+import ReactorKit
+import RxSwift
+import RxCocoa
 
-class HomeViewController: UIViewController {
+class HomeViewController: UIViewController, View {
+    
+    var disposeBag = DisposeBag()
     
     // MARK: - UI COMPONENTS
     
@@ -126,15 +131,6 @@ class HomeViewController: UIViewController {
         return label
     }()
     
-    private lazy var seeAllButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("더보기", for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
-        button.setTitleColor(.gray, for: .normal)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
-    
     private lazy var travelPlansCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
@@ -147,12 +143,11 @@ class HomeViewController: UIViewController {
         collectionView.contentInset = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.register(TravelPlanCell.self, forCellWithReuseIdentifier: "TravelPlanCell")
-        collectionView.dataSource = self
-        collectionView.delegate = self
-        
+//        collectionView.dataSource = self
+//        collectionView.delegate = self
+
         return collectionView
     }()
-    
     
     // Templates Section
     private lazy var templatesSectionView: UIView = {
@@ -189,19 +184,21 @@ class HomeViewController: UIViewController {
         collectionView.isScrollEnabled = false
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.register(TemplateCell.self, forCellWithReuseIdentifier: "TemplateCell")
-        collectionView.dataSource = self
-        collectionView.delegate = self
+//        collectionView.dataSource = self
+//        collectionView.delegate = self
         
         return collectionView
     }()
     
+    private lazy var loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        indicator.hidesWhenStopped = true
+        return indicator
+    }()
+    
     private var gradientLayer: CAGradientLayer!
     
-    // MARK: - DATA
-    
-    private let travelPlans = Journey.examples
-    
-    private let themeTemplates = ThemeTemplate.examples
     
     // MARK: - LIFECYCLE
     
@@ -211,12 +208,93 @@ class HomeViewController: UIViewController {
         configureNavigationBar()
         setupGradientBackground()
         setupAllAnimations()
+        
+        let journeyService = JourneyService()
+        let reactor = HomeViewReactor(journeyService: journeyService)
+        self.reactor = reactor
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         // Update gradient frame when view layout changes
         gradientLayer.frame = view.bounds
+    }
+    
+    func bind(reactor: HomeViewReactor) {
+        // Action 바인딩
+        
+        // 화면 로드 시 여행 목록 가져오기
+        Observable.just(())
+            .map { HomeViewReactor.Action.viewDidLoad }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        // 새 여행 버튼 클릭
+        addNewJourneyButton.rx.tap
+            .map { HomeViewReactor.Action.addNewJourney }
+            .subscribe(onNext: { [weak self] _ in
+                let addJourneyVC = JourneyTransportTypeSelectionViewController()
+                addJourneyVC.hidesBottomBarWhenPushed = true
+                self?.navigationController?.pushViewController(addJourneyVC, animated: true)
+            })
+            .disposed(by: disposeBag)
+        
+        travelPlansCollectionView.rx.modelSelected(Journey.self)
+            .subscribe(onNext: { [weak self] journey in
+                let detailVC = JourneyDetailViewController()
+                detailVC.journey = journey
+                self?.navigationController?.pushViewController(detailVC, animated: true)
+            })
+            .disposed(by: disposeBag)
+        
+        // State 바인딩
+        
+        // 여행 목록 바인딩
+        reactor.state
+            .observe(on: MainScheduler.instance)
+            .map { $0.journeys }
+            .distinctUntilChanged()
+            .bind(to: travelPlansCollectionView.rx.items(cellIdentifier: "TravelPlanCell", cellType: TravelPlanCell.self)) { indexPath, journey, cell in
+                cell.configure(with: journey)
+            }
+            .disposed(by: disposeBag)
+        
+        // 테마 템플릿 바인딩
+        reactor.state
+            .observe(on: MainScheduler.instance)
+            .map { $0.themeTemplates }
+            .distinctUntilChanged()
+            .bind(to: templatesCollectionView.rx.items(cellIdentifier: "TemplateCell", cellType: TemplateCell.self)) { indexPath, template, cell in
+                cell.configure(with: template)
+            }
+            .disposed(by: disposeBag)
+        
+        // 로딩 상태 바인딩
+        reactor.state
+            .observe(on: MainScheduler.instance)
+            .map{ $0.isLoading }
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] isLoading in
+                if isLoading {
+                    self?.loadingIndicator.startAnimating()
+                } else {
+                    self?.loadingIndicator.stopAnimating()
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        // 에러 바인딩
+        reactor.state
+            .observe(on: MainScheduler.instance)
+            .map { $0.error }
+            .distinctUntilChanged { $0?.localizedDescription == $1?.localizedDescription }
+            .subscribe(onNext: { [weak self] error in
+                if let error = error {
+                    // 에러 알림 표시
+                    self?.showErrorAlert(message: error.localizedDescription)
+                }
+            })
+            .disposed(by: disposeBag)
     }
     
     // MARK: - SETUP
@@ -236,9 +314,9 @@ class HomeViewController: UIViewController {
         contentView.addSubview(addNewJourneyButton)
         contentView.addSubview(myTravelPlansSectionView)
         contentView.addSubview(templatesSectionView)
+        contentView.addSubview(loadingIndicator)
         
         myTravelPlansSectionView.addSubview(myTravelPlansSectionLabel)
-        myTravelPlansSectionView.addSubview(seeAllButton)
         myTravelPlansSectionView.addSubview(travelPlansCollectionView)
         
         templatesSectionView.addSubview(templatesSectionLabel)
@@ -261,6 +339,10 @@ class HomeViewController: UIViewController {
             
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
+            
+            // 로딩 인디케이터
+            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             
             planeImageView.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor, constant: 40),
             planeImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -30),
@@ -294,10 +376,8 @@ class HomeViewController: UIViewController {
             
             myTravelPlansSectionLabel.topAnchor.constraint(equalTo: myTravelPlansSectionView.topAnchor, constant: 20),
             myTravelPlansSectionLabel.leadingAnchor.constraint(equalTo: myTravelPlansSectionView.leadingAnchor, constant: 20),
-            
-            seeAllButton.centerYAnchor.constraint(equalTo: myTravelPlansSectionLabel.centerYAnchor),
-            seeAllButton.trailingAnchor.constraint(equalTo: myTravelPlansSectionView.trailingAnchor, constant: -20),
-            
+            myTravelPlansSectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: 0),
+
             travelPlansCollectionView.topAnchor.constraint(equalTo: myTravelPlansSectionLabel.bottomAnchor, constant: 15),
             travelPlansCollectionView.leadingAnchor.constraint(equalTo: myTravelPlansSectionView.leadingAnchor),
             travelPlansCollectionView.trailingAnchor.constraint(equalTo: myTravelPlansSectionView.trailingAnchor),
@@ -345,44 +425,50 @@ class HomeViewController: UIViewController {
         navigationController?.navigationBar.standardAppearance = appearance
         navigationController?.navigationBar.scrollEdgeAppearance = appearance
     }
+    
+    private func showErrorAlert(message: String) {
+        let alert = UIAlertController(title: "오류", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
 }
 
 // MARK: - UICollectionViewDataSource
-extension HomeViewController: UICollectionViewDataSource {
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        if collectionView == travelPlansCollectionView {
-            return travelPlans.count
-        } else {
-            return themeTemplates.count
-        }
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        if collectionView == travelPlansCollectionView {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "TravelPlanCell", for: indexPath) as! TravelPlanCell
-            cell.configure(with: travelPlans[indexPath.item])
-            return cell
-        } else {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "TemplateCell", for: indexPath) as! TemplateCell
-            cell.configure(with: themeTemplates[indexPath.item])
-            return cell
-        }
-    }
-}
+//extension HomeViewController: UICollectionViewDataSource {
+//    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+//        if collectionView == travelPlansCollectionView {
+//            return travelPlans.count
+//        } else {
+//            return themeTemplates.count
+//        }
+//    }
+//    
+//    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+//        if collectionView == travelPlansCollectionView {
+//            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "TravelPlanCell", for: indexPath) as! TravelPlanCell
+//            cell.configure(with: travelPlans[indexPath.item])
+//            return cell
+//        } else {
+//            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "TemplateCell", for: indexPath) as! TemplateCell
+//            cell.configure(with: themeTemplates[indexPath.item])
+//            return cell
+//        }
+//    }
+//}
 
 // MARK: - UICollectionViewDelegate
-extension HomeViewController: UICollectionViewDelegate {
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if collectionView == travelPlansCollectionView {
-            let selectedJourney = travelPlans[indexPath.row]
-            
-            let detailVC = JourneyDetailViewController()
-            detailVC.journey = selectedJourney
-            
-            navigationController?.pushViewController(detailVC, animated: true)
-        }
-    }
-}
+//extension HomeViewController: UICollectionViewDelegate {
+//    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+//        if collectionView == travelPlansCollectionView {
+//            let selectedJourney = travelPlans[indexPath.row]
+//            
+//            let detailVC = JourneyDetailViewController()
+//            detailVC.journey = selectedJourney
+//            
+//            navigationController?.pushViewController(detailVC, animated: true)
+//        }
+//    }
+//}
 
 // MARK: - Custom Cells
 class TravelPlanCell: UICollectionViewCell {
@@ -448,6 +534,9 @@ class TravelPlanCell: UICollectionViewCell {
         dateLabel.text = plan.startDate.description
     }
 }
+
+
+// MARK: - TemplateCell
 
 class TemplateCell: UICollectionViewCell {
     private let circleView: UIView = {
@@ -519,18 +608,6 @@ class TemplateCell: UICollectionViewCell {
     return navigationViewController
 }
 
-import UIKit
-
-// MARK: - UIColor Extension
-extension UIColor {
-    
-    // Useful for theme colors
-    static let accentColor = UIColor(red: 255/255, green: 99/255, blue: 99/255, alpha: 1.0)
-    static let background = UIColor(red: 248/255, green: 250/255, blue: 252/255, alpha: 1.0)
-    static let textPrimary = UIColor(red: 51/255, green: 51/255, blue: 51/255, alpha: 1.0)
-    static let textSecondary = UIColor(red: 102/255, green: 102/255, blue: 102/255, alpha: 1.0)
-}
-
 // MARK: - UIView Extension for Shadows
 extension UIView {
     func applyShadow(color: UIColor = .black, opacity: Float = 0.1, offset: CGSize = CGSize(width: 0, height: 2), radius: CGFloat = 4) {
@@ -576,33 +653,7 @@ extension UIButton {
     }
 }
 
-// MARK: - UIImage Extension
-extension UIImage {
-    func resized(to size: CGSize) -> UIImage {
-        return UIGraphicsImageRenderer(size: size).image { _ in
-            draw(in: CGRect(origin: .zero, size: size))
-        }
-    }
-    
-    func withRoundedCorners(radius: CGFloat = 8) -> UIImage {
-        let rect = CGRect(origin: .zero, size: size)
-        UIGraphicsBeginImageContextWithOptions(size, false, scale)
-        defer { UIGraphicsEndImageContext() }
-        
-        let context = UIGraphicsGetCurrentContext()
-        context?.addPath(UIBezierPath(roundedRect: rect, cornerRadius: radius).cgPath)
-        context?.clip()
-        
-        draw(in: rect)
-        
-        return UIGraphicsGetImageFromCurrentImageContext() ?? self
-    }
-}
-
-
-
 // Add these animations to enhance the user experience
-
 extension HomeViewController {
     
     // Call this in viewDidAppear
@@ -721,4 +772,37 @@ extension HomeViewController {
         super.viewDidAppear(animated)
         animateHeaderElements()
     }
+}
+
+// MARK: - UIImage Extension
+extension UIImage {
+    func resized(to size: CGSize) -> UIImage {
+        return UIGraphicsImageRenderer(size: size).image { _ in
+            draw(in: CGRect(origin: .zero, size: size))
+        }
+    }
+    
+    func withRoundedCorners(radius: CGFloat = 8) -> UIImage {
+        let rect = CGRect(origin: .zero, size: size)
+        UIGraphicsBeginImageContextWithOptions(size, false, scale)
+        defer { UIGraphicsEndImageContext() }
+        
+        let context = UIGraphicsGetCurrentContext()
+        context?.addPath(UIBezierPath(roundedRect: rect, cornerRadius: radius).cgPath)
+        context?.clip()
+        
+        draw(in: rect)
+        
+        return UIGraphicsGetImageFromCurrentImageContext() ?? self
+    }
+}
+
+// MARK: - UIColor Extension
+extension UIColor {
+    
+    // Useful for theme colors
+    static let accentColor = UIColor(red: 255/255, green: 99/255, blue: 99/255, alpha: 1.0)
+    static let background = UIColor(red: 248/255, green: 250/255, blue: 252/255, alpha: 1.0)
+    static let textPrimary = UIColor(red: 51/255, green: 51/255, blue: 51/255, alpha: 1.0)
+    static let textSecondary = UIColor(red: 102/255, green: 102/255, blue: 102/255, alpha: 1.0)
 }

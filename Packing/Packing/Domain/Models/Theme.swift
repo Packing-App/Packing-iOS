@@ -32,8 +32,12 @@ struct ThemeTemplate: Identifiable, Codable {
     }
 }
 
+extension ThemeTemplate: Equatable {
+    
+}
+
 // 여행 테마 열거형
-enum TravelTheme: String, Codable, CaseIterable {
+enum TravelTheme: String, Codable, CaseIterable, Equatable {
 
     case waterSports = "waterSports"
     case cycling = "cycling"
@@ -68,7 +72,7 @@ enum TravelTheme: String, Codable, CaseIterable {
 
 
 // 아이템 카테고리 열거형
-enum ItemCategory: String, Codable, CaseIterable {
+enum ItemCategory: String, Codable, CaseIterable, Equatable {
     case clothing = "clothing"
     case electronics = "electronics"
     case toiletries = "toiletries"
@@ -92,7 +96,7 @@ enum ItemCategory: String, Codable, CaseIterable {
 
 
 // 준비물 아이템 구조체
-struct Item: Identifiable, Codable {
+struct Item: Identifiable, Codable, Equatable {
     let id: String
     let name: String
     let category: ItemCategory

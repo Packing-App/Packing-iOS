@@ -129,6 +129,7 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         // State
         // 테마 컬렉션뷰 데이터 바인딩
         reactor.state.map { $0.themeTemplates }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .bind(to: themeCollectionView.rx.items(cellIdentifier: "ThemeCell", cellType: ThemeCell.self)) { indexPath, template, cell in
                 let isSelected = template.themeName == reactor.currentState.selectedTheme
@@ -138,6 +139,7 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         
         // 선택된 테마 상태 업데이트
         reactor.state.map { $0.selectedTheme }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .subscribe(onNext: { [weak self] _ in
                 self?.themeCollectionView.reloadData()
@@ -146,6 +148,7 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         
         // 다음 버튼 활성화 상태 업데이트
         reactor.state.map { $0.canProceed }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .subscribe(onNext: { [weak self] canProceed in
                 self?.nextButton.isEnabled = canProceed
@@ -155,6 +158,7 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         
         // 다음 화면으로 이동
         reactor.state.map { $0.shouldProceed }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .filter { $0 }
             .subscribe(onNext: { [weak self] _ in

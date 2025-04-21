@@ -288,6 +288,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
         // State
         // 출발지 업데이트
         reactor.state.map { $0.origin }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .subscribe(onNext: { [weak self] origin in
                 var config = self?.departureButton.configuration
@@ -299,6 +300,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
         
         // 도착지 업데이트
         reactor.state.map { $0.destination }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .subscribe(onNext: { [weak self] destination in
                 var config = self?.destinationButton.configuration
@@ -313,6 +315,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
             reactor.state.map { $0.startDate },
             reactor.state.map { $0.endDate }
         )
+        .observe(on: MainScheduler.instance)
         .distinctUntilChanged { prev, next in
             return prev.0?.timeIntervalSince1970 == next.0?.timeIntervalSince1970 &&
                    prev.1?.timeIntervalSince1970 == next.1?.timeIntervalSince1970
@@ -324,6 +327,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
         
         // 다음 버튼 활성화 상태 업데이트
         reactor.state.map { $0.canProceed }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .subscribe(onNext: { [weak self] canProceed in
                 var config = self?.nextButton.configuration
@@ -335,6 +339,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
         
         // 오류 메시지 표시
         reactor.state.map { $0.errorMessage }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .subscribe(onNext: { [weak self] errorMessage in
                 if let errorMessage = errorMessage {
@@ -345,6 +350,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
         
         // 다음 화면으로 이동
         reactor.state.map { $0.shouldProceed }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .filter { $0 }
             .subscribe(onNext: { [weak self] _ in

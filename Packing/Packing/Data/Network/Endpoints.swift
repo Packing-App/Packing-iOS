@@ -33,6 +33,13 @@ extension Endpoints {
     }
     
     func url() -> URL? {
+        if method == .get && parameters != nil && !parameters!.isEmpty {
+            var components = URLComponents(string: baseURL + path)
+            components?.queryItems = parameters?.map { key, value in
+                URLQueryItem(name: key, value: "\(value)")
+            }
+            return components?.url
+        }
         return URL(string: baseURL + path)
     }
 }
@@ -129,6 +136,18 @@ enum APIEndpoint: Endpoints {
     // 여행 추천 준비물 조회
     case getRecommendations(journeyId: String)
     
+    // MARK: - LOCATION ENDPOINTS
+    // 도시 검색 (자동완성)
+    case searchLocations(query: String, limit: Int)
+
+    // 도시 영문명 변환
+    case translateCity(city: String)
+
+    // 도시 날씨 정보 조회
+    case getCityWeather(city: String, date: Date?)
+
+    // 여행 기간 내 날씨 정보 조회
+    case getJourneyForecast(city: String, startDate: Date, endDate: Date)
     
     // MARK: - PATH
     var path: String {
@@ -192,6 +211,14 @@ enum APIEndpoint: Endpoints {
             return "/journeys/invitations/\(notificationId)"
         case .getRecommendations(let journeyId):
             return "/journeys/\(journeyId)/recommendations"
+        case .searchLocations:
+            return "/locations/search"
+        case .translateCity:
+            return "/locations/translate"
+        case .getCityWeather(let city, _):
+            return "/locations/\(city)/weather"
+        case .getJourneyForecast(let city, _, _):
+            return "/locations/\(city)/forecast"
         }
     }
     
@@ -223,6 +250,8 @@ enum APIEndpoint: Endpoints {
             return .put
         case .deleteJourney, .removeParticipant:
             return .delete
+        case .searchLocations, .translateCity, .getCityWeather, .getJourneyForecast:
+            return .get
         }
     }
     
@@ -311,6 +340,25 @@ enum APIEndpoint: Endpoints {
             
         case .respondToInvitation(_, let accept):
             return ["accept": accept]
+            // Location
+            
+        case .searchLocations(let query, let limit):
+            return ["query": query, "limit": limit]
+            
+        case .translateCity(let city):
+            return ["city": city]
+        case .getCityWeather(_, let date):
+            if let date = date {
+                let dateFormatter = ISO8601DateFormatter()
+                return ["date": dateFormatter.string(from: date)]
+            }
+            return nil
+        case .getJourneyForecast(_, let startDate, let endDate):
+            let dateFormatter = ISO8601DateFormatter()
+            return [
+                "startDate": dateFormatter.string(from: startDate),
+                "endDate": dateFormatter.string(from: endDate)
+            ]
             
         default:
             return nil

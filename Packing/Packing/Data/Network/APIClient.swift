@@ -98,7 +98,8 @@ class APIClient: APIClientProtocol {
             }
             
             // HTTP body 설정
-            if let params = endpoint.parameters {
+            // HTTP body 설정 (GET 요청에는 body를 설정하지 않음)
+            if endpoint.method != .get, let params = endpoint.parameters {
                 do {
                     request.httpBody = try JSONSerialization.data(withJSONObject: params, options: [])
                 } catch {
@@ -106,7 +107,6 @@ class APIClient: APIClientProtocol {
                     return Disposables.create()
                 }
             }
-            
             // 네트워크 요청 실행
             let task = self.session.dataTask(with: request) { data, response, error in
                 if let error = error {

@@ -758,6 +758,12 @@ class LocationSearchViewController: UIViewController {
         return tableView
     }()
     
+    // MARK: - Properties
+    private let locationService = LocationService()
+    private let disposeBag = DisposeBag()
+    private var searchResults: [CitySearchResult] = []
+    private var searchDebouncer = PublishSubject<String>()
+    
     // MARK: - Init
     init(searchType: SearchType) {
         self.searchType = searchType
@@ -773,6 +779,7 @@ class LocationSearchViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         configureTableView()
+        setupRx()
     }
     
     // MARK: - Setup
@@ -812,32 +819,70 @@ class LocationSearchViewController: UIViewController {
         tableView.delegate = self
         tableView.dataSource = self
     }
+    
+    private func setupRx() {
+        // 검색어 디바운싱 처리
+        searchDebouncer
+            .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
+            .distinctUntilChanged()
+            .flatMapLatest { [weak self] query -> Observable<[CitySearchResult]> in
+                guard let self = self else { return Observable.just([]) }
+                
+                // 로딩 인디케이터 표시
+                let activityIndicator = UIActivityIndicatorView(style: .medium)
+                activityIndicator.startAnimating()
+                self.tableView.tableFooterView = activityIndicator
+                
+                // 쿼리가 비어있으면 기본 인기 도시 목록 표시
+                if query.isEmpty {
+                    let defaultCities: [CitySearchResult] = [
+                        CitySearchResult(korName: "서울", engName: "Seoul", countryCode: "KR"),
+                        CitySearchResult(korName: "부산", engName: "Busan", countryCode: "KR"),
+                        CitySearchResult(korName: "도쿄", engName: "Tokyo", countryCode: "JP"),
+                        CitySearchResult(korName: "오사카", engName: "Osaka", countryCode: "JP"),
+                        CitySearchResult(korName: "파리", engName: "Paris", countryCode: "FR"),
+                        CitySearchResult(korName: "뉴욕", engName: "New York", countryCode: "US"),
+                        CitySearchResult(korName: "방콕", engName: "Bangkok", countryCode: "TH")
+                    ]
+                    return Observable.just(defaultCities)
+                }
+                
+                return self.locationService.searchLocations(query: query, limit: 20)
+            }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] results in
+                self?.searchResults = results
+                self?.tableView.reloadData()
+                self?.tableView.tableFooterView = nil
+            })
+            .disposed(by: disposeBag)
+        
+        // 초기 검색 결과 로드 (인기 도시)
+        searchDebouncer.onNext("")  // 빈 검색어로 기본 인기 도시 로드
+    }
 }
 
 // MARK: - UISearchBarDelegate
 extension LocationSearchViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        // 실제 구현에서는 검색어에 따라 데이터 필터링
-        tableView.reloadData()
+        searchDebouncer.onNext(searchText)
     }
 }
 
 // MARK: - UITableViewDelegate, UITableViewDataSource
 extension LocationSearchViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 5 // 예시 데이터
+        return searchResults.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "locationCell", for: indexPath)
         
-        // 예시 데이터
-        let locations = searchType == .departure ?
-            ["서울", "부산", "인천", "대구", "제주"] :
-            ["도쿄", "오사카", "파리", "뉴욕", "방콕"]
+        let city = searchResults[indexPath.row]
         
         var content = UIListContentConfiguration.cell()
-        content.text = locations[indexPath.row]
+        content.text = city.korName
+        content.secondaryText = "\(city.engName), \(city.countryCode)"
         cell.contentConfiguration = content
         
         return cell
@@ -846,14 +891,8 @@ extension LocationSearchViewController: UITableViewDelegate, UITableViewDataSour
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         
-        // 선택된 위치 정보 가져오기
-        let locations = searchType == .departure ?
-            ["서울", "부산", "인천", "대구", "제주"] :
-            ["도쿄", "오사카", "파리", "뉴욕", "방콕"]
-        let selectedLocation = locations[indexPath.row]
-        
-        // 콜백으로 선택된 위치 전달
-        completion?(selectedLocation)
+        let selectedCity = searchResults[indexPath.row]
+        completion?(selectedCity.korName)
         dismiss(animated: true)
     }
 }

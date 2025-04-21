@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Notification: Identifiable, Codable {
+struct NotificationModel: Identifiable, Codable {
     let id: String
     let userId: String
     let journeyId: String?

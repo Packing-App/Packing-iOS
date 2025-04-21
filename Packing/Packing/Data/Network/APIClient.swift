@@ -37,7 +37,7 @@ struct TokenData: Codable, Equatable {
 }
 
 struct NotificationResponse: Codable {
-    let notification: Notification
+    let notification: NotificationModel
 }
 
 struct RecommendationResponse: Codable {

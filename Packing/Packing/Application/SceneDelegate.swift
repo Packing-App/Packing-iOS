@@ -10,156 +10,105 @@ import UIKit
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
+    private var authCoordinator: AuthCoordinator?
     
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         Thread.sleep(forTimeInterval: 1.0) // 스플래시 화면 표시 시간
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
         window = UIWindow(frame: UIScreen.main.bounds)
+        window?.windowScene = windowScene
         
-        let userManager = UserManager.shared
+        // AuthCoordinator 초기화 및 설정
+        let coordinator = AuthCoordinator.shared
+        coordinator.configure(with: window!)
+        self.authCoordinator = coordinator
         
-        // 로그인 상태에 따라 다른 화면으로 이동
-        if userManager.currentUser != nil {
-            // 로그인된 상태 - 탭바 컨트롤러 설정
-            setupTabBarController()
-        } else {
-            // 로그인되지 않은 상태 - 로그인 화면으로 이동
-            let loginViewController = LoginViewController()
-            let navigationController = UINavigationController(rootViewController: loginViewController)
-            navigationController.isNavigationBarHidden = true
-            window?.rootViewController = navigationController
-        }
+        // Coordinator를 통해 앱 시작 흐름 관리
+        coordinator.start()
         
         window?.makeKeyAndVisible()
-        window?.windowScene = windowScene
+        
+        // 인증 실패 알림 구독
+//        setupNotificationObservers()
     }
     
-    // 탭바 컨트롤러 설정 메서드
-    public func setupTabBarController() {
-        let tabBarController = UITabBarController()
+    // 인증 실패 알림 구독 설정
+//    private func setupNotificationObservers() {
+//        NotificationCenter.default.addObserver(
+//            self,
+//            selector: #selector(handleAuthenticationFailure),
+//            name: APIClient.authenticationFailedNotification,
+//            object: nil
+//        )
+//    }
+    
+    // 인증 실패 처리
+    @objc private func handleAuthenticationFailure() {
+        // 로그인 화면으로 이동 (이미 AuthCoordinator에서 처리되었을 수 있음)
+        authCoordinator?.navigateToLogin()
         
-        // 홈 탭
-        let homeViewController = HomeViewController()
-        let homeNavigationController = UINavigationController(rootViewController: homeViewController)
-        homeNavigationController.tabBarItem = UITabBarItem(
-            title: "내 여행",
-            image: UIImage(systemName: "house"),
-            selectedImage: UIImage(systemName: "house.fill")
-        )
+        // 추가적인 정리 작업 수행
+        clearUserData()
         
-        // 마이페이지 탭
-        let profileReactor = ProfileViewReactor()
-        let profileViewController = ProfileViewController(reactor: profileReactor)
-        let profileNavigationController = UINavigationController(rootViewController: profileViewController)
-        profileViewController.title = "프로필"
-        profileNavigationController.tabBarItem = UITabBarItem(
-            title: "프로필",
-            image: UIImage(systemName: "person"),
-            selectedImage: UIImage(systemName: "person.fill")
-        )
-        
-        // 탭바에 네비게이션 컨트롤러 추가
-        tabBarController.viewControllers = [homeNavigationController, profileNavigationController]
-        
-        // iOS 15 이상에서 탭바 스타일 설정
-        if #available(iOS 15.0, *) {
-            let appearance = UITabBarAppearance()
-            appearance.configureWithDefaultBackground()
-            tabBarController.tabBar.standardAppearance = appearance
-            tabBarController.tabBar.scrollEdgeAppearance = appearance
+        // 필요한 경우 사용자에게 알림 표시
+        showAuthFailureAlert()
+    }
+    
+    // 사용자 데이터 정리
+    private func clearUserData() {
+        // 로컬 캐시, UserDefaults 등 정리
+        UserDefaults.standard.removeObject(forKey: "lastLoginDate")
+        // 추가적인 데이터 정리 작업...
+    }
+    
+    // 인증 실패 알림 표시
+    private func showAuthFailureAlert() {
+        DispatchQueue.main.async {
+            // 현재 화면에 경고창 표시
+            guard let rootViewController = self.window?.rootViewController else { return }
+            
+            let alert = UIAlertController(
+                title: "세션 만료",
+                message: "로그인 세션이 만료되었습니다. 다시 로그인해주세요.",
+                preferredStyle: .alert
+            )
+            
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            
+            // 최상위 뷰 컨트롤러 찾기
+            var topViewController = rootViewController
+            while let presentedViewController = topViewController.presentedViewController {
+                topViewController = presentedViewController
+            }
+            
+            topViewController.present(alert, animated: true)
         }
-        
-        window?.rootViewController = tabBarController
     }
-    
-    
-    //    private lazy var homeTabButton: UIButton = {
-    //        let button = UIButton(type: .system)
-    //        button.setImage(UIImage(systemName: "house.fill"), for: .normal)
-    //        button.tintColor = .main
-    //        button.translatesAutoresizingMaskIntoConstraints = false
-    //
-    //        let label = UILabel()
-    //        label.text = "홈"
-    //        label.font = .systemFont(ofSize: 12)
-    //        label.textColor = .main
-    //        label.textAlignment = .center
-    //        label.translatesAutoresizingMaskIntoConstraints = false
-    //
-    //        button.addSubview(label)
-    //
-    //        NSLayoutConstraint.activate([
-    //            label.topAnchor.constraint(equalTo: button.centerYAnchor, constant: 10),
-    //            label.centerXAnchor.constraint(equalTo: button.centerXAnchor),
-    //            label.widthAnchor.constraint(equalToConstant: 40)
-    //        ])
-    //
-    //        return button
-    //    }()
-    //
-    //    private lazy var profileTabButton: UIButton = {
-    //        let button = UIButton(type: .system)
-    //        button.setImage(UIImage(systemName: "person"), for: .normal)
-    //        button.tintColor = .lightGray
-    //        button.translatesAutoresizingMaskIntoConstraints = false
-    //
-    //        let label = UILabel()
-    //        label.text = "마이"
-    //        label.font = .systemFont(ofSize: 12)
-    //        label.textColor = .lightGray
-    //        label.textAlignment = .center
-    //        label.translatesAutoresizingMaskIntoConstraints = false
-    //
-    //        button.addSubview(label)
-    //
-    //        NSLayoutConstraint.activate([
-    //            label.topAnchor.constraint(equalTo: button.centerYAnchor, constant: 10),
-    //            label.centerXAnchor.constraint(equalTo: button.centerXAnchor),
-    //            label.widthAnchor.constraint(equalToConstant: 40)
-    //        ])
-    //
-    //        return button
-    //    }()
-//    private lazy var tabBar: UIView = {
-//        let view = UIView()
-//        view.backgroundColor = .white
-//        view.layer.shadowColor = UIColor.black.withAlphaComponent(0.1).cgColor
-//        view.layer.shadowOffset = CGSize(width: 0, height: -2)
-//        view.layer.shadowRadius = 4
-//        view.layer.shadowOpacity = 0.5
-//        view.translatesAutoresizingMaskIntoConstraints = false
-//        return view
-//    }()
     
     func sceneDidDisconnect(_ scene: UIScene) {
-        // Called as the scene is being released by the system.
-        // This occurs shortly after the scene enters the background, or when its session is discarded.
-        // Release any resources associated with this scene that can be re-created the next time the scene connects.
-        // The scene may re-connect later, as its session was not necessarily discarded (see `application:didDiscardSceneSessions` instead).
+        // 앱이 백그라운드로 전환될 때 호출됨
+        // 리소스 정리 등의 작업
     }
-
+    
     func sceneDidBecomeActive(_ scene: UIScene) {
-        // Called when the scene has moved from an inactive state to an active state.
-        // Use this method to restart any tasks that were paused (or not yet started) when the scene was inactive.
+        // 앱이 활성화될 때 호출됨
     }
-
+    
     func sceneWillResignActive(_ scene: UIScene) {
-        // Called when the scene will move from an active state to an inactive state.
-        // This may occur due to temporary interruptions (ex. an incoming phone call).
+        // 앱이 비활성화될 때 호출됨
     }
-
+    
     func sceneWillEnterForeground(_ scene: UIScene) {
-        // Called as the scene transitions from the background to the foreground.
-        // Use this method to undo the changes made on entering the background.
+        // 앱이 포그라운드로 전환될 때 호출됨
     }
-
+    
     func sceneDidEnterBackground(_ scene: UIScene) {
-        // Called as the scene transitions from the foreground to the background.
-        // Use this method to save data, release shared resources, and store enough scene-specific state information
-        // to restore the scene back to its current state.
+        // 앱이 백그라운드로 전환될 때 호출됨
     }
-
-
+    
+    deinit {
+        // 알림 구독 해제
+        NotificationCenter.default.removeObserver(self)
+    }
 }
-

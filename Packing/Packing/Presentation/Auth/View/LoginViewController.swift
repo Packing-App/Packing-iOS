@@ -279,13 +279,7 @@ class LoginViewController: UIViewController {
     }
     
     private func navigateToMainScreen() {
-        if let sceneDelegate = UIApplication.shared.connectedScenes.first?.delegate as? SceneDelegate {
-            sceneDelegate.setupTabBarController()
-            
-            if let window = sceneDelegate.window {
-                UIView.transition(with: window, duration: 0.3, options: .transitionCrossDissolve, animations: nil, completion: nil)
-            }
-        }
+        AuthCoordinator.shared.showMainScreen()
     }
     
     private func showAlert(message: String) {

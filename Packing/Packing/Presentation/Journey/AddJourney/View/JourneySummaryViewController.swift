@@ -290,7 +290,7 @@ class JourneySummaryViewController: UIViewController, View {
         reactor.state.map { $0.themeText }
             .distinctUntilChanged()
             .observe(on: MainScheduler.instance)
-            .bind(to: transportValueLabel.rx.text)
+            .bind(to: themeValueLabel.rx.text)
             .disposed(by: disposeBag)
         
         reactor.state.map { $0.destinationText }
@@ -361,16 +361,19 @@ class JourneySummaryViewController: UIViewController, View {
     }
     
     private func completeJourneyCreation() {
-        // 생성 완료 후 홈 화면으로 이동
-        showAlert(title: "성공", message: "여행이 성공적으로 생성되었습니다.") { [weak self] _ in
-            guard let self = self else { return }
-            
-            // 네비게이션 스택의 루트 뷰 컨트롤러로 이동하거나 필요한 화면으로 이동
-            if let navigationController = self.navigationController {
-                navigationController.popToRootViewController(animated: true)
-            } else {
-                self.dismiss(animated: true)
-            }
+        guard let journey = reactor?.currentState.createdJourney else { return }
+        let journeyService = JourneyService()
+
+        // 추천 준비물 뷰 컨트롤러로 이동
+        let reactor = RecommendationsReactor(journeyService: journeyService, journey: journey)
+        let recommendationsVC = RecommendationsViewController()
+        recommendationsVC.reactor = reactor
+        
+        // 네비게이션 컨트롤러가 있다면 push, 없다면 present
+        if let navigationController = self.navigationController {
+            navigationController.pushViewController(recommendationsVC, animated: true)
+        } else {
+            self.present(recommendationsVC, animated: true)
         }
     }
     

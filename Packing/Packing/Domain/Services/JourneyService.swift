@@ -113,7 +113,9 @@ class JourneyService: JourneyServiceProtocol {
                       theme: TravelTheme,
                       isPrivate: Bool) -> Observable<Journey> {
         
-        return apiClient.request(APIEndpoint.createJourney(
+        print("여행 생성 시작 - 제목: \(title), 목적지: \(destination)")
+        
+        return apiClient.requestWithDateDecoding(APIEndpoint.createJourney(
             title: title,
             transportType: transportType,
             origin: origin,
@@ -123,13 +125,25 @@ class JourneyService: JourneyServiceProtocol {
             theme: theme,
             isPrivate: isPrivate
         ))
+        .do(onNext: { response in
+            print("API 응답: \(response)")
+        }, onError: { error in
+            print("여행 생성 오류: \(error)")
+            if let networkError = error as? NetworkError {
+                print("네트워크 오류 타입: \(networkError)")
+            }
+        })
         .map { (response: APIResponse<Journey>) -> Journey in
+            print("응답 매핑 시작")
             guard let journey = response.data else {
+                print("응답에 데이터가 없음")
                 throw NetworkError.invalidResponse
             }
+            print("여행 생성 성공: ID=\(journey.id)")
             return journey
         }
         .catch { error in
+            print("에러 캐치: \(error)")
             return Observable.error(error)
         }
     }
@@ -145,7 +159,7 @@ class JourneyService: JourneyServiceProtocol {
                       theme: TravelTheme?,
                       isPrivate: Bool?) -> Observable<Journey> {
         
-        return apiClient.request(APIEndpoint.updateJourney(
+        return apiClient.requestWithDateDecoding(APIEndpoint.updateJourney(
             id: id,
             title: title,
             transportType: transportType,

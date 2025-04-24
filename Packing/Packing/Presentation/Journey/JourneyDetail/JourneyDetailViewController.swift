@@ -81,14 +81,18 @@ class JourneyDetailViewController: UIViewController {
 }
 
 // MARK: - SwiftUI JourneyDetailView
+import SwiftUI
+import RxSwift
+
+// MARK: - SwiftUI JourneyDetailView
 struct JourneyDetailView: View {
     // MARK: - Properties
     let journey: Journey
     @State private var packingItems: [PackingItem] = []
     @State private var selectedTab = 0
     @State private var expandedCategories: Set<ItemCategory> = Set()
-    
     @State private var showingAddItemSheet = false
+    
     // MARK: - Body
     var body: some View {
         ScrollView {
@@ -106,6 +110,11 @@ struct JourneyDetailView: View {
                     
                     // Participants
                     participantsSection
+                    
+                    Divider()
+                    
+                    // Weather Section (새로 추가)
+                    WeatherSection(journey: journey)
                     
                     Divider()
                     
@@ -129,13 +138,27 @@ struct JourneyDetailView: View {
     // MARK: - Header Section
     private var headerSection: some View {
         ZStack(alignment: .top) {
-            
-            if let imageUrlString = journey.imageUrl, let uiImage = UIImage(named: imageUrlString) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 250)
-                    .clipped()
+            if let imageUrlString = journey.imageUrl, let url = URL(string: imageUrlString) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    case .failure(_):
+                        Image("journey_default")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    case .empty:
+                        ProgressView()
+                    @unknown default:
+                        Image("journey_default")
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    }
+                }
+                .frame(height: 250)
+                .clipped()
             } else {
                 Image("journey_default")
                     .resizable()
@@ -200,10 +223,11 @@ struct JourneyDetailView: View {
                     .padding(.horizontal, 20)
                 Spacer()
                 Button(action: {
-                    
+                    // 초대 기능 구현
                 }, label: {
                     Text("초대하기")
                         .font(.subheadline)
+                        .foregroundColor(.blue)
                 })
                 .padding(.trailing)
             }
@@ -281,7 +305,6 @@ struct JourneyDetailView: View {
             // Add Item Button
             Button {
                 showingAddItemSheet = true
-
             } label: {
                 HStack {
                     Image(systemName: "plus")
@@ -304,6 +327,7 @@ struct JourneyDetailView: View {
             .presentationDetents([.medium, .large])
         }
     }
+    
     private func addNewItem(_ item: PackingItem) {
         // 실제 앱에서는 데이터베이스에 저장하는 로직이 필요합니다
         packingItems.append(item)
@@ -592,7 +616,3 @@ struct PackingItemRow: View {
 #Preview {
     JourneyDetailView(journey: Journey.examples.first!)
 }
-
-
-
-

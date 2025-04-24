@@ -121,14 +121,3 @@ extension View {
         }
     }
 }
-
-//// MARK: - Preview
-//struct AddPackingItemSheet_Previews: PreviewProvider {
-//    static var previews: some View {
-//        AddPackingItemSheet(
-//            journey: JourneyPreviewProvider.sampleJourney,
-//            onSave: { _ in }
-//        )
-//    }
-//}
-

@@ -17,7 +17,7 @@ struct RecommendationCategory: Codable {
 struct RecommendedItem: Codable, Identifiable {
     var id: String { name }  // 아이템 이름을 ID로 사용
     let name: String
-    let category: String
+    let category: String    // ItemCategory
     let isEssential: Bool
     let count: Int?
 }

@@ -149,6 +149,56 @@ enum APIEndpoint: Endpoints {
     // 여행 기간 내 날씨 정보 조회
     case getJourneyForecast(city: String, startDate: Date, endDate: Date)
     
+    
+    // MARK: - PACKING ITEM ENDPOINTS
+    
+    // 여행별 준비물 목록 조회
+    case getPackingItemsByJourney(journeyId: String)
+    
+    // 준비물 생성
+    case createPackingItem(
+        journeyId: String,
+        name: String,
+        count: Int,
+        category: ItemCategory,
+        isShared: Bool,
+        assignedTo: String?
+    )
+    
+    // 준비물 일괄 생성 (테마 템플릿에서 가져오기)
+    case createBulkPackingItems(
+        journeyId: String,
+        templateName: String,
+        selectedItems: [String],
+        mergeDuplicates: Bool
+    )
+    
+    // 준비물 업데이트
+    case updatePackingItem(
+        id: String,
+        name: String?,
+        count: Int?,
+        category: ItemCategory?,
+        isShared: Bool?,
+        assignedTo: String?
+    )
+    
+    // 준비물 체크 상태 토글
+    case togglePackingItem(id: String)
+    
+    // 준비물 삭제
+    case deletePackingItem(id: String)
+    
+    // 카테고리별 준비물 조회
+    case getPackingItemsByCategory(journeyId: String)
+    
+    // 테마별 준비물 템플릿 목록 조회
+    case getThemeTemplates
+    
+    // 특정 테마의 준비물 템플릿 조회
+    case getThemeTemplateByName(themeName: String)
+    
+    
     // MARK: - PATH
     var path: String {
         switch self {
@@ -219,6 +269,26 @@ enum APIEndpoint: Endpoints {
             return "/locations/\(city)/weather"
         case .getJourneyForecast(let city, _, _):
             return "/locations/\(city)/forecast"
+            
+            // Packing Item
+        case .getPackingItemsByJourney(let journeyId):
+            return "/packing-items/journey/\(journeyId)"
+        case .createPackingItem:
+            return "/packing-items"
+        case .createBulkPackingItems:
+            return "/packing-items/bulk"
+        case .updatePackingItem(let id, _, _, _, _, _):
+            return "/packing-items/\(id)"
+        case .togglePackingItem(let id):
+            return "/packing-items/\(id)/toggle"
+        case .deletePackingItem(let id):
+            return "/packing-items/\(id)"
+        case .getPackingItemsByCategory(let journeyId):
+            return "/packing-items/categories/\(journeyId)"
+        case .getThemeTemplates:
+            return "/packing-items/templates"
+        case .getThemeTemplateByName(let themeName):
+            return "/packing-items/templates/\(themeName)"
         }
     }
     
@@ -252,6 +322,16 @@ enum APIEndpoint: Endpoints {
             return .delete
         case .searchLocations, .translateCity, .getCityWeather, .getJourneyForecast:
             return .get
+            
+            // Packing Item
+        case .getPackingItemsByJourney, .getPackingItemsByCategory, .getThemeTemplates, .getThemeTemplateByName:
+            return .get
+        case .createPackingItem, .createBulkPackingItems:
+            return .post
+        case .updatePackingItem, .togglePackingItem:
+            return .put
+        case .deletePackingItem:
+            return .delete
         }
     }
     
@@ -359,6 +439,47 @@ enum APIEndpoint: Endpoints {
                 "startDate": dateFormatter.string(from: startDate),
                 "endDate": dateFormatter.string(from: endDate)
             ]
+            
+        // Packing Items
+        case .getPackingItemsByJourney, .getPackingItemsByCategory, .getThemeTemplates, .getThemeTemplateByName, .togglePackingItem, .deletePackingItem:
+            return nil
+            
+        case .createPackingItem(let journeyId, let name, let count, let category, let isShared, let assignedTo):
+            var params: [String: Any] = [
+                "journeyId": journeyId,
+                "name": name,
+                "count": count,
+                "category": category.rawValue,
+                "isShared": isShared
+            ]
+            
+            if let assignedTo = assignedTo {
+                params["assignedTo"] = assignedTo
+            }
+            
+            // 기본값 추가
+            params["mergeDuplicates"] = true
+            
+            return params
+            
+        case .createBulkPackingItems(let journeyId, let templateName, let selectedItems, let mergeDuplicates):
+            return [
+                "journeyId": journeyId,
+                "templateName": templateName,
+                "selectedItems": selectedItems,
+                "mergeDuplicates": mergeDuplicates
+            ]
+            
+        case .updatePackingItem(_, let name, let count, let category, let isShared, let assignedTo):
+            var params: [String: Any] = [:]
+            
+            if let name = name { params["name"] = name }
+            if let count = count { params["count"] = count }
+            if let category = category { params["category"] = category.rawValue }
+            if let isShared = isShared { params["isShared"] = isShared }
+            if let assignedTo = assignedTo { params["assignedTo"] = assignedTo }
+            
+            return params
             
         default:
             return nil

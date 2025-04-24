@@ -198,14 +198,6 @@ class JourneyService: JourneyServiceProtocol {
     // MARK: - 여행 추천 준비물 조회
     func getRecommendations(journeyId: String) -> Observable<RecommendationResponse> {
         return apiClient.requestWithDateDecoding(APIEndpoint.getRecommendations(journeyId: journeyId))
-            .do(onNext: { response in
-                print("API 응답: \(response)")
-            }, onError: { error in
-                print("여행 추천 준비물 조회 오류: \(error)")
-                if let networkError = error as? NetworkError {
-                    print("네트워크 오류 타입: \(networkError)")
-                }
-            })
             .map { (response: APIResponse<RecommendationResponse>) -> RecommendationResponse in
                 guard let recommendations = response.data else {
                     throw NetworkError.invalidResponse

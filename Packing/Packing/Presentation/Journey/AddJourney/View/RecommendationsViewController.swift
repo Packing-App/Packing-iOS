@@ -108,9 +108,9 @@ class RecommendationsViewController: UIViewController, View {
         return label
     }()
     
-    private let homeButton: UIButton = {
+    private let addItemsButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("홈으로 이동", for: .normal)
+        button.setTitle("0개 담기", for: .normal)
         button.setTitleColor(.white, for: .normal)
         button.backgroundColor = .main
         button.layer.cornerRadius = 12
@@ -119,6 +119,22 @@ class RecommendationsViewController: UIViewController, View {
         return button
     }()
     
+    // 카테고리 이모지 매핑
+    private let categoryEmojis: [ItemCategory: String] = [
+        .clothing: "👕",
+        .electronics: "📱",
+        .toiletries: "🧴",
+        .documents: "📄",
+        .medicines: "💊",
+        .essentials: "🎒",
+        .other: "🔍"
+    ]
+    
+    // 아이템과 스테퍼 매핑을 위한 딕셔너리
+    private var itemSteppers: [String: UIStepper] = [:]
+    private var itemCountLabels: [String: UILabel] = [:]
+    private var itemCheckboxes: [String: UIButton] = [:]
+
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -142,9 +158,7 @@ class RecommendationsViewController: UIViewController, View {
         containerStackView.addArrangedSubview(titleLabel)
         containerStackView.addArrangedSubview(subtitleLabel)
         
-        view.addSubview(homeButton)
-        
-        homeButton.addTarget(self, action: #selector(homeButtonTapped), for: .touchUpInside)
+        view.addSubview(addItemsButton)
     }
     
     private func setupConstraints() {
@@ -167,7 +181,7 @@ class RecommendationsViewController: UIViewController, View {
             contentView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             contentView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            contentView.bottomAnchor.constraint(equalTo: homeButton.topAnchor, constant: -16),
+            contentView.bottomAnchor.constraint(equalTo: addItemsButton.topAnchor, constant: -16),
             
             scrollView.topAnchor.constraint(equalTo: contentView.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -181,16 +195,20 @@ class RecommendationsViewController: UIViewController, View {
             containerStackView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             
             // Home Button
-            homeButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            homeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
-            homeButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
-            homeButton.heightAnchor.constraint(equalToConstant: 52)
+            addItemsButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            addItemsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            addItemsButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            addItemsButton.heightAnchor.constraint(equalToConstant: 52)
         ])
     }
     
     // MARK: - Binding
     func bind(reactor: Reactor) {
         // Actions
+        addItemsButton.rx.tap
+            .map { Reactor.Action.addSelectedItems }
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
         
         // States
         reactor.state.map { $0.loadingMessage }
@@ -203,6 +221,7 @@ class RecommendationsViewController: UIViewController, View {
             .subscribe(onNext: { [weak self] isLoading in
                 self?.loadingView.isHidden = !isLoading
                 self?.contentView.isHidden = isLoading
+                self?.addItemsButton.isHidden = isLoading   // 로딩 중일 때 하단 버튼 숨기기
                 
                 if isLoading {
                     self?.loadingIndicator.startAnimating()
@@ -220,6 +239,81 @@ class RecommendationsViewController: UIViewController, View {
             })
             .disposed(by: disposeBag)
         
+        // 선택된 아이템 개수에 따라 버튼 텍스트 업데이트 (n 개 선택)
+        reactor.state.map { $0.selectedItems }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] selectedItems in
+                let selectedCount = selectedItems.filter { $0.value > 0 }.count
+                self?.addItemsButton.setTitle("\(selectedCount)개 담기", for: .normal)
+                self?.addItemsButton.isEnabled = selectedCount > 0
+                self?.addItemsButton.alpha = selectedCount > 0 ? 1.0 : 0.5
+                
+                // 스테퍼 값과 체크 박스 상태 업데이트
+                selectedItems.forEach { itemName, count in
+                    if let stepper = self?.itemSteppers[itemName] {
+                        stepper.value = Double(count)
+                        stepper.isHidden = (count <= 0) // count가 0개 이하면 hidden 처리?
+                    }
+                    
+                    if let countLabel = self?.itemCountLabels[itemName] {
+                        countLabel.text = count > 0 ? "\(count)개" : ""
+                    }
+                    
+                    if let checkbox = self?.itemCheckboxes[itemName] {
+                        checkbox.isSelected = count > 0
+                    }
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        // 아이템 추가 처리 중 상태에 따른 UI 업데이트
+        reactor.state.map { $0.isProcessingAddItems }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] isProcessing in
+                self?.addItemsButton.isEnabled = !isProcessing
+                
+                if isProcessing {
+                    let activityIndicator = UIActivityIndicatorView(style: .medium)
+                    activityIndicator.color = .white
+                    activityIndicator.startAnimating()
+                    self?.addItemsButton.setImage(nil, for: .normal)
+                    self?.addItemsButton.setTitle("", for: .normal)
+                    self?.addItemsButton.addSubview(activityIndicator)
+                    activityIndicator.center = CGPoint(x: self?.addItemsButton.bounds.width ?? 0 / 2, y: self?.addItemsButton.bounds.height ?? 0 / 2)
+                    activityIndicator.translatesAutoresizingMaskIntoConstraints = false
+                    NSLayoutConstraint.activate([
+                        activityIndicator.centerXAnchor.constraint(equalTo: self?.addItemsButton.centerXAnchor ?? activityIndicator.centerXAnchor),
+                        activityIndicator.centerYAnchor.constraint(equalTo: self?.addItemsButton.centerYAnchor ?? activityIndicator.centerYAnchor)
+                    ])
+                } else {
+                    for subview in self?.addItemsButton.subviews ?? [] {
+                        if subview is UIActivityIndicatorView {
+                            subview.removeFromSuperview()
+                        }
+                    }
+                    let selectedCount = reactor.currentState.selectedItems.filter { $0.value > 0 }.count
+                    self?.addItemsButton.setTitle("\(selectedCount)개 담기", for: .normal)
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        // 아이템 추가 결과 처리
+//        reactor.state.map { $0.addItemsResult }
+//            .filter { $0 != nil }
+//            .observe(on: MainScheduler.instance)
+//            .subscribe(onNext: { [weak self] result in
+//                guard let result = result else { return }
+//                
+//                if result.success {
+//                    self?.showSuccessAlert(message: result.message) {
+//                        self?.navigateToMainScreen()
+//                    }
+//                } else {
+//                    self?.showErrorAlert(message: result.message)
+//                }
+//            })
+//            .disposed(by: disposeBag)
+        
         reactor.state.map { $0.error }
             .filter { $0 != nil }
             .observe(on: MainScheduler.instance)
@@ -230,6 +324,8 @@ class RecommendationsViewController: UIViewController, View {
     }
     
     // MARK: - Private Methods
+
+    // MARK: - Private Methods
     private func updateCategories(_ categories: [String: RecommendationCategory]) {
         // Remove existing category views
         containerStackView.arrangedSubviews.forEach {
@@ -239,19 +335,21 @@ class RecommendationsViewController: UIViewController, View {
             }
         }
         
-        // Add category views
-        let categoryOrder = ["clothing", "essentials", "documents", "electronics", "toiletries", "medicines", "other"]
+        // Clear item mappings
+        itemSteppers.removeAll()
+        itemCountLabels.removeAll()
+        itemCheckboxes.removeAll()
         
-        for categoryKey in categoryOrder {
-            guard let category = categories[categoryKey],
+        for categoryKey in ItemCategory.allCases {
+            guard let category = categories[categoryKey.rawValue],
                   !category.items.isEmpty else { continue }
             
-            let categoryView = createCategoryView(category: category)
+            let categoryView = createCategoryView(category: category, categoryKey: categoryKey)
             containerStackView.addArrangedSubview(categoryView)
         }
     }
     
-    private func createCategoryView(category: RecommendationCategory) -> UIView {
+    private func createCategoryView(category: RecommendationCategory, categoryKey: ItemCategory) -> UIView {
         let containerView = UIView()
         containerView.backgroundColor = .secondarySystemBackground
         containerView.layer.cornerRadius = 16
@@ -267,8 +365,10 @@ class RecommendationsViewController: UIViewController, View {
         stackView.isLayoutMarginsRelativeArrangement = true
         stackView.translatesAutoresizingMaskIntoConstraints = false
         
+        // 카테고리 제목 레이블 (이모지 포함)
         let titleLabel = UILabel()
-        titleLabel.text = category.name
+        let emoji = categoryEmojis[categoryKey] ?? "📦"
+        titleLabel.text = "\(emoji) \(category.name)"
         titleLabel.font = .systemFont(ofSize: 20, weight: .semibold)
         titleLabel.textColor = .label
         
@@ -291,32 +391,33 @@ class RecommendationsViewController: UIViewController, View {
         
         return containerView
     }
-    
+
     private func createItemView(item: RecommendedItem) -> UIView {
         let containerView = UIView()
         containerView.backgroundColor = .clear
         containerView.translatesAutoresizingMaskIntoConstraints = false
         
-        let checkboxButton = UIButton(type: .system)
+        // 체크박스 버튼
+        let checkboxButton = UIButton(type: .custom)
         checkboxButton.setImage(UIImage(systemName: "square"), for: .normal)
         checkboxButton.setImage(UIImage(systemName: "checkmark.square.fill"), for: .selected)
         checkboxButton.tintColor = .main
         checkboxButton.translatesAutoresizingMaskIntoConstraints = false
         
+        // 아이템 이름 레이블
         let nameLabel = UILabel()
         nameLabel.text = item.name
         nameLabel.font = .systemFont(ofSize: 16, weight: .regular)
         nameLabel.textColor = .label
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
         
+        // 개수 표시 레이블
         let countLabel = UILabel()
-        if let count = item.count {
-            countLabel.text = "\(count)개"
-            countLabel.font = .systemFont(ofSize: 14, weight: .regular)
-            countLabel.textColor = .secondaryLabel
-        }
+        countLabel.font = .systemFont(ofSize: 14, weight: .regular)
+        countLabel.textColor = .secondaryLabel
         countLabel.translatesAutoresizingMaskIntoConstraints = false
         
+        // 필수 아이템 뱃지
         let essentialBadge = UILabel()
         if item.isEssential {
             essentialBadge.text = "필수"
@@ -326,12 +427,23 @@ class RecommendationsViewController: UIViewController, View {
             essentialBadge.textAlignment = .center
             essentialBadge.layer.cornerRadius = 4
             essentialBadge.layer.masksToBounds = true
-            essentialBadge.translatesAutoresizingMaskIntoConstraints = false
         }
+        essentialBadge.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 스테퍼 (수량 조절)
+        let stepper = UIStepper()
+        stepper.minimumValue = 1
+        stepper.maximumValue = 99
+        stepper.stepValue = 1
+        stepper.value = Double(item.count ?? 1)
+        stepper.translatesAutoresizingMaskIntoConstraints = false
+        stepper.isHidden = true // 선택 전에는 숨김
         
         containerView.addSubview(checkboxButton)
         containerView.addSubview(nameLabel)
         containerView.addSubview(countLabel)
+        containerView.addSubview(stepper)
+        
         if item.isEssential {
             containerView.addSubview(essentialBadge)
         }
@@ -356,18 +468,28 @@ class RecommendationsViewController: UIViewController, View {
                 essentialBadge.heightAnchor.constraint(equalToConstant: 20),
                 
                 countLabel.leadingAnchor.constraint(equalTo: essentialBadge.trailingAnchor, constant: 8),
-                countLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-                countLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor)
+                countLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+                
+                stepper.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+                stepper.centerYAnchor.constraint(equalTo: containerView.centerYAnchor)
             ])
         } else {
             NSLayoutConstraint.activate([
                 countLabel.leadingAnchor.constraint(equalTo: nameLabel.trailingAnchor, constant: 8),
-                countLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-                countLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor)
+                countLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+                
+                stepper.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+                stepper.centerYAnchor.constraint(equalTo: containerView.centerYAnchor)
             ])
         }
         
-        checkboxButton.addTarget(self, action: #selector(checkboxTapped(_:)), for: .touchUpInside)
+        // 버튼 액션 처리를 Rx로 바인딩
+        checkboxButton.rx.tap
+            .subscribe(onNext: { [weak self, weak checkboxButton] in
+                guard let reactor = self?.reactor else { return }
+                reactor.action.onNext(.toggleItem(itemName: item.name))
+            })
+            .disposed(by: disposeBag)
         
         return containerView
     }

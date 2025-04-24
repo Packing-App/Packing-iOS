@@ -134,6 +134,7 @@ class CreateJourneyReactor: Reactor {
                 .map { Mutation.setCreatedJourney($0) }
                 .catch { error -> Observable<Mutation> in
                     print(#fileID, #function, #line, "- ")
+                    print(error.localizedDescription)
                     return .just(.setError(error))
                 },
                 

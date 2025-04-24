@@ -7,6 +7,8 @@
 
 import Foundation
 
+
+
 // MARK: - Recommendation Models
 
 struct RecommendationCategory: Codable {
@@ -20,6 +22,20 @@ struct RecommendedItem: Codable, Identifiable {
     let category: String    // ItemCategory
     let isEssential: Bool
     let count: Int?
+}
+
+// 여행 추가 -> 추천 아이템 -> 추천 아이템 중 select (다음: -> packing item 으로 가기 위한 중간 과정)
+// 선택된 준비물 아이템 모델
+struct SelectedRecommendedItem: Codable {
+    let name: String
+    let category: String
+    let count: Int
+    
+    init(name: String, category: String, count: Int = 1) {
+        self.name = name
+        self.category = category
+        self.count = count
+    }
 }
 
 // MARK: - PackingItem Model

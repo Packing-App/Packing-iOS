@@ -173,6 +173,13 @@ enum APIEndpoint: Endpoints {
         mergeDuplicates: Bool
     )
     
+    // 추천 준비물에서 선택한 준비물들을 일괄 등록
+    case createSelectedRecommendedItems(
+        journeyId: String,
+        selectedItems: [SelectedRecommendedItem],
+        mergeDuplicates: Bool
+    )
+    
     // 준비물 업데이트
     case updatePackingItem(
         id: String,
@@ -277,6 +284,8 @@ enum APIEndpoint: Endpoints {
             return "/packing-items"
         case .createBulkPackingItems:
             return "/packing-items/bulk"
+        case .createSelectedRecommendedItems:
+            return "/packing-items/from-recommendations"
         case .updatePackingItem(let id, _, _, _, _, _):
             return "/packing-items/\(id)"
         case .togglePackingItem(let id):
@@ -326,7 +335,7 @@ enum APIEndpoint: Endpoints {
             // Packing Item
         case .getPackingItemsByJourney, .getPackingItemsByCategory, .getThemeTemplates, .getThemeTemplateByName:
             return .get
-        case .createPackingItem, .createBulkPackingItems:
+        case .createPackingItem, .createBulkPackingItems, .createSelectedRecommendedItems:
             return .post
         case .updatePackingItem, .togglePackingItem:
             return .put
@@ -467,6 +476,19 @@ enum APIEndpoint: Endpoints {
                 "journeyId": journeyId,
                 "templateName": templateName,
                 "selectedItems": selectedItems,
+                "mergeDuplicates": mergeDuplicates
+            ]
+            
+        case .createSelectedRecommendedItems(let journeyId, let selectedItems, let mergeDuplicates):
+            return [
+                "journeyId": journeyId,
+                "selectedItems": selectedItems.map { item in
+                    [
+                        "name": item.name,
+                        "category": item.category,
+                        "count": item.count
+                    ]
+                },
                 "mergeDuplicates": mergeDuplicates
             ]
             

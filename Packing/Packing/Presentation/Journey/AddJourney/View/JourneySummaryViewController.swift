@@ -369,9 +369,9 @@ class JourneySummaryViewController: UIViewController, View {
         print("생성된 여행 정보: \(journey)")
         
         let journeyService = JourneyService()
-        
+        let packingItemService = PackingItemService()
         // 추천 준비물 뷰 컨트롤러로 이동
-        let reactor = RecommendationsReactor(journeyService: journeyService, journey: journey)
+        let reactor = RecommendationsReactor(journeyService: journeyService, packingItemService: packingItemService, journey: journey)
         let recommendationsVC = RecommendationsViewController()
         recommendationsVC.reactor = reactor
         

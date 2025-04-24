@@ -484,7 +484,7 @@ struct JourneyDetailView: View {
     
     private func loadData() {
         // Use the same method as in your original code
-        packingItems = PackingItem.itemsForJourney(id: journey.id)
+//        packingItems = PackingItem.itemsForJourney(id: journey.id)
         
         // Default to expanding the first category in each tab
         if let firstPersonalCategory = PackingItem.groupedByCategory(items: personalItems).keys.sorted(by: { $0.rawValue < $1.rawValue }).first {

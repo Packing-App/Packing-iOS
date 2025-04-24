@@ -85,17 +85,17 @@ struct AddPackingItemSheet: View {
     }
     
     private func saveItem() {
-        let newItem = PackingItem(
-            journeyId: journey.id,
-            name: itemName,
-            count: itemCount,
-            category: selectedCategory,
-            isShared: isShared,
-            assignedTo: isShared ? selectedAssignee : nil,
-            createdBy: User.currentUser.id
-        )
+//        let newItem = PackingItem(
+//            journeyId: journey.id,
+//            name: itemName,
+//            count: itemCount,
+//            category: selectedCategory,
+//            isShared: isShared,
+//            assignedTo: isShared ? selectedAssignee : nil,
+//            createdBy: User.currentUser.id
+//        )
         
-        onSave(newItem)
+//        onSave(newItem)
         presentationMode.wrappedValue.dismiss()
     }
     

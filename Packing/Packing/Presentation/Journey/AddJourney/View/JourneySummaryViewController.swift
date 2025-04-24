@@ -361,9 +361,15 @@ class JourneySummaryViewController: UIViewController, View {
     }
     
     private func completeJourneyCreation() {
-        guard let journey = reactor?.currentState.createdJourney else { return }
+        guard let journey = reactor?.currentState.createdJourney else {
+            print(#fileID, #function, #line, "- ")
+            print("No journey")
+            return
+        }
+        print("생성된 여행 정보: \(journey)")
+        
         let journeyService = JourneyService()
-
+        
         // 추천 준비물 뷰 컨트롤러로 이동
         let reactor = RecommendationsReactor(journeyService: journeyService, journey: journey)
         let recommendationsVC = RecommendationsViewController()

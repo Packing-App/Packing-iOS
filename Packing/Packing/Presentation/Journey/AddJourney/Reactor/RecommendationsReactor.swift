@@ -26,7 +26,7 @@ class RecommendationsReactor: Reactor {
         var isLoading: Bool = true
         var loadingMessage: String = ""
         var categories: [String: RecommendationCategory] = [:]
-        var journeyInfo: RecommendationResponse.JourneyInfo?
+        var journeyInfo: Journey?
         var error: Error?
     }
     
@@ -51,6 +51,8 @@ class RecommendationsReactor: Reactor {
             journeyService.getRecommendations(journeyId: journey.id)
                 .map { Mutation.setRecommendations($0) }
                 .catch { error in
+                    print(#fileID, #function, #line, "- ")
+                    print("여행 추천 준비물 불러오기 실패: \(error.localizedDescription)")
                     return Observable.just(Mutation.setError(error))
                 },
             

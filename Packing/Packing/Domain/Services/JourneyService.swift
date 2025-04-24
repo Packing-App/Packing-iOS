@@ -56,35 +56,16 @@ class JourneyService: JourneyServiceProtocol {
     
     // MARK: - 여행 목록 조회
     func getJourneys() -> Observable<[Journey]> {
-        print(#fileID, #function, #line, "- 여행 목록 조회 시작")
+//        print(#fileID, #function, #line, "- 여행 목록 조회 시작")
         return apiClient.requestWithDateDecoding(APIEndpoint.getJourneys)
-            .do(onNext: { response in
-                print("Response 받음: \(response)")
-            })
             .map { (response: APIResponse<[Journey]>) -> [Journey] in
                 guard let journeys = response.data else {
-                    print("응답에 data 필드가 없음")
                     throw NetworkError.invalidResponse
                 }
                 print("여행 목록 디코딩 성공: \(journeys.count)개")
                 return journeys
             }
             .catch { error in
-                print("여행 목록 조회 오류: \(error)ll")
-                if let decodingError = error as? DecodingError {
-                    switch decodingError {
-                    case .typeMismatch(let type, let context):
-                        print("Type mismatch: \(type), path: \(context.codingPath), \(context.debugDescription)")
-                    case .valueNotFound(let type, let context):
-                        print("Value not found: \(type), path: \(context.codingPath), \(context.debugDescription)")
-                    case .keyNotFound(let key, let context):
-                        print("Key not found: \(key), path: \(context.codingPath), \(context.debugDescription)")
-                    case .dataCorrupted(let context):
-                        print("Data corrupted: \(context.debugDescription), path: \(context.codingPath)")
-                    @unknown default:
-                        print("Unknown decoding error: \(decodingError)")
-                    }
-                }
                 return Observable.error(error)
             }
     }
@@ -112,9 +93,7 @@ class JourneyService: JourneyServiceProtocol {
                       endDate: Date,
                       theme: TravelTheme,
                       isPrivate: Bool) -> Observable<Journey> {
-        
-        print("여행 생성 시작 - 제목: \(title), 목적지: \(destination)")
-        
+                
         return apiClient.requestWithDateDecoding(APIEndpoint.createJourney(
             title: title,
             transportType: transportType,
@@ -125,25 +104,13 @@ class JourneyService: JourneyServiceProtocol {
             theme: theme,
             isPrivate: isPrivate
         ))
-        .do(onNext: { response in
-            print("API 응답: \(response)")
-        }, onError: { error in
-            print("여행 생성 오류: \(error)")
-            if let networkError = error as? NetworkError {
-                print("네트워크 오류 타입: \(networkError)")
-            }
-        })
         .map { (response: APIResponse<Journey>) -> Journey in
-            print("응답 매핑 시작")
             guard let journey = response.data else {
-                print("응답에 데이터가 없음")
                 throw NetworkError.invalidResponse
             }
-            print("여행 생성 성공: ID=\(journey.id)")
             return journey
         }
         .catch { error in
-            print("에러 캐치: \(error)")
             return Observable.error(error)
         }
     }
@@ -230,7 +197,15 @@ class JourneyService: JourneyServiceProtocol {
     
     // MARK: - 여행 추천 준비물 조회
     func getRecommendations(journeyId: String) -> Observable<RecommendationResponse> {
-        return apiClient.request(APIEndpoint.getRecommendations(journeyId: journeyId))
+        return apiClient.requestWithDateDecoding(APIEndpoint.getRecommendations(journeyId: journeyId))
+            .do(onNext: { response in
+                print("API 응답: \(response)")
+            }, onError: { error in
+                print("여행 추천 준비물 조회 오류: \(error)")
+                if let networkError = error as? NetworkError {
+                    print("네트워크 오류 타입: \(networkError)")
+                }
+            })
             .map { (response: APIResponse<RecommendationResponse>) -> RecommendationResponse in
                 guard let recommendations = response.data else {
                     throw NetworkError.invalidResponse

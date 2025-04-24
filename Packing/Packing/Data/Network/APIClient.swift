@@ -41,17 +41,8 @@ struct NotificationResponse: Codable {
 }
 
 struct RecommendationResponse: Codable {
-    let journey: JourneyInfo
+    let journey: Journey
     let categories: [String: RecommendationCategory]
-    
-    struct JourneyInfo: Codable {
-        let title: String
-        let destination: String
-        let startDate: Date
-        let endDate: Date
-        let theme: String
-        let transportType: String
-    }
 }
 
 struct ErrorResponse: Codable {
@@ -89,7 +80,7 @@ class APIClient: APIClientProtocol {
             // 인증이 필요한 endpoints에는 token 추가
             if self.requiresAuthentication(endpoint) {
                 if let token = self.tokenManager.accessToken {
-                    print("Current Token: \(token)")
+//                    print("Current Token: \(token)")
                     request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
                 } else {
                     observer.onError(NetworkError.unauthorized(nil))

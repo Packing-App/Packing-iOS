@@ -10,7 +10,7 @@ import RxSwift
 
 // MARK: - PackingItemService Protocol
 protocol PackingItemServiceProtocol {
-    func getPackingItemsByJourney(journeyId: String) -> Observable<APIResponse<[PackingItem]>>
+    func getPackingItemsByJourney(journeyId: String) async throws -> [PackingItem]
     
     func createPackingItem(
         journeyId: String,
@@ -19,7 +19,7 @@ protocol PackingItemServiceProtocol {
         category: ItemCategory,
         isShared: Bool,
         assignedTo: String?
-    ) -> Observable<APIResponse<PackingItem>>
+    ) async throws -> PackingItem
     
     // 준비물 일괄 생성 (테마 템플릿에서 가져오기)
     func createBulkPackingItems(
@@ -44,16 +44,16 @@ protocol PackingItemServiceProtocol {
         category: ItemCategory?,
         isShared: Bool?,
         assignedTo: String?
-    ) -> Observable<APIResponse<PackingItem>>
+    ) async throws -> PackingItem
     
     // 준비물 체크 상태 토글
-    func togglePackingItem(id: String) -> Observable<APIResponse<PackingItem>>
+    func togglePackingItem(id: String) async throws -> PackingItem
     
     // 준비물 삭제
-    func deletePackingItem(id: String) -> Observable<APIResponse<Bool>>
+    func deletePackingItem(id: String) async throws -> Bool
     
     // 카테고리별 준비물 조회
-    func getPackingItemsByCategory(journeyId: String) -> Observable<APIResponse<[String: [PackingItem]]>>
+    func getPackingItemsByCategory(journeyId: String) async throws -> [String: [PackingItem]]
     
     // 테마별 준비물 템플릿 목록 조회
     func getThemeTemplates() -> Observable<APIResponse<[ThemeTemplate]>>
@@ -61,8 +61,6 @@ protocol PackingItemServiceProtocol {
     // 특정 테마의 준비물 템플릿 조회
     func getThemeTemplateByName(themeName: String) -> Observable<APIResponse<ThemeTemplate>>
 }
-
-// MARK: - LocationService Implementation
 
 // MARK: - PackingItemService Implementation
 class PackingItemService: PackingItemServiceProtocol {
@@ -73,9 +71,15 @@ class PackingItemService: PackingItemServiceProtocol {
     }
     
     // 여행별 준비물 목록 조회
-    func getPackingItemsByJourney(journeyId: String) -> Observable<APIResponse<[PackingItem]>> {
+    func getPackingItemsByJourney(journeyId: String) async throws -> [PackingItem] {
         let endpoint = APIEndpoint.getPackingItemsByJourney(journeyId: journeyId)
-        return apiClient.requestWithDateDecoding(endpoint)
+        let response: APIResponse<[PackingItem]> = try await apiClient.requestWithDateDecodingAsync(endpoint)
+        
+        guard response.success, let items = response.data else {
+            throw NetworkError.serverError(response.message)
+        }
+        
+        return items
     }
     
     // 준비물 생성
@@ -86,7 +90,7 @@ class PackingItemService: PackingItemServiceProtocol {
         category: ItemCategory,
         isShared: Bool,
         assignedTo: String?
-    ) -> Observable<APIResponse<PackingItem>> {
+    ) async throws -> PackingItem {
         let endpoint = APIEndpoint.createPackingItem(
             journeyId: journeyId,
             name: name,
@@ -95,9 +99,15 @@ class PackingItemService: PackingItemServiceProtocol {
             isShared: isShared,
             assignedTo: assignedTo
         )
-        return apiClient.requestWithDateDecoding(endpoint)
+        let response: APIResponse<PackingItem> = try await apiClient.requestWithDateDecodingAsync(endpoint)
+        
+        guard response.success, let item = response.data else {
+            throw NetworkError.serverError(response.message)
+        }
+        
+        return item
     }
-    
+
     // 준비물 일괄 생성 (테마 템플릿에서 가져오기)
     func createBulkPackingItems(
         journeyId: String,
@@ -136,7 +146,7 @@ class PackingItemService: PackingItemServiceProtocol {
         category: ItemCategory?,
         isShared: Bool?,
         assignedTo: String?
-    ) -> Observable<APIResponse<PackingItem>> {
+    ) async throws -> PackingItem {
         let endpoint = APIEndpoint.updatePackingItem(
             id: id,
             name: name,
@@ -145,25 +155,49 @@ class PackingItemService: PackingItemServiceProtocol {
             isShared: isShared,
             assignedTo: assignedTo
         )
-        return apiClient.requestWithDateDecoding(endpoint)
+        let response: APIResponse<PackingItem> = try await apiClient.requestWithDateDecodingAsync(endpoint)
+        
+        guard response.success, let item = response.data else {
+            throw NetworkError.serverError(response.message)
+        }
+        
+        return item
     }
     
     // 준비물 체크 상태 토글
-    func togglePackingItem(id: String) -> Observable<APIResponse<PackingItem>> {
+    func togglePackingItem(id: String) async throws -> PackingItem {
         let endpoint = APIEndpoint.togglePackingItem(id: id)
-        return apiClient.requestWithDateDecoding(endpoint)
+        let response: APIResponse<PackingItem> = try await apiClient.requestWithDateDecodingAsync(endpoint)
+        
+        guard response.success, let item = response.data else {
+            throw NetworkError.serverError(response.message)
+        }
+        
+        return item
     }
     
     // 준비물 삭제
-    func deletePackingItem(id: String) -> Observable<APIResponse<Bool>> {
+    func deletePackingItem(id: String) async throws -> Bool {
         let endpoint = APIEndpoint.deletePackingItem(id: id)
-        return apiClient.request(endpoint)
+        let response: APIResponse<Bool> = try await apiClient.requestAsync(endpoint)
+        
+        guard response.success, let success = response.data else {
+            throw NetworkError.serverError(response.message)
+        }
+        
+        return success
     }
     
     // 카테고리별 준비물 조회
-    func getPackingItemsByCategory(journeyId: String) -> Observable<APIResponse<[String: [PackingItem]]>> {
+    func getPackingItemsByCategory(journeyId: String) async throws -> [String: [PackingItem]] {
         let endpoint = APIEndpoint.getPackingItemsByCategory(journeyId: journeyId)
-        return apiClient.requestWithDateDecoding(endpoint)
+        let response: APIResponse<[String: [PackingItem]]> = try await apiClient.requestWithDateDecodingAsync(endpoint)
+        
+        guard response.success, let categorizedItems = response.data else {
+            throw NetworkError.serverError(response.message)
+        }
+        
+        return categorizedItems
     }
     
     // 테마별 준비물 템플릿 목록 조회

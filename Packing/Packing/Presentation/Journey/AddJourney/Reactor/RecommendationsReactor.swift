@@ -15,6 +15,8 @@ class RecommendationsReactor: Reactor {
         case toggleItem(itemName: String)
         case updateItemCount(itemName: String, count: Int)
         case addSelectedItems
+        case selectAllInCategory(category: String, select: Bool)
+        case selectAll(select: Bool)
     }
     
     enum Mutation {
@@ -25,6 +27,8 @@ class RecommendationsReactor: Reactor {
         case updateItemCount(itemName: String, count: Int)
         case setProcessingAddItems(Bool)
         case setAddItemsResult(APIResponse<[PackingItem]>)
+        case selectAllInCategory(category: String, select: Bool)
+        case selectAll(select: Bool)
         case setError(Error)
     }
     
@@ -94,7 +98,11 @@ class RecommendationsReactor: Reactor {
                 
                 Observable.just(Mutation.setProcessingAddItems(false))
             ])
+        case .selectAllInCategory(let category, let select):
+            return Observable.just(Mutation.selectAllInCategory(category: category, select: select))
             
+        case .selectAll(let select):
+            return Observable.just(Mutation.selectAll(select: select))
         }
     }
     
@@ -155,6 +163,36 @@ class RecommendationsReactor: Reactor {
             newState.error = error
             newState.isLoading = false
             newState.isProcessingAddItems = false
+            
+        case .selectAllInCategory(let category, let select):
+            // 특정 카테고리 내 모든 아이템 선택/해제
+            if let categoryItems = newState.categories[category]?.items {
+                for item in categoryItems {
+                    if select {
+                        // 선택: 기본 카운트 또는 1로 설정
+                        let count = getDefaultCountForItem(item.name, in: newState.categories) ?? 1
+                        newState.selectedItems[item.name] = count
+                    } else {
+                        // 해제: 0으로 설정
+                        newState.selectedItems[item.name] = 0
+                    }
+                }
+            }
+            
+        case .selectAll(let select):
+            // 모든 카테고리의 모든 아이템 선택/해제
+            for (_, category) in newState.categories {
+                for item in category.items {
+                    if select {
+                        // 선택: 기본 카운트 또는 1로 설정
+                        let count = getDefaultCountForItem(item.name, in: newState.categories) ?? 1
+                        newState.selectedItems[item.name] = count
+                    } else {
+                        // 해제: 0으로 설정
+                        newState.selectedItems[item.name] = 0
+                    }
+                }
+            }
         }
         
         return newState

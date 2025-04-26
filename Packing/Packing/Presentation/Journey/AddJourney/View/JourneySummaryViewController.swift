@@ -366,7 +366,6 @@ class JourneySummaryViewController: UIViewController, View {
             print("No journey")
             return
         }
-        print("생성된 여행 정보: \(journey)")
         
         let journeyService = JourneyService()
         let packingItemService = PackingItemService()

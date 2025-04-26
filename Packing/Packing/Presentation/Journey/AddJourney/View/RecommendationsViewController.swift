@@ -119,6 +119,14 @@ class RecommendationsViewController: UIViewController, View {
         return button
     }()
     
+    private let selectAllButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("전체 선택", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
     // 카테고리 이모지 매핑
     private let categoryEmojis: [ItemCategory: String] = [
         .clothing: "👕",
@@ -157,7 +165,8 @@ class RecommendationsViewController: UIViewController, View {
         
         containerStackView.addArrangedSubview(titleLabel)
         containerStackView.addArrangedSubview(subtitleLabel)
-        
+        containerStackView.addArrangedSubview(selectAllButton)
+
         view.addSubview(addItemsButton)
     }
     
@@ -208,6 +217,16 @@ class RecommendationsViewController: UIViewController, View {
         addItemsButton.rx.tap
             .map { Reactor.Action.addSelectedItems }
             .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        selectAllButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                guard let reactor = self?.reactor else { return }
+                // 전체 선택 / 해제 토글
+                let shouldSelect = (reactor.currentState.selectedItems.filter { $0.value > 0 }.count == 0)
+                reactor.action.onNext(.selectAll(select: shouldSelect))
+                self?.selectAllButton.setTitle(shouldSelect ? "전체 해제" : "전체 선택", for: .normal)
+            })
             .disposed(by: disposeBag)
         
         // States
@@ -365,14 +384,27 @@ class RecommendationsViewController: UIViewController, View {
         stackView.isLayoutMarginsRelativeArrangement = true
         stackView.translatesAutoresizingMaskIntoConstraints = false
         
+        let headerView = UIView()
+
         // 카테고리 제목 레이블 (이모지 포함)
         let titleLabel = UILabel()
         let emoji = categoryEmojis[categoryKey] ?? "📦"
         titleLabel.text = "\(emoji) \(category.name)"
         titleLabel.font = .systemFont(ofSize: 20, weight: .semibold)
         titleLabel.textColor = .label
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        let selectAllButton = UIButton(type: .system)
+        selectAllButton.setTitle("전체 선택", for: .normal)
+        selectAllButton.setTitle("전체 해제", for: .selected)
+        selectAllButton.titleLabel?.font = .systemFont(ofSize: 14)
+        selectAllButton.translatesAutoresizingMaskIntoConstraints = false
         
-        stackView.addArrangedSubview(titleLabel)
+        headerView.addSubview(titleLabel)
+        headerView.addSubview(selectAllButton)
+        headerView.translatesAutoresizingMaskIntoConstraints = false
+        
+        stackView.addArrangedSubview(headerView)
         
         // Add items
         for item in category.items {
@@ -382,7 +414,29 @@ class RecommendationsViewController: UIViewController, View {
         
         containerView.addSubview(stackView)
         
+        // 전체 선택 버튼 액션
+        selectAllButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                guard let reactor = self?.reactor else { return }
+                // 현재 버튼 상태에 따라 반전
+                let shouldSelect = !selectAllButton.isSelected
+                reactor.action.onNext(.selectAllInCategory(category: categoryKey.rawValue, select: shouldSelect))
+                selectAllButton.isSelected = shouldSelect
+            })
+            .disposed(by: disposeBag)
+        
         NSLayoutConstraint.activate([
+            titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor),
+            titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor),
+            titleLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor),
+            
+            selectAllButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
+            selectAllButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
+            
+            headerView.heightAnchor.constraint(equalToConstant: 30),
+            headerView.leadingAnchor.constraint(equalTo: stackView.leadingAnchor, constant: 16),
+            headerView.trailingAnchor.constraint(equalTo: stackView.trailingAnchor, constant: -16),
+            
             stackView.topAnchor.constraint(equalTo: containerView.topAnchor),
             stackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
@@ -437,7 +491,16 @@ class RecommendationsViewController: UIViewController, View {
         stepper.stepValue = 1
         stepper.value = Double(item.count ?? 1)
         stepper.translatesAutoresizingMaskIntoConstraints = false
-        stepper.isHidden = true // 선택 전에는 숨김
+        
+        stepper.rx.value
+            .map { Reactor.Action.updateItemCount(itemName: item.name, count: Int($0)) }
+            .bind(to: reactor!.action)
+            .disposed(by: disposeBag)
+
+        // 아이템 맵핑 저장
+        itemCheckboxes[item.name] = checkboxButton
+        itemSteppers[item.name] = stepper
+        itemCountLabels[item.name] = countLabel
         
         containerView.addSubview(checkboxButton)
         containerView.addSubview(nameLabel)

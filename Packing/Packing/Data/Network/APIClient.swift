@@ -443,3 +443,34 @@ class APIClient: APIClientProtocol {
         }
     }
 }
+
+// APIClient Extension for Async/Await support
+extension APIClientProtocol {
+    func requestAsync<T: Decodable>(_ endpoint: APIEndpoint) async throws -> T {
+        return try await withCheckedThrowingContinuation { continuation in
+            let disposable = request(endpoint)
+                .subscribe(
+                    onNext: { (response: T) in
+                        continuation.resume(returning: response)
+                    },
+                    onError: { error in
+                        continuation.resume(throwing: error)
+                    }
+                )
+        }
+    }
+    
+    func requestWithDateDecodingAsync<T: Decodable>(_ endpoint: APIEndpoint) async throws -> T {
+        return try await withCheckedThrowingContinuation { continuation in
+            let disposable = requestWithDateDecoding(endpoint)
+                .subscribe(
+                    onNext: { (response: T) in
+                        continuation.resume(returning: response)
+                    },
+                    onError: { error in
+                        continuation.resume(throwing: error)
+                    }
+                )
+        }
+    }
+}

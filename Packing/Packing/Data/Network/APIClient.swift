@@ -20,6 +20,7 @@ struct APIResponse<T: Codable>: Codable {
     let success: Bool
     let message: String
     let data: T?
+    let status: Int?
 }
 
 struct UserResponse: Codable {
@@ -122,6 +123,7 @@ class APIClient: APIClientProtocol {
                         observer.onNext(decodedObject)
                         observer.onCompleted()
                     } catch let error {
+                        print("Decoding Error: \(error.localizedDescription)")
                         observer.onError(NetworkError.decodingFailed(error))
                     }
                 case 401:
@@ -231,6 +233,24 @@ class APIClient: APIClientProtocol {
                         observer.onNext(decodedObject)
                         observer.onCompleted()
                     } catch let error {
+                        print("디코딩 오류: \(error)")
+                        
+                        // 디코딩 오류 세부 정보 출력
+                        if let decodingError = error as? DecodingError {
+                            switch decodingError {
+                            case .keyNotFound(let key, let context):
+                                print("키 없음: \(key.stringValue), 경로: \(context.codingPath)")
+                            case .typeMismatch(let type, let context):
+                                print("타입 불일치: \(type), 경로: \(context.codingPath)")
+                            case .valueNotFound(let type, let context):
+                                print("값 없음: \(type), 경로: \(context.codingPath)")
+                            case .dataCorrupted(let context):
+                                print("데이터 손상: \(context)")
+                            @unknown default:
+                                print("알 수 없는 디코딩 오류")
+                            }
+                        }
+                        
                         observer.onError(NetworkError.decodingFailed(error))
                     }
                 

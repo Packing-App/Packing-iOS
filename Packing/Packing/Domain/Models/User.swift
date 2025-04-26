@@ -13,7 +13,7 @@ struct User: Codable, Equatable {
     let email: String?
     var profileImage: String?
     let intro: String?
-    let socialType: LoginType
+    let socialType: LoginType?
     let socialId: String?
     let pushNotificationEnabled: Bool?
     let isEmailVerified: Bool?

@@ -219,10 +219,10 @@ final class ProfileViewController: UIViewController, View {
                 switch menuItem {
                 case .connectedAccount:
                     if let user = self.reactor?.currentState.user {
-                        content.secondaryText = self.getSocialTypeName(for: user.socialType)
+                        content.secondaryText = self.getSocialTypeName(for: user.socialType ?? .email)
                         let socialIconView = UIImageView(frame: CGRect(x: 0, y: 0, width: 24, height: 24))
                         socialIconView.contentMode = .scaleAspectFit
-                        socialIconView.image = self.getSocialTypeImage(for: user.socialType)
+                        socialIconView.image = self.getSocialTypeImage(for: user.socialType ?? .email)
                         cell.accessoryView = socialIconView
                     }
                     cell.selectionStyle = .none

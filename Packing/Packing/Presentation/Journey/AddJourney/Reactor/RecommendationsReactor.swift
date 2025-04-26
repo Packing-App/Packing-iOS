@@ -11,6 +11,7 @@ import RxSwift
 import RxCocoa
 
 class RecommendationsReactor: Reactor {
+    // MARK: - Action
     enum Action {
         case toggleItem(itemName: String)
         case updateItemCount(itemName: String, count: Int)
@@ -19,6 +20,7 @@ class RecommendationsReactor: Reactor {
         case selectAll(select: Bool)
     }
     
+    // MARK: - Mutation
     enum Mutation {
         case setLoading(Bool)
         case setLoadingMessage(String)
@@ -32,6 +34,7 @@ class RecommendationsReactor: Reactor {
         case setError(Error)
     }
     
+    // MARK: - State
     struct State {
         var isLoading: Bool = true
         var loadingMessage: String = ""
@@ -43,76 +46,122 @@ class RecommendationsReactor: Reactor {
         var error: Error?
     }
     
+    // MARK: - Properties
     let initialState: State
     private let journeyService: JourneyServiceProtocol
     private let packingItemsService: PackingItemServiceProtocol
     private let journey: Journey
     private let disposeBag = DisposeBag()
     
+    // MARK: - Initialization
     init(journeyService: JourneyServiceProtocol, packingItemService: PackingItemServiceProtocol, journey: Journey) {
         self.journeyService = journeyService
         self.packingItemsService = packingItemService
         self.journey = journey
-        self.initialState = State(loadingMessage: "잠시만 기다려주세요.\n\(journey.destination)을 가는 여행자님에게\n꼭 필요한 준비물을 추천해드릴게요.")
+        self.initialState = State(
+            loadingMessage: "잠시만 기다려주세요.\n\(journey.destination)을 가는 여행자님에게\n꼭 필요한 준비물을 추천해드릴게요."
+        )
+        
+        print("RecommendationsReactor initialized for journey: \(journey.id)")
     }
     
-    // 초기 상태 설정 후 뷰가 바인딩 되면 호출됨
+    // MARK: - Data Loading
     func fetchRecommendations() -> Observable<Mutation> {
-        // 2초 동안 로딩 메시지 표시 후 API 호출
+        print("Fetching recommendations for journey: \(journey.id)")
+        
         return Observable.concat([
-            Observable<Mutation>.just(.setLoading(true))
-                .delay(.seconds(2), scheduler: MainScheduler.instance),
+            // Initial loading state
+            Observable<Mutation>.just(.setLoading(true)),
             
+            // Small delay to show loading message
+            Observable<Mutation>.just(.setLoading(true))
+                .delay(.seconds(1), scheduler: MainScheduler.instance),
+            
+            // Fetch recommendations from API
             journeyService.getRecommendations(journeyId: journey.id)
+                .do(onNext: { response in
+                    print("Successfully fetched \(response.categories.count) categories with recommendations")
+                })
                 .map { Mutation.setRecommendations($0) }
                 .catch { error in
-                    print(#fileID, #function, #line, "- ")
-                    print("여행 추천 준비물 불러오기 실패: \(error.localizedDescription)")
+                    print("Failed to fetch recommendations: \(error.localizedDescription)")
                     return Observable.just(Mutation.setError(error))
                 },
             
+            // Complete loading
             Observable.just(Mutation.setLoading(false))
         ])
     }
     
+    // MARK: - Action Processing
     func mutate(action: Action) -> Observable<Mutation> {
         switch action {
         case .toggleItem(let itemName):
+            print("Action: Toggle item: \(itemName)")
             return Observable.just(Mutation.toggleItem(itemName: itemName))
-        case .updateItemCount(let itemName, let count):
-            return Observable.just(Mutation.updateItemCount(itemName: itemName, count: count))
-        case .addSelectedItems:
-            guard !currentState.selectedItems.isEmpty else { return .empty() }
-            let selectedRecommendedItems = createSelectedRecommendedItems()
             
-            return Observable.concat([
-                Observable.just(Mutation.setProcessingAddItems(true)),
-                
-                packingItemsService.createSelectedRecommendedItems(
-                    journeyId: journey.id,
-                    selectedItems: selectedRecommendedItems,
-                    mergeDuplicates: true
-                )
-                .map { Mutation.setAddItemsResult($0) }
-                .catch { error in return Observable.just(Mutation.setError(error)) },
-                
-                Observable.just(Mutation.setProcessingAddItems(false))
-            ])
+        case .updateItemCount(let itemName, let count):
+            print("Action: Update item count: \(itemName) to \(count)")
+            return Observable.just(Mutation.updateItemCount(itemName: itemName, count: count))
+            
+        case .addSelectedItems:
+            print("Action: Add selected items")
+            return handleAddSelectedItemsAction()
+            
         case .selectAllInCategory(let category, let select):
+            print("Action: Select all in category: \(category), select: \(select)")
             return Observable.just(Mutation.selectAllInCategory(category: category, select: select))
             
         case .selectAll(let select):
+            print("Action: Select all: \(select)")
             return Observable.just(Mutation.selectAll(select: select))
         }
     }
     
+    private func handleAddSelectedItemsAction() -> Observable<Mutation> {
+        // Get selected items
+        let selectedItems = createSelectedRecommendedItems()
+        
+        // If nothing selected, return empty observable
+        guard !selectedItems.isEmpty else {
+            print("No items selected, not proceeding with add")
+            return .empty()
+        }
+        
+        print("Adding \(selectedItems.count) selected items")
+        
+        return Observable.concat([
+            // Start processing
+            Observable.just(Mutation.setProcessingAddItems(true)),
+            
+            // API call to create items
+            packingItemsService.createSelectedRecommendedItems(
+                journeyId: journey.id,
+                selectedItems: selectedItems,
+                mergeDuplicates: true
+            )
+            .do(onNext: { response in
+                print("Successfully added \(response.data?.count ?? 0) items")
+            })
+            .map { Mutation.setAddItemsResult($0) }
+            .catch { error in
+                print("Error adding items: \(error.localizedDescription)")
+                return Observable.just(Mutation.setError(error))
+            },
+            
+            // Complete processing
+            Observable.just(Mutation.setProcessingAddItems(false))
+        ])
+    }
+    
+    // MARK: - Initial API Call
     func transform(mutation: Observable<Mutation>) -> Observable<Mutation> {
-        // 초기화 시 한 번만 API 호출
-        // This method is called once after the state stream is created.
+        // Fetch recommendations when reactor is initialized
         let initialMutation = fetchRecommendations()
         return Observable.merge(mutation, initialMutation)
     }
     
+    // MARK: - State Reduction
     func reduce(state: State, mutation: Mutation) -> State {
         var newState = state
         
@@ -124,32 +173,36 @@ class RecommendationsReactor: Reactor {
             newState.loadingMessage = message
             
         case .setRecommendations(let response):
+            print("Reducing: Set recommendations with \(response.categories.count) categories")
             newState.categories = response.categories
             newState.journeyInfo = response.journey
             
-            // 초기 개수 설정
+            // Initialize all items with count 0 (unselected)
             response.categories.forEach { categoryKey, category in
                 category.items.forEach { item in
-                    // 기본값으로 선택하지 않음 (개수 0으로 설정!)
                     newState.selectedItems[item.name] = 0
                 }
             }
             
         case .toggleItem(let itemName):
             if let currentCount = newState.selectedItems[itemName], currentCount > 0 {
-                // 이미 선택한 경우 선택 해제 (0으로 설정)
+                // Item is currently selected, deselect it
+                print("Reducing: Deselecting item: \(itemName)")
                 newState.selectedItems[itemName] = 0
             } else {
-                // 선택되지 않은 경우 선택 (기본값 1 또는 API의 count 사용)
+                // Item is not selected, select it with default count
                 let count = getDefaultCountForItem(itemName, in: newState.categories) ?? 1
+                print("Reducing: Selecting item: \(itemName) with count: \(count)")
                 newState.selectedItems[itemName] = count
             }
             
         case .updateItemCount(let itemName, let count):
+            print("Reducing: Updating count for \(itemName) to \(count)")
             if count <= 0 {
-                // 0 이하로 내려가면 선택 해제로 처리
+                // Invalid count, deselect item
                 newState.selectedItems[itemName] = 0
             } else {
+                // Update count
                 newState.selectedItems[itemName] = count
             }
             
@@ -160,35 +213,38 @@ class RecommendationsReactor: Reactor {
             newState.addItemsResult = result
             
         case .setError(let error):
+            print("Reducing: Setting error: \(error.localizedDescription)")
             newState.error = error
             newState.isLoading = false
             newState.isProcessingAddItems = false
             
         case .selectAllInCategory(let category, let select):
-            // 특정 카테고리 내 모든 아이템 선택/해제
+            print("Reducing: Select all in category \(category): \(select)")
+            // Get all items in the category
             if let categoryItems = newState.categories[category]?.items {
                 for item in categoryItems {
                     if select {
-                        // 선택: 기본 카운트 또는 1로 설정
+                        // Select item with default count
                         let count = getDefaultCountForItem(item.name, in: newState.categories) ?? 1
                         newState.selectedItems[item.name] = count
                     } else {
-                        // 해제: 0으로 설정
+                        // Deselect item
                         newState.selectedItems[item.name] = 0
                     }
                 }
             }
             
         case .selectAll(let select):
-            // 모든 카테고리의 모든 아이템 선택/해제
+            print("Reducing: Select all: \(select)")
+            // Select/deselect all items in all categories
             for (_, category) in newState.categories {
                 for item in category.items {
                     if select {
-                        // 선택: 기본 카운트 또는 1로 설정
+                        // Select with default count
                         let count = getDefaultCountForItem(item.name, in: newState.categories) ?? 1
                         newState.selectedItems[item.name] = count
                     } else {
-                        // 해제: 0으로 설정
+                        // Deselect
                         newState.selectedItems[item.name] = 0
                     }
                 }
@@ -198,7 +254,8 @@ class RecommendationsReactor: Reactor {
         return newState
     }
     
-    // 선택된 준비물들을 SelectedRecommendedItem 배열로 변환
+    // MARK: - Helper Methods
+    // Convert selected items to API model
     private func createSelectedRecommendedItems() -> [SelectedRecommendedItem] {
         var selectedItems: [SelectedRecommendedItem] = []
         
@@ -215,9 +272,11 @@ class RecommendationsReactor: Reactor {
                 }
             }
         }
+        
         return selectedItems
     }
     
+    // Get default count for an item from API data
     private func getDefaultCountForItem(_ itemName: String, in categories: [String: RecommendationCategory]) -> Int? {
         for (_, category) in categories {
             if let item = category.items.first(where: { $0.name == itemName }) {

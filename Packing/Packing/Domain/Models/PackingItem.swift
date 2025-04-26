@@ -11,12 +11,12 @@ import Foundation
 
 // MARK: - Recommendation Models
 
-struct RecommendationCategory: Codable {
+struct RecommendationCategory: Codable, Equatable {
     let name: String
     let items: [RecommendedItem]
 }
 
-struct RecommendedItem: Codable, Identifiable {
+struct RecommendedItem: Codable, Identifiable, Equatable {
     var id: String { name }  // 아이템 이름을 ID로 사용
     let name: String
     let category: String    // ItemCategory
@@ -40,7 +40,7 @@ struct SelectedRecommendedItem: Codable {
 
 // MARK: - PackingItem Model
 
-struct PackingItem: Identifiable, Codable {
+struct PackingItem: Identifiable, Codable, Equatable {
     let id: String
     let journeyId: String
     let name: String

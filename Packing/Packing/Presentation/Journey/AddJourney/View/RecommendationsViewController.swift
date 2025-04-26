@@ -17,117 +17,38 @@ class RecommendationsViewController: UIViewController, View {
     
     var disposeBag = DisposeBag()
     
+    // MARK: - UI Components
     private lazy var navigationTitleLabel: UILabel = {
         let label = UILabel()
         let attachmentString = NSMutableAttributedString(string: "")
-        let imageAttachment: NSTextAttachment = NSTextAttachment()
+        let imageAttachment = NSTextAttachment()
         imageAttachment.image = UIImage(named: "logoIconWhite")
         imageAttachment.bounds = CGRect(x: 0, y: -7, width: 24, height: 24)
         attachmentString.append(NSAttributedString(attachment: imageAttachment))
         attachmentString.append(NSAttributedString(string: " PACKING"))
         label.attributedText = attachmentString
-        label.sizeToFit()
-        
         label.textAlignment = .center
         label.font = .systemFont(ofSize: 20, weight: .semibold)
         label.textColor = .white
         label.translatesAutoresizingMaskIntoConstraints = false
-        
         return label
     }()
     
-    private let loadingView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .systemBackground
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
+    private let loadingView = UIView()
+    private let loadingMessageLabel = UILabel()
+    private let loadingIndicator = UIActivityIndicatorView(style: .large)
     
-    private let loadingMessageLabel: UILabel = {
-        let label = UILabel()
-        label.numberOfLines = 0
-        label.textAlignment = .center
-        label.font = .systemFont(ofSize: 18, weight: .medium)
-        label.textColor = .label
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
+    private let contentView = UIView()
+    private let scrollView = UIScrollView()
+    private let containerStackView = UIStackView()
     
-    private let loadingIndicator: UIActivityIndicatorView = {
-        let indicator = UIActivityIndicatorView(style: .large)
-        indicator.color = .main
-        indicator.hidesWhenStopped = true
-        indicator.translatesAutoresizingMaskIntoConstraints = false
-        return indicator
-    }()
+    private let titleLabel = UILabel()
+    private let subtitleLabel = UILabel()
     
-    private let contentView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .systemBackground
-        view.isHidden = true
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
+    private let selectAllButton = UIButton(type: .system)
+    private let addItemsButton = UIButton(type: .system)
     
-    private let scrollView: UIScrollView = {
-        let scrollView = UIScrollView()
-        scrollView.showsVerticalScrollIndicator = true
-        scrollView.alwaysBounceVertical = true
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
-        return scrollView
-    }()
-    
-    private let containerStackView: UIStackView = {
-        let stackView = UIStackView()
-        stackView.axis = .vertical
-        stackView.spacing = 24
-        stackView.alignment = .fill
-        stackView.distribution = .equalSpacing
-        stackView.layoutMargins = UIEdgeInsets(top: 20, left: 16, bottom: 20, right: 16)
-        stackView.isLayoutMarginsRelativeArrangement = true
-        stackView.translatesAutoresizingMaskIntoConstraints = false
-        return stackView
-    }()
-    
-    private let titleLabel: UILabel = {
-        let label = UILabel()
-        label.text = "추천 준비물"
-        label.font = .systemFont(ofSize: 28, weight: .bold)
-        label.textColor = .label
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    
-    private let subtitleLabel: UILabel = {
-        let label = UILabel()
-        label.text = "여행에 필요한 준비물을 확인하고 체크해보세요"
-        label.font = .systemFont(ofSize: 16, weight: .regular)
-        label.textColor = .secondaryLabel
-        label.numberOfLines = 0
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    
-    private let addItemsButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("0개 담기", for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = .main
-        button.layer.cornerRadius = 12
-        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
-    
-    private let selectAllButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("전체 선택", for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
-    
-    // 카테고리 이모지 매핑
+    // Category emoji mapping
     private let categoryEmojis: [ItemCategory: String] = [
         .clothing: "👕",
         .electronics: "📱",
@@ -138,41 +59,107 @@ class RecommendationsViewController: UIViewController, View {
         .other: "🔍"
     ]
     
-    // 아이템과 스테퍼 매핑을 위한 딕셔너리
+    // Item control mappings
     private var itemSteppers: [String: UIStepper] = [:]
     private var itemCountLabels: [String: UILabel] = [:]
     private var itemCheckboxes: [String: UIButton] = [:]
+    private var categorySelectButtons: [String: UIButton] = [:]
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupUI()
+        setupUIComponents()
+        setupViewHierarchy()
         setupConstraints()
     }
     
-    // MARK: - Setup UI
-    private func setupUI() {
+    // MARK: - UI Setup
+    private func setupUIComponents() {
         view.backgroundColor = .systemBackground
-        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: navigationTitleLabel)
         
-        view.addSubview(loadingView)
+        // Loading view
+        loadingView.backgroundColor = .systemBackground
+        loadingView.translatesAutoresizingMaskIntoConstraints = false
+        
+        loadingMessageLabel.numberOfLines = 0
+        loadingMessageLabel.textAlignment = .center
+        loadingMessageLabel.font = .systemFont(ofSize: 18, weight: .medium)
+        loadingMessageLabel.textColor = .label
+        loadingMessageLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        loadingIndicator.color = .main
+        loadingIndicator.hidesWhenStopped = true
+        loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Content view
+        contentView.backgroundColor = .systemBackground
+        contentView.isHidden = true
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        
+        scrollView.showsVerticalScrollIndicator = true
+        scrollView.alwaysBounceVertical = true
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        
+        containerStackView.axis = .vertical
+        containerStackView.spacing = 24
+        containerStackView.alignment = .fill
+        containerStackView.distribution = .equalSpacing
+        containerStackView.layoutMargins = UIEdgeInsets(top: 20, left: 16, bottom: 20, right: 16)
+        containerStackView.isLayoutMarginsRelativeArrangement = true
+        containerStackView.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Labels
+        titleLabel.text = "추천 준비물"
+        titleLabel.font = .systemFont(ofSize: 28, weight: .bold)
+        titleLabel.textColor = .label
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        subtitleLabel.text = "여행에 필요한 준비물을 확인하고 체크해보세요"
+        subtitleLabel.font = .systemFont(ofSize: 16, weight: .regular)
+        subtitleLabel.textColor = .secondaryLabel
+        subtitleLabel.numberOfLines = 0
+        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Action buttons
+        selectAllButton.setTitle("전체 선택", for: .normal)
+        selectAllButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
+        selectAllButton.translatesAutoresizingMaskIntoConstraints = false
+        
+        addItemsButton.setTitle("0개 담기", for: .normal)
+        addItemsButton.setTitleColor(.white, for: .normal)
+        addItemsButton.backgroundColor = .main
+        addItemsButton.layer.cornerRadius = 12
+        addItemsButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
+        addItemsButton.translatesAutoresizingMaskIntoConstraints = false
+        addItemsButton.isEnabled = false
+        addItemsButton.alpha = 0.5
+    }
+    
+    private func setupViewHierarchy() {
+        // Navigation bar setup
+        navigationItem.titleView = navigationTitleLabel
+        
+        // Loading view hierarchy
         loadingView.addSubview(loadingMessageLabel)
         loadingView.addSubview(loadingIndicator)
+        view.addSubview(loadingView)
         
-        view.addSubview(contentView)
-        contentView.addSubview(scrollView)
-        scrollView.addSubview(containerStackView)
-        
+        // Content view hierarchy
         containerStackView.addArrangedSubview(titleLabel)
         containerStackView.addArrangedSubview(subtitleLabel)
         containerStackView.addArrangedSubview(selectAllButton)
-
+        
+        scrollView.addSubview(containerStackView)
+        contentView.addSubview(scrollView)
+        view.addSubview(contentView)
+        
+        // Bottom button
         view.addSubview(addItemsButton)
     }
     
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            // Loading View
+            // Loading view
             loadingView.topAnchor.constraint(equalTo: view.topAnchor),
             loadingView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             loadingView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -186,7 +173,7 @@ class RecommendationsViewController: UIViewController, View {
             loadingIndicator.centerXAnchor.constraint(equalTo: loadingView.centerXAnchor),
             loadingIndicator.topAnchor.constraint(equalTo: loadingMessageLabel.bottomAnchor, constant: 20),
             
-            // Content View
+            // Content view
             contentView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             contentView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -203,7 +190,7 @@ class RecommendationsViewController: UIViewController, View {
             containerStackView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             containerStackView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             
-            // Home Button
+            // Add items button
             addItemsButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
             addItemsButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
             addItemsButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
@@ -211,154 +198,164 @@ class RecommendationsViewController: UIViewController, View {
         ])
     }
     
-    // MARK: - Binding
+    // MARK: - ReactorKit Binding
     func bind(reactor: Reactor) {
-        // Actions
+        // Setup initial debugging
+        print("Binding to reactor")
+        
+        // Action bindings
+        bindActions(reactor)
+        
+        // State bindings
+        bindStateToUI(reactor)
+    }
+    
+    private func bindActions(_ reactor: Reactor) {
+        // Add items button action
         addItemsButton.rx.tap
+            .throttle(.milliseconds(300), scheduler: MainScheduler.instance)
             .map { Reactor.Action.addSelectedItems }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
         
+        // Select all button action
         selectAllButton.rx.tap
+            .throttle(.milliseconds(300), scheduler: MainScheduler.instance)
             .subscribe(onNext: { [weak self] in
-                guard let reactor = self?.reactor else { return }
-                // 전체 선택 / 해제 토글
-                let shouldSelect = (reactor.currentState.selectedItems.filter { $0.value > 0 }.count == 0)
+                guard let self = self, let reactor = self.reactor else { return }
+                let currentSelectedCount = reactor.currentState.selectedItems.filter { $0.value > 0 }.count
+                let totalItemCount = reactor.currentState.selectedItems.count
+                
+                // Determine if we should select or deselect all
+                let shouldSelect = currentSelectedCount < totalItemCount
+                
+                // Update button text
+                self.selectAllButton.setTitle(shouldSelect ? "전체 해제" : "전체 선택", for: .normal)
+                
+                // Send action to reactor
                 reactor.action.onNext(.selectAll(select: shouldSelect))
-                self?.selectAllButton.setTitle(shouldSelect ? "전체 해제" : "전체 선택", for: .normal)
-            })
-            .disposed(by: disposeBag)
-        
-        // States
-        reactor.state.map { $0.loadingMessage }
-            .observe(on: MainScheduler.instance)
-            .bind(to: loadingMessageLabel.rx.text)
-            .disposed(by: disposeBag)
-        
-        reactor.state.map { $0.isLoading }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] isLoading in
-                self?.loadingView.isHidden = !isLoading
-                self?.contentView.isHidden = isLoading
-                self?.addItemsButton.isHidden = isLoading   // 로딩 중일 때 하단 버튼 숨기기
                 
-                if isLoading {
-                    self?.loadingIndicator.startAnimating()
-                } else {
-                    self?.loadingIndicator.stopAnimating()
-                }
-            })
-            .disposed(by: disposeBag)
-        
-        reactor.state.map { $0.categories }
-            .filter { !$0.isEmpty }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] categories in
-                self?.updateCategories(categories)
-            })
-            .disposed(by: disposeBag)
-        
-        // 선택된 아이템 개수에 따라 버튼 텍스트 업데이트 (n 개 선택)
-        reactor.state.map { $0.selectedItems }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] selectedItems in
-                let selectedCount = selectedItems.filter { $0.value > 0 }.count
-                self?.addItemsButton.setTitle("\(selectedCount)개 담기", for: .normal)
-                self?.addItemsButton.isEnabled = selectedCount > 0
-                self?.addItemsButton.alpha = selectedCount > 0 ? 1.0 : 0.5
-                
-                // 스테퍼 값과 체크 박스 상태 업데이트
-                selectedItems.forEach { itemName, count in
-                    if let stepper = self?.itemSteppers[itemName] {
-                        stepper.value = Double(count)
-                        stepper.isHidden = (count <= 0) // count가 0개 이하면 hidden 처리?
-                    }
-                    
-                    if let countLabel = self?.itemCountLabels[itemName] {
-                        countLabel.text = count > 0 ? "\(count)개" : ""
-                    }
-                    
-                    if let checkbox = self?.itemCheckboxes[itemName] {
-                        checkbox.isSelected = count > 0
-                    }
-                }
-            })
-            .disposed(by: disposeBag)
-        
-        // 아이템 추가 처리 중 상태에 따른 UI 업데이트
-        reactor.state.map { $0.isProcessingAddItems }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] isProcessing in
-                self?.addItemsButton.isEnabled = !isProcessing
-                
-                if isProcessing {
-                    let activityIndicator = UIActivityIndicatorView(style: .medium)
-                    activityIndicator.color = .white
-                    activityIndicator.startAnimating()
-                    self?.addItemsButton.setImage(nil, for: .normal)
-                    self?.addItemsButton.setTitle("", for: .normal)
-                    self?.addItemsButton.addSubview(activityIndicator)
-                    activityIndicator.center = CGPoint(x: self?.addItemsButton.bounds.width ?? 0 / 2, y: self?.addItemsButton.bounds.height ?? 0 / 2)
-                    activityIndicator.translatesAutoresizingMaskIntoConstraints = false
-                    NSLayoutConstraint.activate([
-                        activityIndicator.centerXAnchor.constraint(equalTo: self?.addItemsButton.centerXAnchor ?? activityIndicator.centerXAnchor),
-                        activityIndicator.centerYAnchor.constraint(equalTo: self?.addItemsButton.centerYAnchor ?? activityIndicator.centerYAnchor)
-                    ])
-                } else {
-                    for subview in self?.addItemsButton.subviews ?? [] {
-                        if subview is UIActivityIndicatorView {
-                            subview.removeFromSuperview()
-                        }
-                    }
-                    let selectedCount = reactor.currentState.selectedItems.filter { $0.value > 0 }.count
-                    self?.addItemsButton.setTitle("\(selectedCount)개 담기", for: .normal)
-                }
-            })
-            .disposed(by: disposeBag)
-        
-        // 아이템 추가 결과 처리
-//        reactor.state.map { $0.addItemsResult }
-//            .filter { $0 != nil }
-//            .observe(on: MainScheduler.instance)
-//            .subscribe(onNext: { [weak self] result in
-//                guard let result = result else { return }
-//                
-//                if result.success {
-//                    self?.showSuccessAlert(message: result.message) {
-//                        self?.navigateToMainScreen()
-//                    }
-//                } else {
-//                    self?.showErrorAlert(message: result.message)
-//                }
-//            })
-//            .disposed(by: disposeBag)
-        
-        reactor.state.map { $0.error }
-            .filter { $0 != nil }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] error in
-                self?.showError(error!)
+                print("Select all button tapped, shouldSelect: \(shouldSelect)")
             })
             .disposed(by: disposeBag)
     }
     
-    // MARK: - Private Methods
-
-    // MARK: - Private Methods
+    private func bindStateToUI(_ reactor: Reactor) {
+        // Loading message binding
+        reactor.state
+            .map { $0.loadingMessage }
+            .distinctUntilChanged()
+            .bind(to: loadingMessageLabel.rx.text)
+            .disposed(by: disposeBag)
+        
+        // Loading state binding
+        reactor.state
+            .map { $0.isLoading }
+            .distinctUntilChanged()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] isLoading in
+                guard let self = self else { return }
+                
+                self.loadingView.isHidden = !isLoading
+                self.contentView.isHidden = isLoading
+                self.addItemsButton.isHidden = isLoading
+                
+                if isLoading {
+                    self.loadingIndicator.startAnimating()
+                } else {
+                    self.loadingIndicator.stopAnimating()
+                    print("Loading finished, content should be visible")
+                }
+            })
+            .disposed(by: disposeBag)
+        
+        // Categories binding
+        reactor.state
+            .map { $0.categories }
+            .distinctUntilChanged()
+            .filter { !$0.isEmpty }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] categories in
+                guard let self = self else { return }
+                print("Updating categories: \(categories.keys.joined(separator: ", "))")
+                self.updateCategories(categories)
+            })
+            .disposed(by: disposeBag)
+        
+        // Selected items binding
+        reactor.state
+            .map { $0.selectedItems }
+            .distinctUntilChanged()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] selectedItems in
+                guard let self = self else { return }
+                
+                // Count selected items (count > 0)
+                let selectedCount = selectedItems.filter { $0.value > 0 }.count
+                
+                // Update UI based on selection state
+                self.updateSelectionUI(selectedItems: selectedItems, selectedCount: selectedCount)
+                
+                print("Selected items updated, count: \(selectedCount)")
+            })
+            .disposed(by: disposeBag)
+        
+        // Loading indicator for add items action
+        reactor.state
+            .map { $0.isProcessingAddItems }
+            .distinctUntilChanged()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] isProcessing in
+                guard let self = self else { return }
+                
+                self.updateAddButtonLoadingState(isProcessing: isProcessing)
+            })
+            .disposed(by: disposeBag)
+        
+        // 아이템 추가 결과 처리
+        reactor.state.map { $0.addItemsResult }
+            .filter { $0 != nil }
+            .take(1) // 첫 번째 성공 이벤트만 처리
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] result in
+                guard let result = result, result.success else { return }
+                
+                // 성공했으면 메인 화면으로 이동
+                self?.navigateToMainScreen()
+            })
+            .disposed(by: disposeBag)
+        
+        // Error handling
+        reactor.state
+            .map { $0.error }
+            .filter { $0 != nil }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] error in
+                guard let error = error else { return }
+                self?.showError(error)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - UI Update Methods
     private func updateCategories(_ categories: [String: RecommendationCategory]) {
-        // Remove existing category views
-        containerStackView.arrangedSubviews.forEach {
-            if $0 !== titleLabel && $0 !== subtitleLabel {
-                containerStackView.removeArrangedSubview($0)
-                $0.removeFromSuperview()
+        // Remove existing category views except for title, subtitle, and select all button
+        let viewsToKeep = [titleLabel, subtitleLabel, selectAllButton]
+        
+        for view in containerStackView.arrangedSubviews {
+            if !viewsToKeep.contains(where: { $0 === view }) {
+                containerStackView.removeArrangedSubview(view)
+                view.removeFromSuperview()
             }
         }
         
-        // Clear item mappings
+        // Clear mappings
         itemSteppers.removeAll()
         itemCountLabels.removeAll()
         itemCheckboxes.removeAll()
+        categorySelectButtons.removeAll()
         
+        // Add category views
         for categoryKey in ItemCategory.allCases {
             guard let category = categories[categoryKey.rawValue],
                   !category.items.isEmpty else { continue }
@@ -366,45 +363,123 @@ class RecommendationsViewController: UIViewController, View {
             let categoryView = createCategoryView(category: category, categoryKey: categoryKey)
             containerStackView.addArrangedSubview(categoryView)
         }
+        
+        // Force layout update
+        containerStackView.layoutIfNeeded()
     }
     
+    private func updateSelectionUI(selectedItems: [String: Int], selectedCount: Int) {
+        // Update add items button
+        addItemsButton.setTitle("\(selectedCount)개 담기", for: .normal)
+        addItemsButton.isEnabled = selectedCount > 0
+        addItemsButton.alpha = selectedCount > 0 ? 1.0 : 0.5
+        
+        // Update global select all button
+        let totalItems = itemCheckboxes.count
+        selectAllButton.setTitle(selectedCount == totalItems ? "전체 해제" : "전체 선택", for: .normal)
+        
+        // Update category select all buttons
+        updateCategorySelectButtons()
+        
+        // Update item UI elements
+        for (itemName, count) in selectedItems {
+            if let checkbox = itemCheckboxes[itemName] {
+                checkbox.isSelected = count > 0
+            }
+            
+            if let stepper = itemSteppers[itemName] {
+                if stepper.value != Double(count) {
+                    stepper.value = Double(max(count, 0))
+                }
+            }
+            
+            if let countLabel = itemCountLabels[itemName] {
+                countLabel.text = count > 0 ? "\(count)개" : ""
+            }
+        }
+    }
+    
+    private func updateCategorySelectButtons() {
+        guard let reactor = self.reactor else { return }
+        
+        for (category, button) in categorySelectButtons {
+            // Get all items in this category
+            guard let categoryItems = reactor.currentState.categories[category]?.items else { continue }
+            
+            // Count how many items are selected in this category
+            var selectedInCategory = 0
+            for item in categoryItems {
+                if let count = reactor.currentState.selectedItems[item.name], count > 0 {
+                    selectedInCategory += 1
+                }
+            }
+            
+            // Update button state and title
+            let allSelected = selectedInCategory == categoryItems.count && categoryItems.count > 0
+            button.isSelected = allSelected
+            button.setTitle(allSelected ? "전체 해제" : "전체 선택", for: .normal)
+        }
+    }
+    
+    private func updateAddButtonLoadingState(isProcessing: Bool) {
+        addItemsButton.isEnabled = !isProcessing
+        
+        // Remove any existing activity indicators
+        for subview in addItemsButton.subviews {
+            if subview is UIActivityIndicatorView {
+                subview.removeFromSuperview()
+            }
+        }
+        
+        if isProcessing {
+            // Add activity indicator
+            let activityIndicator = UIActivityIndicatorView(style: .medium)
+            activityIndicator.color = .white
+            activityIndicator.startAnimating()
+            activityIndicator.translatesAutoresizingMaskIntoConstraints = false
+            
+            addItemsButton.setTitle("", for: .normal)
+            addItemsButton.addSubview(activityIndicator)
+            
+            NSLayoutConstraint.activate([
+                activityIndicator.centerXAnchor.constraint(equalTo: addItemsButton.centerXAnchor),
+                activityIndicator.centerYAnchor.constraint(equalTo: addItemsButton.centerYAnchor)
+            ])
+        } else {
+            // Restore button title
+            guard let reactor = reactor else { return }
+            let selectedCount = reactor.currentState.selectedItems.filter { $0.value > 0 }.count
+            addItemsButton.setTitle("\(selectedCount)개 담기", for: .normal)
+        }
+    }
+    
+    // MARK: - UI Creation Methods
     private func createCategoryView(category: RecommendationCategory, categoryKey: ItemCategory) -> UIView {
         let containerView = UIView()
         containerView.backgroundColor = .secondarySystemBackground
         containerView.layer.cornerRadius = 16
-        containerView.layer.masksToBounds = true
+        containerView.clipsToBounds = true
         containerView.translatesAutoresizingMaskIntoConstraints = false
         
         let stackView = UIStackView()
         stackView.axis = .vertical
-        stackView.spacing = 8
+        stackView.spacing = 12
         stackView.alignment = .fill
-        stackView.distribution = .equalSpacing
+        stackView.distribution = .fill
         stackView.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
         stackView.isLayoutMarginsRelativeArrangement = true
         stackView.translatesAutoresizingMaskIntoConstraints = false
         
-        let headerView = UIView()
-
-        // 카테고리 제목 레이블 (이모지 포함)
-        let titleLabel = UILabel()
-        let emoji = categoryEmojis[categoryKey] ?? "📦"
-        titleLabel.text = "\(emoji) \(category.name)"
-        titleLabel.font = .systemFont(ofSize: 20, weight: .semibold)
-        titleLabel.textColor = .label
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let selectAllButton = UIButton(type: .system)
-        selectAllButton.setTitle("전체 선택", for: .normal)
-        selectAllButton.setTitle("전체 해제", for: .selected)
-        selectAllButton.titleLabel?.font = .systemFont(ofSize: 14)
-        selectAllButton.translatesAutoresizingMaskIntoConstraints = false
-        
-        headerView.addSubview(titleLabel)
-        headerView.addSubview(selectAllButton)
-        headerView.translatesAutoresizingMaskIntoConstraints = false
-        
+        // Header view with category title and select all button
+        let headerView = createCategoryHeaderView(category: category, categoryKey: categoryKey)
         stackView.addArrangedSubview(headerView)
+        
+        // Add separator
+        let separator = UIView()
+        separator.backgroundColor = .systemGray5
+        separator.translatesAutoresizingMaskIntoConstraints = false
+        separator.heightAnchor.constraint(equalToConstant: 1).isActive = true
+        stackView.addArrangedSubview(separator)
         
         // Add items
         for item in category.items {
@@ -414,29 +489,7 @@ class RecommendationsViewController: UIViewController, View {
         
         containerView.addSubview(stackView)
         
-        // 전체 선택 버튼 액션
-        selectAllButton.rx.tap
-            .subscribe(onNext: { [weak self] in
-                guard let reactor = self?.reactor else { return }
-                // 현재 버튼 상태에 따라 반전
-                let shouldSelect = !selectAllButton.isSelected
-                reactor.action.onNext(.selectAllInCategory(category: categoryKey.rawValue, select: shouldSelect))
-                selectAllButton.isSelected = shouldSelect
-            })
-            .disposed(by: disposeBag)
-        
         NSLayoutConstraint.activate([
-            titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor),
-            titleLabel.topAnchor.constraint(equalTo: headerView.topAnchor),
-            titleLabel.bottomAnchor.constraint(equalTo: headerView.bottomAnchor),
-            
-            selectAllButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
-            selectAllButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-            
-            headerView.heightAnchor.constraint(equalToConstant: 30),
-            headerView.leadingAnchor.constraint(equalTo: stackView.leadingAnchor, constant: 16),
-            headerView.trailingAnchor.constraint(equalTo: stackView.trailingAnchor, constant: -16),
-            
             stackView.topAnchor.constraint(equalTo: containerView.topAnchor),
             stackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             stackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
@@ -445,33 +498,98 @@ class RecommendationsViewController: UIViewController, View {
         
         return containerView
     }
-
+    
+    private func createCategoryHeaderView(category: RecommendationCategory, categoryKey: ItemCategory) -> UIView {
+        let headerView = UIView()
+        headerView.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Category title with emoji
+        let titleLabel = UILabel()
+        let emoji = categoryEmojis[categoryKey] ?? "📦"
+        titleLabel.text = "\(emoji) \(category.name)"
+        titleLabel.font = .systemFont(ofSize: 20, weight: .semibold)
+        titleLabel.textColor = .label
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Category select all button
+        let selectAllButton = UIButton(type: .system)
+        selectAllButton.setTitle("전체 선택", for: .normal)
+        selectAllButton.titleLabel?.font = .systemFont(ofSize: 14)
+        selectAllButton.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Store reference to this button
+        categorySelectButtons[categoryKey.rawValue] = selectAllButton
+        
+        // Add button action
+        selectAllButton.rx.tap
+            .throttle(.milliseconds(300), scheduler: MainScheduler.instance)
+            .subscribe(onNext: { [weak self, weak selectAllButton] in
+                guard let self = self, let reactor = self.reactor else { return }
+                
+                // Toggle selection state
+                let shouldSelect = !(selectAllButton?.isSelected ?? false)
+                
+                // Update button text
+                selectAllButton?.isSelected = shouldSelect
+                selectAllButton?.setTitle(shouldSelect ? "전체 해제" : "전체 선택", for: .normal)
+                
+                // Send action to reactor
+                reactor.action.onNext(.selectAllInCategory(category: categoryKey.rawValue, select: shouldSelect))
+                
+                print("Category select button tapped: \(categoryKey.rawValue), shouldSelect: \(shouldSelect)")
+            })
+            .disposed(by: disposeBag)
+        
+        headerView.addSubview(titleLabel)
+        headerView.addSubview(selectAllButton)
+        
+        NSLayoutConstraint.activate([
+            headerView.heightAnchor.constraint(equalToConstant: 40),
+            
+            titleLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor),
+            titleLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+            
+            selectAllButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
+            selectAllButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor)
+        ])
+        
+        return headerView
+    }
+    
     private func createItemView(item: RecommendedItem) -> UIView {
         let containerView = UIView()
         containerView.backgroundColor = .clear
         containerView.translatesAutoresizingMaskIntoConstraints = false
         
-        // 체크박스 버튼
+        // Checkbox
         let checkboxButton = UIButton(type: .custom)
         checkboxButton.setImage(UIImage(systemName: "square"), for: .normal)
         checkboxButton.setImage(UIImage(systemName: "checkmark.square.fill"), for: .selected)
         checkboxButton.tintColor = .main
         checkboxButton.translatesAutoresizingMaskIntoConstraints = false
         
-        // 아이템 이름 레이블
+        // Item name
         let nameLabel = UILabel()
         nameLabel.text = item.name
         nameLabel.font = .systemFont(ofSize: 16, weight: .regular)
         nameLabel.textColor = .label
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        // 개수 표시 레이블
+        // Count label
         let countLabel = UILabel()
         countLabel.font = .systemFont(ofSize: 14, weight: .regular)
         countLabel.textColor = .secondaryLabel
         countLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        // 필수 아이템 뱃지
+        // Stepper for quantity
+        let stepper = UIStepper()
+        stepper.minimumValue = 1
+        stepper.maximumValue = 99
+        stepper.stepValue = 1
+        stepper.value = Double(item.count ?? 1)
+        stepper.translatesAutoresizingMaskIntoConstraints = false
+        
+        // Essential badge if needed
         let essentialBadge = UILabel()
         if item.isEssential {
             essentialBadge.text = "필수"
@@ -480,28 +598,11 @@ class RecommendationsViewController: UIViewController, View {
             essentialBadge.backgroundColor = .systemRed
             essentialBadge.textAlignment = .center
             essentialBadge.layer.cornerRadius = 4
-            essentialBadge.layer.masksToBounds = true
+            essentialBadge.clipsToBounds = true
+            essentialBadge.translatesAutoresizingMaskIntoConstraints = false
         }
-        essentialBadge.translatesAutoresizingMaskIntoConstraints = false
         
-        // 스테퍼 (수량 조절)
-        let stepper = UIStepper()
-        stepper.minimumValue = 1
-        stepper.maximumValue = 99
-        stepper.stepValue = 1
-        stepper.value = Double(item.count ?? 1)
-        stepper.translatesAutoresizingMaskIntoConstraints = false
-        
-        stepper.rx.value
-            .map { Reactor.Action.updateItemCount(itemName: item.name, count: Int($0)) }
-            .bind(to: reactor!.action)
-            .disposed(by: disposeBag)
-
-        // 아이템 맵핑 저장
-        itemCheckboxes[item.name] = checkboxButton
-        itemSteppers[item.name] = stepper
-        itemCountLabels[item.name] = countLabel
-        
+        // Add subviews
         containerView.addSubview(checkboxButton)
         containerView.addSubview(nameLabel)
         containerView.addSubview(countLabel)
@@ -511,6 +612,12 @@ class RecommendationsViewController: UIViewController, View {
             containerView.addSubview(essentialBadge)
         }
         
+        // Store UI element references
+        itemCheckboxes[item.name] = checkboxButton
+        itemSteppers[item.name] = stepper
+        itemCountLabels[item.name] = countLabel
+        
+        // Setup layout
         NSLayoutConstraint.activate([
             containerView.heightAnchor.constraint(equalToConstant: 44),
             
@@ -520,7 +627,7 @@ class RecommendationsViewController: UIViewController, View {
             checkboxButton.heightAnchor.constraint(equalToConstant: 24),
             
             nameLabel.leadingAnchor.constraint(equalTo: checkboxButton.trailingAnchor, constant: 12),
-            nameLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor)
+            nameLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
         ])
         
         if item.isEssential {
@@ -546,30 +653,43 @@ class RecommendationsViewController: UIViewController, View {
             ])
         }
         
-        // 버튼 액션 처리를 Rx로 바인딩
+        // Bind checkbox tap
         checkboxButton.rx.tap
+            .throttle(.milliseconds(300), scheduler: MainScheduler.instance)
             .subscribe(onNext: { [weak self, weak checkboxButton] in
-                guard let reactor = self?.reactor else { return }
+                guard let self = self, let reactor = self.reactor else { return }
+                
+                // Toggle checkbox visually immediately for better UX
+                let isCurrentlySelected = checkboxButton?.isSelected ?? false
+                checkboxButton?.isSelected = !isCurrentlySelected
+                
+                // Update reactor
                 reactor.action.onNext(.toggleItem(itemName: item.name))
+                
+                print("Checkbox tapped for: \(item.name), new visual state: \(!isCurrentlySelected)")
+            })
+            .disposed(by: disposeBag)
+        
+        // Bind stepper value changes
+        stepper.rx.value
+            .skip(1) // Skip initial value
+            .throttle(.milliseconds(300), scheduler: MainScheduler.instance)
+            .map { Reactor.Action.updateItemCount(itemName: item.name, count: Int($0)) }
+            .subscribe(onNext: { [weak self] action in
+                guard let reactor = self?.reactor else { return }
+                reactor.action.onNext(action)
+                
+                print("Stepper changed for: \(item.name), new value: \(Int(stepper.value))")
             })
             .disposed(by: disposeBag)
         
         return containerView
     }
     
-    @objc private func checkboxTapped(_ sender: UIButton) {
-        sender.isSelected.toggle()
-    }
-    
-    @objc private func homeButtonTapped() {
-        navigateToMainScreen()
-    }
-    
-    private func navigateToMainScreen() {
-        AuthCoordinator.shared.showMainScreen()
-    }
-    
+    // MARK: - Utility Methods
     private func showError(_ error: Error) {
+        print("Error: \(error.localizedDescription)")
+        
         let alert = UIAlertController(
             title: "오류",
             message: error.localizedDescription,
@@ -577,5 +697,9 @@ class RecommendationsViewController: UIViewController, View {
         )
         alert.addAction(UIAlertAction(title: "확인", style: .default))
         present(alert, animated: true)
+    }
+    
+    private func navigateToMainScreen() {
+        AuthCoordinator.shared.showMainScreen()
     }
 }

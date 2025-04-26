@@ -80,7 +80,6 @@ class JourneyDetailViewController: UIViewController {
     }
 }
 
-// MARK: - SwiftUI JourneyDetailView
 import SwiftUI
 import RxSwift
 

@@ -15,54 +15,81 @@ struct AddPackingItemSheet: View {
     @State private var isShared: Bool = false
     @State private var selectedAssignee: String?
     
+    // API 호출 관련 상태
+    @State private var isLoading = false
+    @State private var errorMessage: String? = nil
+    
     let journey: Journey
     let onSave: (PackingItem) -> Void
     
+    // 서비스
+    private let packingService = PackingItemService()
+    
     var body: some View {
         NavigationStack {
-            Form {
-                // 아이템 이름 입력
-                Section(header: Text("아이템 정보")) {
-                    TextField("준비물 이름", text: $itemName)
-                    
-                    Stepper("수량: \(itemCount)개", value: $itemCount, in: 1...99)
-                }
-                
-                // 카테고리 선택
-                Section(header: Text("카테고리")) {
-                    Picker("카테고리", selection: $selectedCategory) {
-                        ForEach(ItemCategory.allCases, id: \.self) { category in
-                            HStack {
-                                Image(systemName: categoryIcon(for: category))
-                                Text("  \(category.displayName)")
-                            }
-                            .tag(category)
-                        }
+            ZStack {
+                Form {
+                    // 아이템 이름 입력
+                    Section(header: Text("아이템 정보")) {
+                        TextField("준비물 이름", text: $itemName)
+                        
+                        Stepper("수량: \(itemCount)개", value: $itemCount, in: 1...99)
                     }
-                    .pickerStyle(MenuPickerStyle())
-                }
-                
-                // 개인/공용 선택
-                Section(header: Text("준비물 유형")) {
-                    Toggle("공용 준비물", isOn: $isShared)
-                        .toggleStyle(SwitchToggleStyle(tint: .blue))
-                }
-                
-                // 담당자 지정 (공용일 때만 표시)
-                if isShared {
-                    Section(header: Text("담당자")) {
-                        Picker("담당자", selection: $selectedAssignee) {
-                            Text("담당자 미지정").tag(String?.none)
-                            ForEach(self.journey.participants.map { $0.id }, id: \.self) { participantId in
-                                let isCreator = participantId == journey.creatorId
-                                Text(isCreator ? "방장" : "참가자")
-                                    .tag(participantId as String?)
+                    
+                    // 카테고리 선택
+                    Section(header: Text("카테고리")) {
+                        Picker("카테고리", selection: $selectedCategory) {
+                            ForEach(ItemCategory.allCases, id: \.self) { category in
+                                HStack {
+                                    Image(systemName: categoryIcon(for: category))
+                                    Text("  \(category.displayName)")
+                                }
+                                .tag(category)
                             }
                         }
                         .pickerStyle(MenuPickerStyle())
                     }
-                    .transition(.opacity)
-                    .animation(.default, value: isShared)
+                    
+                    // 개인/공용 선택
+                    Section(header: Text("준비물 유형")) {
+                        Toggle("공용 준비물", isOn: $isShared)
+                            .toggleStyle(SwitchToggleStyle(tint: .blue))
+                    }
+                    
+                    // 담당자 지정 (공용일 때만 표시)
+                    if isShared {
+                        Section(header: Text("담당자")) {
+                            Picker("담당자", selection: $selectedAssignee) {
+                                Text("담당자 미지정").tag(String?.none)
+                                ForEach(self.journey.participants.map { $0.id }, id: \.self) { participantId in
+                                    let isCreator = participantId == journey.creatorId
+                                    Text(isCreator ? "방장" : "참가자")
+                                        .tag(participantId as String?)
+                                }
+                            }
+                            .pickerStyle(MenuPickerStyle())
+                        }
+                        .transition(.opacity)
+                        .animation(.default, value: isShared)
+                    }
+                }
+                
+                // 로딩 오버레이
+                if isLoading {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                    
+                    VStack {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .padding()
+                        Text("저장 중...")
+                            .foregroundColor(.white)
+                            .font(.headline)
+                    }
+                    .frame(width: 150, height: 150)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(10)
                 }
             }
             .navigationTitle("준비물 추가")
@@ -72,31 +99,57 @@ struct AddPackingItemSheet: View {
                     Button("취소") {
                         presentationMode.wrappedValue.dismiss()
                     }
+                    .disabled(isLoading)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("저장") {
                         saveItem()
                     }
-                    .disabled(itemName.isEmpty)
+                    .disabled(itemName.isEmpty || isLoading)
                 }
+            }
+            .alert(item: Binding(
+                get: { errorMessage.map { ErrorWrapper(message: $0) } },
+                set: { errorMessage = $0?.message }
+            )) { error in
+                Alert(
+                    title: Text("오류"),
+                    message: Text(error.message),
+                    dismissButton: .default(Text("확인"))
+                )
             }
         }
     }
     
     private func saveItem() {
-//        let newItem = PackingItem(
-//            journeyId: journey.id,
-//            name: itemName,
-//            count: itemCount,
-//            category: selectedCategory,
-//            isShared: isShared,
-//            assignedTo: isShared ? selectedAssignee : nil,
-//            createdBy: User.currentUser.id
-//        )
+        guard !itemName.isEmpty else { return }
         
-//        onSave(newItem)
-        presentationMode.wrappedValue.dismiss()
+        isLoading = true
+        
+        Task {
+            do {
+                let newItem = try await packingService.createPackingItemAsync(
+                    journeyId: journey.id,
+                    name: itemName,
+                    count: itemCount,
+                    category: selectedCategory,
+                    isShared: isShared,
+                    assignedTo: isShared ? selectedAssignee : nil
+                )
+                
+                await MainActor.run {
+                    isLoading = false
+                    onSave(newItem)
+                    presentationMode.wrappedValue.dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    errorMessage = "준비물 추가에 실패했습니다: \(error.localizedDescription)"
+                }
+            }
+        }
     }
     
     private func categoryIcon(for category: ItemCategory) -> String {

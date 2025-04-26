@@ -28,7 +28,7 @@ final class HomeViewReactor: Reactor {
         var isLoading: Bool = false
         var journeys: [Journey] = []
         var error: NetworkError? = nil
-        var themeTemplates: [ThemeTemplate] = ThemeTemplate.examples
+        var themeTemplates: [ThemeListModel] = ThemeListModel.examples
     }
     
     let initialState: State

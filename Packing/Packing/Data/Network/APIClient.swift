@@ -123,7 +123,24 @@ class APIClient: APIClientProtocol {
                         observer.onNext(decodedObject)
                         observer.onCompleted()
                     } catch let error {
-                        print("Decoding Error: \(error.localizedDescription)")
+                        print("디코딩 오류: \(error)")
+                        
+                        // 디코딩 오류 세부 정보 출력
+                        if let decodingError = error as? DecodingError {
+                            switch decodingError {
+                            case .keyNotFound(let key, let context):
+                                print("키 없음: \(key.stringValue), 경로: \(context.codingPath)")
+                            case .typeMismatch(let type, let context):
+                                print("타입 불일치: \(type), 경로: \(context.codingPath)")
+                            case .valueNotFound(let type, let context):
+                                print("값 없음: \(type), 경로: \(context.codingPath)")
+                            case .dataCorrupted(let context):
+                                print("데이터 손상: \(context)")
+                            @unknown default:
+                                print("알 수 없는 디코딩 오류")
+                            }
+                        }
+                        
                         observer.onError(NetworkError.decodingFailed(error))
                     }
                 case 401:
@@ -210,6 +227,10 @@ class APIClient: APIClientProtocol {
                         return
                     }
                     
+                    // 디버깅을 위해 응답 데이터 출력
+                    if let jsonString = String(data: data, encoding: .utf8) {
+                        print("Raw Server Response: \(jsonString)")
+                    }
                     do {
                         // 날짜 디코딩 전략이 설정된 디코더 사용
                         let decoder = JSONDecoder()
@@ -448,13 +469,19 @@ class APIClient: APIClientProtocol {
 extension APIClientProtocol {
     func requestAsync<T: Decodable>(_ endpoint: APIEndpoint) async throws -> T {
         return try await withCheckedThrowingContinuation { continuation in
-            let disposable = request(endpoint)
+            var disposable: Disposable?
+            
+            disposable = requestWithDateDecoding(endpoint)
                 .subscribe(
                     onNext: { (response: T) in
                         continuation.resume(returning: response)
+                        // 안전하게 disposable 해제
+                        disposable?.dispose()
                     },
                     onError: { error in
                         continuation.resume(throwing: error)
+                        // 안전하게 disposable 해제
+                        disposable?.dispose()
                     }
                 )
         }
@@ -462,13 +489,19 @@ extension APIClientProtocol {
     
     func requestWithDateDecodingAsync<T: Decodable>(_ endpoint: APIEndpoint) async throws -> T {
         return try await withCheckedThrowingContinuation { continuation in
-            let disposable = requestWithDateDecoding(endpoint)
+            var disposable: Disposable?
+            
+            disposable = requestWithDateDecoding(endpoint)
                 .subscribe(
                     onNext: { (response: T) in
                         continuation.resume(returning: response)
+                        // 안전하게 disposable 해제
+                        disposable?.dispose()
                     },
                     onError: { error in
                         continuation.resume(throwing: error)
+                        // 안전하게 disposable 해제
+                        disposable?.dispose()
                     }
                 )
         }

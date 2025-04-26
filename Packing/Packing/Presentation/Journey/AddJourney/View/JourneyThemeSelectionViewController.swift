@@ -130,7 +130,7 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         // 테마 컬렉션뷰 데이터 바인딩
         reactor.state.map { $0.themeTemplates }
             .observe(on: MainScheduler.instance)
-            .distinctUntilChanged()
+//            .distinctUntilChanged()
             .bind(to: themeCollectionView.rx.items(cellIdentifier: "ThemeCell", cellType: ThemeCell.self)) { indexPath, template, cell in
                 let isSelected = template.themeName == reactor.currentState.selectedTheme
                 cell.configure(with: template, isSelected: isSelected)
@@ -333,7 +333,7 @@ class ThemeCell: UICollectionViewCell {
         ])
     }
     
-    func configure(with template: ThemeTemplate, isSelected: Bool = false) {
+    func configure(with template: ThemeListModel, isSelected: Bool = false) {
         imageView.image = UIImage(named: template.image)
         titleLabel.text = template.themeName.displayName
         

@@ -84,6 +84,7 @@ import SwiftUI
 import RxSwift
 
 // MARK: - SwiftUI JourneyDetailView
+
 struct JourneyDetailView: View {
     // MARK: - Properties
     let journey: Journey
@@ -92,8 +93,50 @@ struct JourneyDetailView: View {
     @State private var expandedCategories: Set<ItemCategory> = Set()
     @State private var showingAddItemSheet = false
     
+    // State for API calls
+    @State private var isLoading = false
+    @State private var errorMessage: String? = nil
+    
+    // Service
+    private let packingService = PackingItemService()
+    
     // MARK: - Body
     var body: some View {
+        Group {
+            if isLoading && packingItems.isEmpty {
+                loadingView
+            } else {
+                mainContentView
+            }
+        }
+        .alert(item: Binding(
+            get: { errorMessage.map { ErrorWrapper(message: $0) } },
+            set: { errorMessage = $0?.message }
+        )) { error in
+            Alert(
+                title: Text("오류"),
+                message: Text(error.message),
+                dismissButton: .default(Text("확인"))
+            )
+        }
+        .onAppear {
+            loadPackingItems()
+        }
+    }
+    
+    // MARK: - Loading View
+    private var loadingView: some View {
+        VStack(spacing: 20) {
+            ProgressView()
+                .scaleEffect(1.5)
+            Text("준비물 로딩 중...")
+                .font(.headline)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    // MARK: - Main Content View
+    private var mainContentView: some View {
         ScrollView {
             VStack(spacing: 0) {
                 // Header Image
@@ -112,7 +155,7 @@ struct JourneyDetailView: View {
                     
                     Divider()
                     
-                    // Weather Section (새로 추가)
+                    // Weather Section
                     WeatherSection(journey: journey)
                     
                     Divider()
@@ -129,8 +172,8 @@ struct JourneyDetailView: View {
                 .offset(y: -20)
             }
         }
-        .onAppear {
-            loadData()
+        .refreshable {
+            await refreshPackingItems()
         }
     }
     
@@ -320,22 +363,16 @@ struct JourneyDetailView: View {
             .padding(.bottom, 20)
         }
         .sheet(isPresented: $showingAddItemSheet) {
-            AddPackingItemSheet(journey: journey, onSave: { newItem in
-                addNewItem(newItem)
-            })
+            AddPackingItemSheet(
+                journey: journey,
+                onSave: { newItem in
+                    packingItems.append(newItem)
+                    expandedCategories.insert(newItem.category)
+                    selectedTab = newItem.isShared ? 1 : 0
+                }
+            )
             .presentationDetents([.medium, .large])
         }
-    }
-    
-    private func addNewItem(_ item: PackingItem) {
-        // 실제 앱에서는 데이터베이스에 저장하는 로직이 필요합니다
-        packingItems.append(item)
-        
-        // 새 아이템의 카테고리를 열어둠
-        expandedCategories.insert(item.category)
-        
-        // 적절한 탭으로 전환
-        selectedTab = item.isShared ? 1 : 0
     }
     
     // MARK: - Packing Items List
@@ -382,7 +419,10 @@ struct JourneyDetailView: View {
                                 item: item,
                                 isSharedTab: selectedTab == 1,
                                 onToggle: { isChecked in
-                                    toggleItemCheck(item, isChecked: isChecked)
+                                    toggleItem(item, isChecked: isChecked)
+                                },
+                                onDelete: {
+                                    deleteItem(item)
                                 }
                             )
                             .padding(.vertical, 8)
@@ -418,7 +458,111 @@ struct JourneyDetailView: View {
         }
     }
     
+    // MARK: - API Operations
+    
+    private func loadPackingItems() {
+        isLoading = true
+        
+        Task {
+            do {
+                let items = try await packingService.getPackingItemsByJourneyAsync(journeyId: journey.id)
+                await MainActor.run {
+                    self.packingItems = items
+                    setupInitialExpandedCategories()
+                    isLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = "준비물을 불러오는데 실패했습니다: \(error.localizedDescription)"
+                    isLoading = false
+                }
+            }
+        }
+    }
+    
+    private func refreshPackingItems() async {
+        do {
+            let items = try await packingService.getPackingItemsByJourneyAsync(journeyId: journey.id)
+            await MainActor.run {
+                self.packingItems = items
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = "준비물을 새로고침하는데 실패했습니다: \(error.localizedDescription)"
+            }
+        }
+    }
+    
+    private func toggleItem(_ item: PackingItem, isChecked: Bool) {
+        // 즉시 UI 업데이트를 위한 optimistic update
+        if let index = packingItems.firstIndex(where: { $0.id == item.id }) {
+            packingItems[index].isChecked = isChecked
+        }
+        
+        // API 호출을 통한 서버 업데이트
+        Task {
+            do {
+                let updatedItem = try await packingService.togglePackingItemAsync(id: item.id)
+                await MainActor.run {
+                    // 성공 시 서버 응답으로 데이터 업데이트
+                    if let index = packingItems.firstIndex(where: { $0.id == updatedItem.id }) {
+                        packingItems[index] = updatedItem
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    // 실패 시 원래 상태로 복원
+                    if let index = packingItems.firstIndex(where: { $0.id == item.id }) {
+                        packingItems[index].isChecked = !isChecked
+                    }
+                    errorMessage = "상태 변경에 실패했습니다: \(error.localizedDescription)"
+                }
+            }
+        }
+    }
+    
+    private func deleteItem(_ item: PackingItem) {
+        // Optimistic UI update
+        let itemIndex = packingItems.firstIndex(where: { $0.id == item.id })
+        let removedItem = itemIndex.map { packingItems.remove(at: $0) }
+        
+        Task {
+            do {
+                // 성공이면 아무것도 할 필요 없음 (이미 UI에서 제거됨)
+                _ = try await packingService.deletePackingItemAsync(id: item.id)
+//                if !success {
+//                    // 실패 시 아이템 되돌리기
+//                    await MainActor.run {
+//                        if let item = removedItem, let index = itemIndex {
+//                            packingItems.insert(item, at: min(index, packingItems.count))
+//                        }
+//                        errorMessage = "삭제에 실패했습니다."
+//                    }
+//                }
+            } catch {
+                await MainActor.run {
+                    // 실패 시 아이템 되돌리기
+                    if let item = removedItem, let index = itemIndex {
+                        packingItems.insert(item, at: min(index, packingItems.count))
+                    }
+                    errorMessage = "삭제에 실패했습니다: \(error.localizedDescription)"
+                }
+            }
+        }
+    }
+    
     // MARK: - Helpers & Computed Properties
+    
+    private func setupInitialExpandedCategories() {
+        if let firstPersonalCategory = PackingItem.groupedByCategory(items: personalItems).keys.sorted(by: { $0.rawValue < $1.rawValue }).first {
+            expandedCategories.insert(firstPersonalCategory)
+        }
+        
+        if let firstSharedCategory = PackingItem.groupedByCategory(items: sharedItems).keys.sorted(by: { $0.rawValue < $1.rawValue }).first {
+            expandedCategories.insert(firstSharedCategory)
+        }
+    }
+    
     private var dateRangeText: String {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy.MM.dd"
@@ -479,27 +623,6 @@ struct JourneyDetailView: View {
     
     private var progressValue: Float {
         packingItems.isEmpty ? 0 : Float(checkedItemsCount) / Float(packingItems.count)
-    }
-    
-    private func loadData() {
-        // Use the same method as in your original code
-//        packingItems = PackingItem.itemsForJourney(id: journey.id)
-        
-        // Default to expanding the first category in each tab
-        if let firstPersonalCategory = PackingItem.groupedByCategory(items: personalItems).keys.sorted(by: { $0.rawValue < $1.rawValue }).first {
-            expandedCategories.insert(firstPersonalCategory)
-        }
-        
-        if let firstSharedCategory = PackingItem.groupedByCategory(items: sharedItems).keys.sorted(by: { $0.rawValue < $1.rawValue }).first {
-            expandedCategories.insert(firstSharedCategory)
-        }
-        
-    }
-    
-    private func toggleItemCheck(_ item: PackingItem, isChecked: Bool) {
-        if let index = packingItems.firstIndex(where: { $0.id == item.id }) {
-            packingItems[index].isChecked = isChecked
-        }
     }
     
     private func calculateContentHeight() -> CGFloat {
@@ -566,13 +689,19 @@ struct PackingItemRow: View {
     let item: PackingItem
     let isSharedTab: Bool
     let onToggle: (Bool) -> Void
+    let onDelete: () -> Void
     
     @State private var isChecked: Bool
+    @State private var showDeleteConfirm = false
     
-    init(item: PackingItem, isSharedTab: Bool, onToggle: @escaping (Bool) -> Void) {
+    init(item: PackingItem,
+         isSharedTab: Bool,
+         onToggle: @escaping (Bool) -> Void,
+         onDelete: @escaping () -> Void) {
         self.item = item
         self.isSharedTab = isSharedTab
         self.onToggle = onToggle
+        self.onDelete = onDelete
         _isChecked = State(initialValue: item.isChecked)
     }
     
@@ -607,11 +736,55 @@ struct PackingItemRow: View {
             }
             
             Spacer()
+            
+            // Delete button
+            Button {
+                showDeleteConfirm = true
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 16))
+                    .foregroundColor(.red.opacity(0.8))
+            }
+            .padding(.trailing, 5)
         }
         .contentShape(Rectangle())
+        .contextMenu {
+            Button(action: {
+                isChecked.toggle()
+                onToggle(isChecked)
+            }) {
+                Label(
+                    isChecked ? "체크 해제하기" : "체크하기",
+                    systemImage: isChecked ? "circle" : "checkmark.circle"
+                )
+            }
+            
+            Divider()
+            
+            Button(role: .destructive, action: {
+                showDeleteConfirm = true
+            }) {
+                Label("삭제하기", systemImage: "trash")
+            }
+        }
+        .alert("준비물 삭제", isPresented: $showDeleteConfirm) {
+            Button("취소", role: .cancel) { }
+            Button("삭제", role: .destructive) {
+                onDelete()
+            }
+        } message: {
+            Text("\(item.name) 준비물을 삭제하시겠습니까?")
+        }
     }
 }
 
 #Preview {
     JourneyDetailView(journey: Journey.examples.first!)
+}
+
+
+// Error Wrapper for alerts
+struct ErrorWrapper: Identifiable {
+    let id = UUID()
+    let message: String
 }

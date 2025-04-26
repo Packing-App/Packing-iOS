@@ -260,6 +260,16 @@ class HomeViewController: UIViewController, View {
             })
             .disposed(by: disposeBag)
         
+        // 테마 템플릿 선택시 처리
+        templatesCollectionView.rx.modelSelected(ThemeListModel.self)
+            .subscribe(onNext: { [weak self] theme in
+                let themeTemplateVC = ThemeTemplateViewController()
+                themeTemplateVC.themeName = theme.themeName
+                themeTemplateVC.reactor = ThemeTemplateReactor()
+                self?.navigationController?.pushViewController(themeTemplateVC, animated: true)
+            })
+            .disposed(by: disposeBag)
+        
         // State 바인딩
         
         // 여행 목록 바인딩
@@ -276,7 +286,7 @@ class HomeViewController: UIViewController, View {
         reactor.state
             .observe(on: MainScheduler.instance)
             .map { $0.themeTemplates }
-            .distinctUntilChanged()
+//            .distinctUntilChanged()
             .bind(to: templatesCollectionView.rx.items(cellIdentifier: "TemplateCell", cellType: TemplateCell.self)) { indexPath, template, cell in
                 cell.configure(with: template)
             }
@@ -612,7 +622,7 @@ class TemplateCell: UICollectionViewCell {
         ])
     }
     
-    func configure(with template: ThemeTemplate) {
+    func configure(with template: ThemeListModel) {
         imageView.image = UIImage(named: template.image)
         titleLabel.text = template.themeName.displayName
     }

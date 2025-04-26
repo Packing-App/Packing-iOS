@@ -28,7 +28,7 @@ class JourneyThemeSelectionReactor: Reactor {
         var selectedTheme: TravelTheme?
         var canProceed: Bool
         var shouldProceed: Bool
-        var themeTemplates: [ThemeTemplate]
+        var themeTemplates: [ThemeListModel]
     }
     
     let initialState: State
@@ -43,7 +43,7 @@ class JourneyThemeSelectionReactor: Reactor {
             selectedTheme: model.theme,
             canProceed: model.theme != nil,
             shouldProceed: false,
-            themeTemplates: ThemeTemplate.examples
+            themeTemplates: ThemeListModel.examples
         )
     }
     

@@ -7,36 +7,46 @@
 
 import Foundation
 
-
-// 여행 테마 템플릿 구조체
-struct ThemeTemplate: Identifiable, Codable {
-    let id: String
+struct ThemeListModel: Identifiable {
+    let id = UUID()
     let themeName: TravelTheme
     let image: String
-    let items: [Item]
+}
+
+struct ThemeTemplate: Identifiable, Codable {
+    let id: String
+    let themeName: String
+    let items: [RecommendedItem]
     let createdAt: Date
     let updatedAt: Date
     
+    // TravelTheme로 변환하는 계산 속성
+    var theme: TravelTheme? {
+        return TravelTheme(rawValue: themeName)
+    }
+    
     init(id: String = UUID().uuidString,
          themeName: TravelTheme,
-         image: String = "",
-         items: [Item] = [],
+         items: [RecommendedItem] = [],
          createdAt: Date = Date(),
          updatedAt: Date = Date()) {
         self.id = id
-        self.themeName = themeName
-        self.image = image
+        self.themeName = themeName.rawValue
         self.items = items
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case themeName
+        case items
+        case createdAt
+        case updatedAt
+    }
 }
 
-extension ThemeTemplate: Equatable {
-    
-}
 
-// 여행 테마 열거형
+
 enum TravelTheme: String, Codable, CaseIterable, Equatable {
 
     case waterSports = "waterSports"
@@ -70,8 +80,6 @@ enum TravelTheme: String, Codable, CaseIterable, Equatable {
     }
 }
 
-
-// 아이템 카테고리 열거형
 enum ItemCategory: String, Codable, CaseIterable, Equatable {
     case clothing = "clothing"
     case electronics = "electronics"
@@ -94,88 +102,16 @@ enum ItemCategory: String, Codable, CaseIterable, Equatable {
     }
 }
 
-
-// 준비물 아이템 구조체
-struct Item: Identifiable, Codable, Equatable {
-    let id: String
-    let name: String
-    let category: ItemCategory
-    let isEssential: Bool
-    
-    init(id: String = UUID().uuidString, name: String, category: ItemCategory, isEssential: Bool = true) {
-        self.id = id
-        self.name = name
-        self.category = category
-        self.isEssential = isEssential
-    }
-}
-
-
-
-// 예시 아이템 데이터
-extension Item {
-    static let shoppingItems: [Item] = [
-        Item(name: "쇼핑백", category: .essentials, isEssential: false),
-        Item(name: "신용카드", category: .documents, isEssential: true),
-        Item(name: "여행용 소형 가방", category: .essentials, isEssential: true),
-        Item(name: "비상금", category: .essentials, isEssential: true)
+extension ThemeListModel {
+    static let examples: [ThemeListModel] = [
+        ThemeListModel(themeName: .waterSports, image: "waterSports"),
+        ThemeListModel(themeName: .cycling, image: "cycling"),
+        ThemeListModel(themeName: .camping, image: "camping"),
+        ThemeListModel(themeName: .picnic, image: "picnic"),
+        ThemeListModel(themeName: .mountain, image: "mountain"),
+        ThemeListModel(themeName: .skiing, image: "skiing"),
+        ThemeListModel(themeName: .fishing, image: "fishing"),
+        ThemeListModel(themeName: .shopping, image: "shopping"),
+        ThemeListModel(themeName: .themepark, image: "themepark")
     ]
-    
-    static let waterSportsItems: [Item] = [
-        Item(name: "수영복", category: .clothing, isEssential: true),
-        Item(name: "비치타올", category: .essentials, isEssential: true),
-        Item(name: "선글라스", category: .essentials, isEssential: false),
-        Item(name: "선크림", category: .toiletries, isEssential: true),
-        Item(name: "비치샌들", category: .clothing, isEssential: true),
-        Item(name: "방수 가방", category: .essentials, isEssential: false),
-        Item(name: "물병", category: .essentials, isEssential: true),
-        Item(name: "수상카메라", category: .electronics, isEssential: false)
-    ]
-    
-    static let campingItems: [Item] = [
-        Item(name: "텐트", category: .essentials, isEssential: true),
-        Item(name: "침낭", category: .essentials, isEssential: true),
-        Item(name: "랜턴", category: .electronics, isEssential: true),
-        Item(name: "캠핑 의자", category: .essentials, isEssential: false),
-        Item(name: "취사도구", category: .essentials, isEssential: true),
-        Item(name: "보온 재킷", category: .clothing, isEssential: true),
-        Item(name: "방충제", category: .medicines, isEssential: true),
-        Item(name: "구급상자", category: .medicines, isEssential: true),
-        Item(name: "식수", category: .essentials, isEssential: true)
-    ]
-    
-    static let skiingItems: [Item] = [
-        Item(name: "스키복", category: .clothing, isEssential: true),
-        Item(name: "스키/보드", category: .essentials, isEssential: false),
-        Item(name: "고글", category: .essentials, isEssential: true),
-        Item(name: "방한장갑", category: .clothing, isEssential: true),
-        Item(name: "보온내의", category: .clothing, isEssential: true),
-        Item(name: "목도리", category: .clothing, isEssential: false),
-        Item(name: "귀마개", category: .clothing, isEssential: false),
-        Item(name: "선크림", category: .toiletries, isEssential: true),
-        Item(name: "립밤", category: .toiletries, isEssential: true)
-    ]
-}
-
-// 예시 테마 템플릿 데이터
-extension ThemeTemplate {
-    
-    static let examples: [ThemeTemplate] = [
-        ThemeTemplate(id: "theme1", themeName: .waterSports, image: "waterSports", items: Item.campingItems),
-        ThemeTemplate(id: "theme2", themeName: .cycling, image: "cycling", items: Item.skiingItems),
-        ThemeTemplate(id: "theme3", themeName: .camping, image: "camping", items: Item.shoppingItems),
-        
-        ThemeTemplate(id: "theme4", themeName: .picnic, image: "picnic", items: Item.waterSportsItems),
-        ThemeTemplate(id: "theme5", themeName: .mountain, image: "mountain", items: Item.waterSportsItems),
-        ThemeTemplate(id: "theme6", themeName: .skiing, image: "skiing", items: Item.waterSportsItems),
-        
-        ThemeTemplate(id: "theme7", themeName: .fishing, image: "fishing", items: Item.waterSportsItems),
-        ThemeTemplate(id: "theme8", themeName: .shopping, image: "shopping", items: Item.waterSportsItems),
-        ThemeTemplate(id: "theme9", themeName: .themepark, image: "themepark", items: Item.waterSportsItems),
-    ]
-    
-    static func templateFor(theme: TravelTheme) -> ThemeTemplate {
-        return examples.first(where: { $0.themeName == theme }) ??
-               ThemeTemplate(themeName: theme, image: theme.imageUrl)
-    }
 }

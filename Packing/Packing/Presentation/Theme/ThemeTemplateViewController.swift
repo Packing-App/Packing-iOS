@@ -41,6 +41,10 @@ class ThemeTemplateViewController: UIViewController, View {
         super.viewDidLoad()
         setupUI()
         configureNavigationBar()
+        
+        // 테이블뷰 데이터소스와 델리게이트 설정
+        tableView.dataSource = self
+        tableView.delegate = self
     }
     
     func bind(reactor: ThemeTemplateReactor) {
@@ -74,28 +78,15 @@ class ThemeTemplateViewController: UIViewController, View {
             })
             .disposed(by: disposeBag)
         
-        // 테이블뷰 섹션 바인딩
+        // 데이터 변경 시 테이블뷰 리로드
         reactor.state
             .observe(on: MainScheduler.instance)
-            .map { $0.categories.count }
+            .map { $0.template != nil }
             .distinctUntilChanged()
-            .bind(to: tableView.rx.observableNumberOfSections)
-            .disposed(by: disposeBag)
-        
-        // 테이블뷰 셀 바인딩
-        reactor.state
-            .observe(on: MainScheduler.instance)
-            .compactMap { state -> [String: [RecommendedItem]]? in
-                return state.template != nil ? state.groupedItems : nil
-            }
-            .share()
+            .filter { $0 }
             .subscribe(onNext: { [weak self] _ in
                 self?.tableView.reloadData()
             })
-            .disposed(by: disposeBag)
-        
-        // 카테고리로 섹션 header 제공
-        tableView.rx.setDelegate(self)
             .disposed(by: disposeBag)
     }
     
@@ -138,11 +129,41 @@ class ThemeTemplateViewController: UIViewController, View {
     }
 }
 
+// MARK: - UITableViewDataSource
+extension ThemeTemplateViewController: UITableViewDataSource {
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return reactor?.currentState.categories.count ?? 0
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        guard let reactor = reactor,
+              let category = reactor.currentState.categories[safe: section],
+              let items = reactor.currentState.groupedItems[category] else {
+            return 0
+        }
+        return items.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "ItemCell", for: indexPath) as? ItemCell,
+              let reactor = reactor,
+              let category = reactor.currentState.categories[safe: indexPath.section],
+              let items = reactor.currentState.groupedItems[category],
+              indexPath.row < items.count else {
+            return UITableViewCell()
+        }
+        
+        let item = items[indexPath.row]
+        cell.configure(with: item)
+        return cell
+    }
+}
+
 // MARK: - UITableViewDelegate
 extension ThemeTemplateViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         guard let reactor = reactor,
-              let categories = reactor.currentState.categories[safe: section] else {
+              let category = reactor.currentState.categories[safe: section] else {
             return nil
         }
         
@@ -155,10 +176,10 @@ extension ThemeTemplateViewController: UITableViewDelegate {
         titleLabel.textColor = .label
         
         // 카테고리명을 사용자 친화적인 형태로 변환
-        if let category = ItemCategory(rawValue: categories) {
-            titleLabel.text = category.displayName
+        if let itemCategory = ItemCategory(rawValue: category) {
+            titleLabel.text = itemCategory.displayName
         } else {
-            titleLabel.text = categories
+            titleLabel.text = category
         }
         
         headerView.addSubview(titleLabel)
@@ -174,43 +195,11 @@ extension ThemeTemplateViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return 44
     }
-    
-    func numberOfSections(in tableView: UITableView) -> Int {
-        return reactor?.currentState.categories.count ?? 0
-    }
-    
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        guard let reactor = reactor,
-              let category = reactor.currentState.categories[safe: section],
-              let items = reactor.currentState.groupedItems[category] else {
-            return 0
-        }
-        return items.count
-    }
 }
 
 // 인덱스 안전 접근을 위한 확장
 extension Collection {
     subscript(safe index: Index) -> Element? {
         return indices.contains(index) ? self[index] : nil
-    }
-}
-
-extension Reactive where Base: UITableView {
-    var observableNumberOfSections: Binder<Int> {
-        return Binder(self.base) { tableView, count in
-            tableView.numberOfSections = count
-        }
-    }
-}
-
-extension UITableView {
-    var numberOfSections: Int {
-        get {
-            return dataSource?.numberOfSections?(in: self) ?? 0
-        }
-        set {
-            self.reloadData()
-        }
     }
 }

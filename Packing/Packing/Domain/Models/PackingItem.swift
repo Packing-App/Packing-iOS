@@ -14,23 +14,20 @@ struct RecommendationCategory: Codable, Equatable {
     let items: [RecommendedItem]
 }
 
-struct RecommendedItem: Codable, Identifiable, Equatable {
-    let id: String
+struct RecommendedItem: Codable, Equatable {
     let name: String
     let category: String
     let isEssential: Bool
     let count: Int?
     
     enum CodingKeys: String, CodingKey {
-        case id = "_id"
         case name
         case category
         case isEssential
         case count
     }
     
-    init(id: String = UUID().uuidString, name: String, category: String, isEssential: Bool, count: Int? = 0) {
-        self.id = id
+    init(name: String, category: String, isEssential: Bool, count: Int? = 0) {
         self.name = name
         self.category = category
         self.isEssential = isEssential

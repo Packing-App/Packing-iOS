@@ -40,9 +40,7 @@ class ThemeTemplateViewController: UIViewController, View {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        configureNavigationBar()
-        
-        // 테이블뷰 데이터소스와 델리게이트 설정
+        title = themeName.displayName + " 준비물"
         tableView.dataSource = self
         tableView.delegate = self
     }
@@ -106,20 +104,6 @@ class ThemeTemplateViewController: UIViewController, View {
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
-    }
-    
-    private func configureNavigationBar() {
-        title = themeName.displayName + " 준비물"
-        navigationController?.navigationBar.prefersLargeTitles = true
-        navigationItem.largeTitleDisplayMode = .always
-        
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .systemBackground
-        appearance.shadowColor = .clear
-        
-        navigationController?.navigationBar.standardAppearance = appearance
-        navigationController?.navigationBar.scrollEdgeAppearance = appearance
     }
     
     private func showErrorAlert(message: String) {

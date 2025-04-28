@@ -97,6 +97,11 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
         configureTransportOptions()
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        reactor?.action.onNext(.viewDidAppear)
+    }
+    
     func bind(reactor: Reactor) {
         // 다음 버튼 탭 바인딩
         nextButton.rx.tap
@@ -139,24 +144,6 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
             })
             .disposed(by: disposeBag)
         
-        // 다음 화면으로 이동 로직
-        reactor.state.map { $0.shouldProceed }
-            .observe(on: MainScheduler.instance)
-            .distinctUntilChanged()
-            .filter { $0 }
-            .subscribe(onNext: { [weak self] _ in
-                self?.navigateToDateSelection()
-            })
-            .disposed(by: disposeBag)
-    }
-    
-    // MARK: - Navigation
-    private func navigateToDateSelection() {
-        // ReactorKit으로 구현된 날짜 선택 화면으로 이동
-        let dateSelectionReactor = JourneyDateSelectionReactor(parentReactor: reactor!.parentReactor)
-        let dateSelectionVC = JourneyDateSelectionViewController()
-        dateSelectionVC.reactor = dateSelectionReactor
-        navigationController?.pushViewController(dateSelectionVC, animated: true)
     }
     
     // MARK: - Setup UI

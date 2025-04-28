@@ -16,6 +16,7 @@ class JourneySummaryReactor: Reactor {
         case setIsPrivate(Bool)
         case createJourney
         case invite
+        case viewDidAppear
     }
     
     enum Mutation {
@@ -25,10 +26,10 @@ class JourneySummaryReactor: Reactor {
         case setError(Error?)
         case setCreatedJourney(Journey?)
         case complete
+        case resetProceedState
     }
     
     struct State {
-        var journeyModel: JourneyCreationModel
         var title: String
         var isPrivate: Bool
         var isCreating: Bool
@@ -36,89 +37,91 @@ class JourneySummaryReactor: Reactor {
         var error: Error?
         var shouldComplete: Bool
         
-        // 표시용 프로퍼티
-        var transportTypeText: String {
-            return journeyModel.transportType?.displayName ?? ""
-        }
-        
-        var themeText: String {
-            return journeyModel.theme?.displayName ?? ""
-        }
-        
-        var originText: String {
-            return journeyModel.origin
-        }
-        
-        var destinationText: String {
-            return journeyModel.destination
-        }
-        
-        var dateRangeText: String {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy.MM.dd"
-            
-            guard let start = journeyModel.startDate, let end = journeyModel.endDate else {
-                return "날짜 미설정"
-            }
-            
-            return "\(formatter.string(from: start)) - \(formatter.string(from: end))"
-        }
+        var transportTypeText: String
+        var themeText: String
+        var originText: String
+        var destinationText: String
+        var dateRangeText: String
     }
     
     let initialState: State
-    let parentReactor: CreateJourneyReactor
+    let coordinator: JourneyCreationCoordinator
     
-    init(parentReactor: CreateJourneyReactor) {
-        self.parentReactor = parentReactor
-        let model = parentReactor.currentState.journeyModel
+    init(coordinator: JourneyCreationCoordinator) {
+        self.coordinator = coordinator
+        let model = coordinator.getJourneyModel()
         
         // 제목이 비어있다면 기본 제목 설정
         let defaultTitle = model.title.isEmpty ? "\(model.destination) 여행" : model.title
         
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy.MM.dd"
+        
+        let dateRangeText: String
+        if let start = model.startDate, let end = model.endDate {
+            dateRangeText = "\(dateFormatter.string(from: start)) - \(dateFormatter.string(from: end))"
+        } else {
+            dateRangeText = "날짜 미설정"
+        }
+        
         self.initialState = State(
-            journeyModel: model,
             title: defaultTitle,
             isPrivate: model.isPrivate,
             isCreating: false,
             createdJourney: nil,
             error: nil,
-            shouldComplete: false
+            shouldComplete: false,
+            transportTypeText: model.transportType?.displayName ?? "",
+            themeText: model.theme?.displayName ?? "",
+            originText: model.origin,
+            destinationText: model.destination,
+            dateRangeText: dateRangeText
         )
     }
     
     func mutate(action: Action) -> Observable<Mutation> {
         switch action {
         case .setTitle(let title):
-            parentReactor.action.onNext(.setTitle(title))
+            coordinator.updateTitle(title)
             return .just(.setTitle(title))
             
         case .setIsPrivate(let isPrivate):
-            parentReactor.action.onNext(.setIsPrivate(isPrivate))
+            coordinator.updateIsPrivate(isPrivate)
             return .just(.setIsPrivate(isPrivate))
             
         case .createJourney:
-            // 최종 여행 생성
-            parentReactor.action.onNext(.createJourney)
+            // 생성 상태 모니터링
+            let creatingObservable = coordinator.isCreatingJourney()
+                .map { Mutation.setIsCreating($0) }
             
-            // 부모 리액터의 상태를 구독하여 생성 결과 모니터링
-            return parentReactor.state.flatMap { state -> Observable<Mutation> in
-                if let error = state.error {
-                    return .just(.setError(error))
-                }
-                
-                if let journey = state.createdJourney {
+            // 오류 모니터링
+            let errorObservable = coordinator.getError()
+                .map { Mutation.setError($0) }
+            
+            // 여행 생성 요청 및 결과 모니터링
+            let journeyObservable = coordinator.createJourney()
+                .flatMap { journey -> Observable<Mutation> in
+                    guard journey != nil else {
+                        return .empty()
+                    }
                     return Observable.concat([
-                        .just(.setCreatedJourney(journey)),
-                        .just(.complete)
+                        .just(Mutation.setCreatedJourney(journey)),
+                        .just(Mutation.complete)
                     ])
                 }
-                
-                return .just(.setIsCreating(state.isCreatingJourney))
-            }
+            
+            return Observable.merge(
+                creatingObservable,
+                errorObservable,
+                journeyObservable
+            )
             
         case .invite:
-            // 초대 로직 (실제 구현은 별도로 필요)
+            // 초대 기능은 별도 구현 필요
             return .empty()
+            
+        case .viewDidAppear:
+            return .just(.resetProceedState)
         }
     }
     
@@ -145,6 +148,9 @@ class JourneySummaryReactor: Reactor {
             
         case .complete:
             newState.shouldComplete = true
+            
+        case .resetProceedState:
+            newState.shouldComplete = false
         }
         
         return newState

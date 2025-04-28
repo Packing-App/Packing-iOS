@@ -234,21 +234,8 @@ class HomeViewController: UIViewController, View {
         addNewJourneyButton.rx.tap
             .map { HomeViewReactor.Action.addNewJourney }
             .subscribe(onNext: { [weak self] _ in
-                
-                // JourneyService 인스턴스 생성
-                let journeyService = JourneyService()
-
-                // 부모 리액터 생성
-                let createJourneyReactor = CreateJourneyReactor(journeyService: journeyService)
-
-                // 첫 번째 화면 (교통 수단 선택) 생성 및 표시
-                let transportSelectVC = JourneyTransportTypeSelectionViewController()
-                transportSelectVC.reactor = JourneyTransportTypeSelectionReactor(parentReactor: createJourneyReactor)
-                transportSelectVC.hidesBottomBarWhenPushed = true
-
-                // 네비게이션 컨트롤러에 추가하여 표시
-                self?.navigationController?.pushViewController(transportSelectVC, animated: true)
-                
+                guard let navigationController = self?.navigationController else { return }
+                JourneyCreationCoordinator.shared.startJourneyCreation(from: navigationController)
             })
             .disposed(by: disposeBag)
         

@@ -11,6 +11,7 @@ import RxSwift
 protocol JourneyServiceProtocol {
     func getJourneys() -> Observable<[Journey]>
     func getJourneyById(id: String) -> Observable<Journey>
+    
     func createJourney(title: String,
                        transportType: TransportType,
                        origin: String,

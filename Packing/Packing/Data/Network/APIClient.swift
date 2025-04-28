@@ -227,10 +227,6 @@ class APIClient: APIClientProtocol {
                         return
                     }
                     
-                    // 디버깅을 위해 응답 데이터 출력
-                    if let jsonString = String(data: data, encoding: .utf8) {
-                        print("Raw Server Response: \(jsonString)")
-                    }
                     do {
                         // 날짜 디코딩 전략이 설정된 디코더 사용
                         let decoder = JSONDecoder()

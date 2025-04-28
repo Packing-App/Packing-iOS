@@ -109,6 +109,11 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         setupUI()
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        reactor?.action.onNext(.viewDidAppear)
+    }
+    
     func bind(reactor: Reactor) {
         // Action
         // 테마 셀 선택 처리
@@ -156,27 +161,9 @@ class JourneyThemeSelectionViewController: UIViewController, View {
             })
             .disposed(by: disposeBag)
         
-        // 다음 화면으로 이동
-        reactor.state.map { $0.shouldProceed }
-            .observe(on: MainScheduler.instance)
-            .distinctUntilChanged()
-            .filter { $0 }
-            .subscribe(onNext: { [weak self] _ in
-                self?.navigateToJourneySummary()
-            })
-            .disposed(by: disposeBag)
-        
         // Collection view delegate 설정
         themeCollectionView.rx.setDelegate(self)
             .disposed(by: disposeBag)
-    }
-    
-    // MARK: - Navigation
-    private func navigateToJourneySummary() {
-        let summaryReactor = JourneySummaryReactor(parentReactor: reactor!.parentReactor)
-        let summaryVC = JourneySummaryViewController()
-        summaryVC.reactor = summaryReactor
-        navigationController?.pushViewController(summaryVC, animated: true)
     }
     
     // MARK: - Setup UI

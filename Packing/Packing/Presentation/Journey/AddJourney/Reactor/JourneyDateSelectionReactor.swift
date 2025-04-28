@@ -18,6 +18,7 @@ class JourneyDateSelectionReactor: Reactor {
         case setEndDate(Date)
         case setDates(start: Date, end: Date)
         case next
+        case viewDidAppear
     }
     
     enum Mutation {
@@ -28,10 +29,10 @@ class JourneyDateSelectionReactor: Reactor {
         case setDates(start: Date, end: Date)
         case validateForm
         case proceed
+        case resetProceedState
     }
     
     struct State {
-        var journeyModel: JourneyCreationModel
         var origin: String
         var destination: String
         var startDate: Date?
@@ -42,14 +43,13 @@ class JourneyDateSelectionReactor: Reactor {
     }
     
     let initialState: State
-    let parentReactor: CreateJourneyReactor
+    let coordinator: JourneyCreationCoordinator
     
-    init(parentReactor: CreateJourneyReactor) {
-        self.parentReactor = parentReactor
-        let model = parentReactor.currentState.journeyModel
-        
+    init(coordinator: JourneyCreationCoordinator) {
+        self.coordinator = coordinator
+        let model = coordinator.getJourneyModel()
+
         self.initialState = State(
-            journeyModel: model,
             origin: model.origin,
             destination: model.destination,
             startDate: model.startDate,
@@ -63,35 +63,39 @@ class JourneyDateSelectionReactor: Reactor {
     func mutate(action: Action) -> Observable<Mutation> {
         switch action {
         case .setOrigin(let origin):
-            parentReactor.action.onNext(.setOrigin(origin))
+            coordinator.updateOrigin(origin)
             return Observable.concat([
                 .just(.setOrigin(origin)),
                 .just(.validateForm)
             ])
             
         case .setDestination(let destination):
-            parentReactor.action.onNext(.setDestination(destination))
+            coordinator.updateDestination(destination)
             return Observable.concat([
                 .just(.setDestination(destination)),
                 .just(.validateForm)
             ])
             
         case .setStartDate(let date):
-            parentReactor.action.onNext(.setDates(start: date, end: currentState.endDate ?? date))
+            if let endDate = currentState.endDate {
+                coordinator.updateDates(start: date, end: endDate)
+            }
             return Observable.concat([
                 .just(.setStartDate(date)),
                 .just(.validateForm)
             ])
             
         case .setEndDate(let date):
-            parentReactor.action.onNext(.setDates(start: currentState.startDate ?? date, end: date))
+            if let startDate = currentState.startDate {
+                coordinator.updateDates(start: startDate, end: date)
+            }
             return Observable.concat([
                 .just(.setEndDate(date)),
                 .just(.validateForm)
             ])
             
         case .setDates(let start, let end):
-            parentReactor.action.onNext(.setDates(start: start, end: end))
+            coordinator.updateDates(start: start, end: end)
             return Observable.concat([
                 .just(.setDates(start: start, end: end)),
                 .just(.validateForm)
@@ -99,11 +103,15 @@ class JourneyDateSelectionReactor: Reactor {
             
         case .next:
             if currentState.canProceed {
+                coordinator.moveToNextStep()
                 return .just(.proceed)
             } else {
                 // 폼 유효성 검사 다시 실행
                 return .just(.validateForm)
             }
+            
+        case .viewDidAppear:
+            return .just(.resetProceedState)
         }
     }
     
@@ -148,6 +156,9 @@ class JourneyDateSelectionReactor: Reactor {
             
         case .proceed:
             newState.shouldProceed = true
+            
+        case.resetProceedState:
+            newState.shouldProceed = false
         }
         
         return newState

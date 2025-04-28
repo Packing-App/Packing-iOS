@@ -250,6 +250,11 @@ class JourneyDateSelectionViewController: UIViewController, View {
         setupCalendar()
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        reactor?.action.onNext(.viewDidAppear)
+    }
+    
     func bind(reactor: Reactor) {
         // Action
         // 출발지 선택 버튼 탭 처리
@@ -348,15 +353,6 @@ class JourneyDateSelectionViewController: UIViewController, View {
             })
             .disposed(by: disposeBag)
         
-        // 다음 화면으로 이동
-        reactor.state.map { $0.shouldProceed }
-            .observe(on: MainScheduler.instance)
-            .distinctUntilChanged()
-            .filter { $0 }
-            .subscribe(onNext: { [weak self] _ in
-                self?.navigateToThemeSelection()
-            })
-            .disposed(by: disposeBag)
     }
     
     // MARK: - Methods
@@ -438,13 +434,6 @@ class JourneyDateSelectionViewController: UIViewController, View {
         let alert = UIAlertController(title: "알림", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "확인", style: .default))
         present(alert, animated: true)
-    }
-    
-    private func navigateToThemeSelection() {
-        let themeSelectionReactor = JourneyThemeSelectionReactor(parentReactor: reactor!.parentReactor)
-        let themeSelectionVC = JourneyThemeSelectionViewController()
-        themeSelectionVC.reactor = themeSelectionReactor
-        navigationController?.pushViewController(themeSelectionVC, animated: true)
     }
     
     // MARK: - Setup UI & Calendar

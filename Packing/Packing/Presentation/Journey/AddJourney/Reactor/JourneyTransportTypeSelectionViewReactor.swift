@@ -16,31 +16,33 @@ class JourneyTransportTypeSelectionReactor: Reactor {
         case selectTransportType(TransportType)
         case next
         case skip
+        case viewDidAppear
     }
     
     // State 변화를 위한 Mutation 정의
     enum Mutation {
         case setTransportType(TransportType)
         case proceed
+        case resetProceedState
     }
     
     // 화면의 상태를 나타내는 State 정의
     struct State {
-        var journeyModel: JourneyCreationModel
         var selectedTransportType: TransportType?
         var canProceed: Bool
         var shouldProceed: Bool
     }
     
     let initialState: State
-    let parentReactor: CreateJourneyReactor
+    let coordinator: JourneyCreationCoordinator
     
-    init(parentReactor: CreateJourneyReactor) {
-        self.parentReactor = parentReactor
+    init(coordinator: JourneyCreationCoordinator) {
+        self.coordinator = coordinator
+        let model = coordinator.getJourneyModel()
+        
         self.initialState = State(
-            journeyModel: parentReactor.currentState.journeyModel,
-            selectedTransportType: parentReactor.currentState.journeyModel.transportType,
-            canProceed: parentReactor.currentState.journeyModel.transportType != nil,
+            selectedTransportType: model.transportType,
+            canProceed: model.transportType != nil,
             shouldProceed: false
         )
     }
@@ -49,21 +51,25 @@ class JourneyTransportTypeSelectionReactor: Reactor {
         switch action {
         case .selectTransportType(let type):
             // 상위 리액터에 변경 사항 전달
-            print(#fileID, #function, #line, "- ")
-            parentReactor.action.onNext(.setTransportType(type))
+            coordinator.updateTransportType(type)
             return .just(.setTransportType(type))
-            
+                        
         case .next:
+            coordinator.moveToNextStep()
             return .just(.proceed)
             
         case .skip:
             // 기본값 설정 후 다음 단계로 진행
             let defaultType = TransportType.other
-            parentReactor.action.onNext(.setTransportType(defaultType))
+            coordinator.updateTransportType(defaultType)
+            coordinator.moveToNextStep()
             return Observable.concat([
                 .just(.setTransportType(defaultType)),
                 .just(.proceed)
             ])
+            
+        case .viewDidAppear:
+            return .just(.resetProceedState)
         }
     }
     
@@ -72,13 +78,14 @@ class JourneyTransportTypeSelectionReactor: Reactor {
         
         switch mutation {
         case .setTransportType(let type):
-            print(#fileID, #function, #line, "- ")
-            print(type)
             newState.selectedTransportType = type
             newState.canProceed = true
             
         case .proceed:
             newState.shouldProceed = true
+            
+        case .resetProceedState:
+            newState.shouldProceed = false
         }
         
         return newState

@@ -251,6 +251,11 @@ class JourneySummaryViewController: UIViewController, View {
         setupAvatars()
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        reactor?.action.onNext(.viewDidAppear)
+    }
+    
     func bind(reactor: Reactor) {
         // Action
         // 제목 입력 처리
@@ -361,25 +366,7 @@ class JourneySummaryViewController: UIViewController, View {
     }
     
     private func completeJourneyCreation() {
-        guard let journey = reactor?.currentState.createdJourney else {
-            print(#fileID, #function, #line, "- ")
-            print("No journey")
-            return
-        }
-        
-        let journeyService = JourneyService()
-        let packingItemService = PackingItemService()
-        // 추천 준비물 뷰 컨트롤러로 이동
-        let reactor = RecommendationsReactor(journeyService: journeyService, packingItemService: packingItemService, journey: journey)
-        let recommendationsVC = RecommendationsViewController()
-        recommendationsVC.reactor = reactor
-        
-        // 네비게이션 컨트롤러가 있다면 push, 없다면 present
-        if let navigationController = self.navigationController {
-            navigationController.pushViewController(recommendationsVC, animated: true)
-        } else {
-            self.present(recommendationsVC, animated: true)
-        }
+        (reactor?.coordinator as? JourneyCreationCoordinator)?.navigateToRecommendations()
     }
     
     private func showAlert(title: String, message: String, completion: ((UIAlertAction) -> Void)? = nil) {

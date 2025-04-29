@@ -37,10 +37,6 @@ struct TokenData: Codable, Equatable {
     let user: User
 }
 
-struct NotificationResponse: Codable {
-    let notification: NotificationModel
-}
-
 struct RecommendationResponse: Codable {
     let journey: Journey
     let categories: [String: RecommendationCategory]

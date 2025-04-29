@@ -23,3 +23,16 @@ enum NotificationType: String, Codable {
     case weather = "weather"
     case reminder = "reminder"
 }
+
+
+// 디바이스 토큰 응답
+struct DeviceTokenResponse: Codable {
+    let deviceToken: String
+    let deviceType: String
+    let pushNotificationEnabled: Bool
+}
+
+// 푸시 설정 응답
+struct PushSettingsResponse: Codable {
+    let pushNotificationEnabled: Bool
+}

@@ -225,6 +225,21 @@ enum APIEndpoint: Endpoints {
     // 이메일로 친구 검색
     case searchFriendByEmail(email: String)
     
+    // MARK: - DEVICE
+    case updateDeviceToken(token: String)
+    case updatePushSettings(enabled: Bool)
+    case sendTestNotification
+    case removeDeviceToken
+
+    // MARK: - NOTIFICATION
+    case getNotifications
+    case markNotificationAsRead(id: String)
+    case markAllNotificationsAsRead
+    case deleteNotification(id: String)
+    case getUnreadCount
+    case createJourneyReminder(journeyId: String)
+    case createWeatherAlert(journeyId: String)
+    
     // MARK: - PATH
     var path: String {
         switch self {
@@ -330,6 +345,33 @@ enum APIEndpoint: Endpoints {
             return "/friendships/\(id)"
         case .searchFriendByEmail:
             return "/friendships/search"
+
+            
+            // 디바이스 관련
+        case .updateDeviceToken:
+            return "/devices/token"
+        case .updatePushSettings:
+            return "/devices/push-settings"
+        case .sendTestNotification:
+            return "/devices/test-notification"
+        case .removeDeviceToken:
+            return "/devices/token"
+            
+            // 알림 관련
+        case .getNotifications:
+            return "/notifications"
+        case .markNotificationAsRead(let id):
+            return "/notifications/\(id)/read"
+        case .markAllNotificationsAsRead:
+            return "/notifications/read-all"
+        case .deleteNotification(let id):
+            return "/notifications/\(id)"
+        case .getUnreadCount:
+            return "/notifications/unread/count"
+        case .createJourneyReminder:
+            return "/notifications/journey-reminder"
+        case .createWeatherAlert:
+            return "/notifications/weather-alert"
         }
     }
     
@@ -383,6 +425,23 @@ enum APIEndpoint: Endpoints {
             return .put
         case .removeFriend:
             return .delete
+            // 디바이스 관련
+        case .updateDeviceToken, .updatePushSettings:
+            return .put
+        case .sendTestNotification:
+            return .post
+        case .removeDeviceToken:
+            return .delete
+            
+            // 알림 관련
+        case .getNotifications, .getUnreadCount:
+            return .get
+        case .markNotificationAsRead, .markAllNotificationsAsRead:
+            return .put
+        case .deleteNotification:
+            return .delete
+        case .createJourneyReminder, .createWeatherAlert:
+            return .post
         }
     }
     
@@ -556,6 +615,24 @@ enum APIEndpoint: Endpoints {
             return nil
         case .searchFriendByEmail(let email):
             return ["email": email]
+            
+            
+            
+            // 디바이스 관련
+        case .updateDeviceToken(let token):
+            return ["deviceToken": token, "deviceType": "ios"]
+        case .updatePushSettings(let enabled):
+            return ["enabled": enabled]
+//        case .sendTestNotification, .removeDeviceToken:
+//            return nil
+            
+            // 알림 관련
+//        case .getNotifications, .markNotificationAsRead, .markAllNotificationsAsRead,
+//                .deleteNotification, .getUnreadCount:
+//            return nil
+            
+        case .createJourneyReminder(let journeyId), .createWeatherAlert(let journeyId):
+            return ["journeyId": journeyId]
             
         default:
             return nil

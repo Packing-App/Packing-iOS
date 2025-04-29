@@ -105,7 +105,7 @@ class FriendsViewController: UIViewController, View {
     }
     
     private func setupNavigationBar() {
-        title = "친구"
+        title = "내 친구"
         
         // 검색 컨트롤러 설정
         navigationItem.searchController = searchController

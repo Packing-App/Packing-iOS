@@ -110,7 +110,7 @@ class AuthCoordinator: AuthCoordinatorProtocol {
             let friendsViewController = FriendsViewController()
             let friendsNavigationController = UINavigationController(rootViewController: friendsViewController)
             friendsNavigationController.tabBarItem = UITabBarItem(
-                title: "친구",
+                title: "내 친구",
                 image: UIImage(systemName: "person.2"),
                 selectedImage: UIImage(systemName: "person.2.fill")
             )
@@ -119,9 +119,8 @@ class AuthCoordinator: AuthCoordinatorProtocol {
             let profileReactor = ProfileViewReactor()
             let profileViewController = ProfileViewController(reactor: profileReactor)
             let profileNavigationController = UINavigationController(rootViewController: profileViewController)
-            profileViewController.title = "프로필"
             profileNavigationController.tabBarItem = UITabBarItem(
-                title: "프로필",
+                title: "내 프로필",
                 image: UIImage(systemName: "person"),
                 selectedImage: UIImage(systemName: "person.fill")
             )

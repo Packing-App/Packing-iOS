@@ -205,6 +205,25 @@ enum APIEndpoint: Endpoints {
     // 특정 테마의 준비물 템플릿 조회
     case getThemeTemplateByName(themeName: String)
     
+    // MARK: - FRIENDSHIP ENDPOINTS
+
+    // 친구 목록 조회
+    case getFriends
+        
+    // 친구 요청 목록 조회
+    case getFriendRequests
+        
+    // 친구 요청 보내기
+    case sendFriendRequest(email: String)
+        
+    // 친구 요청 응답 (수락/거절)
+    case respondToFriendRequest(id: String, accept: Bool)
+        
+    // 친구 삭제
+    case removeFriend(id: String)
+        
+    // 이메일로 친구 검색
+    case searchFriendByEmail(email: String)
     
     // MARK: - PATH
     var path: String {
@@ -298,6 +317,19 @@ enum APIEndpoint: Endpoints {
             return "/packing-items/templates"
         case .getThemeTemplateByName(let themeName):
             return "/packing-items/templates/\(themeName)"
+            // Friendship
+        case .getFriends:
+            return "/friendships"
+        case .getFriendRequests:
+            return "/friendships/requests"
+        case .sendFriendRequest:
+            return "/friendships/requests"
+        case .respondToFriendRequest(let id, _):
+            return "/friendships/requests/\(id)"
+        case .removeFriend(let id):
+            return "/friendships/\(id)"
+        case .searchFriendByEmail:
+            return "/friendships/search"
         }
     }
     
@@ -340,6 +372,16 @@ enum APIEndpoint: Endpoints {
         case .updatePackingItem, .togglePackingItem:
             return .put
         case .deletePackingItem:
+            return .delete
+            
+            // Friendship
+        case .getFriends, .getFriendRequests, .searchFriendByEmail:
+            return .get
+        case .sendFriendRequest:
+            return .post
+        case .respondToFriendRequest:
+            return .put
+        case .removeFriend:
             return .delete
         }
     }
@@ -502,6 +544,18 @@ enum APIEndpoint: Endpoints {
             if let assignedTo = assignedTo { params["assignedTo"] = assignedTo }
             
             return params
+            
+            // Friendship
+        case .getFriends, .getFriendRequests:
+            return nil
+        case .sendFriendRequest(let email):
+            return ["email": email]
+        case .respondToFriendRequest(_, let accept):
+            return ["accept": accept]
+        case .removeFriend:
+            return nil
+        case .searchFriendByEmail(let email):
+            return ["email": email]
             
         default:
             return nil

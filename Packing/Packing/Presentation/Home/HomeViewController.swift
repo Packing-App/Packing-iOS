@@ -203,7 +203,6 @@ class HomeViewController: UIViewController, View {
     
     // MARK: - INITIALIZE
     
-    
     init() {
         super.init(nibName: nil, bundle: nil)
         

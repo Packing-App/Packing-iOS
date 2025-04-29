@@ -106,6 +106,15 @@ class AuthCoordinator: AuthCoordinatorProtocol {
                 selectedImage: UIImage(systemName: "house.fill")
             )
             
+            // 친구목록 탭
+            let friendsViewController = FriendsViewController()
+            let friendsNavigationController = UINavigationController(rootViewController: friendsViewController)
+            friendsNavigationController.tabBarItem = UITabBarItem(
+                title: "친구",
+                image: UIImage(systemName: "person.2"),
+                selectedImage: UIImage(systemName: "person.2.fill")
+            )
+            
             // 마이페이지 탭
             let profileReactor = ProfileViewReactor()
             let profileViewController = ProfileViewController(reactor: profileReactor)
@@ -118,7 +127,7 @@ class AuthCoordinator: AuthCoordinatorProtocol {
             )
             
             // 탭바에 네비게이션 컨트롤러 추가
-            tabBarController.viewControllers = [homeNavigationController, profileNavigationController]
+            tabBarController.viewControllers = [homeNavigationController, friendsNavigationController, profileNavigationController]
             
             // iOS 15 이상에서 탭바 스타일 설정
             if #available(iOS 15.0, *) {

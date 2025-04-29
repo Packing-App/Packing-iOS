@@ -27,21 +27,33 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Coordinator를 통해 앱 시작 흐름 관리
         coordinator.start()
         
-        window?.makeKeyAndVisible()
+        if let notificationResponse = connectionOptions.notificationResponse {
+            handleNotificationResponse(notificationResponse)
+        }
         
-        // 인증 실패 알림 구독
-//        setupNotificationObservers()
+        window?.makeKeyAndVisible()
     }
     
-    // 인증 실패 알림 구독 설정
-//    private func setupNotificationObservers() {
-//        NotificationCenter.default.addObserver(
-//            self,
-//            selector: #selector(handleAuthenticationFailure),
-//            name: APIClient.authenticationFailedNotification,
-//            object: nil
-//        )
-//    }
+    private func handleNotificationResponse(_ response: UNNotificationResponse) {
+        let userInfo = response.notification.request.content.userInfo
+        
+        guard let type = userInfo["type"] as? String else { return }
+        
+        switch type {
+        case "invitation":
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                self.authCoordinator?.navigateToNotifications()
+            }
+        case "weather", "reminder":
+            if let journeyId = userInfo["journeyId"] as? Journey {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    self.authCoordinator?.navigateToJourneyDetail(journey: journeyId)
+                }
+            }
+        default:
+            break
+        }
+    }
     
     // 인증 실패 처리
     @objc private func handleAuthenticationFailure() {

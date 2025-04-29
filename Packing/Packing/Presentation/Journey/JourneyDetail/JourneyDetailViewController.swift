@@ -158,7 +158,9 @@ struct JourneyDetailView: View {
     @State private var packingItems: [PackingItem] = []
     @State private var selectedTab = 0
     @State private var expandedCategories: Set<ItemCategory> = Set()
+    
     @State private var showingAddItemSheet = false
+    @State private var showingInvitationSheet = false
     
     // State for API calls
     @State private var isLoading = false
@@ -332,7 +334,7 @@ struct JourneyDetailView: View {
                     .padding(.horizontal, 20)
                 Spacer()
                 Button(action: {
-                    // 초대 기능 구현
+                    self.showingInvitationSheet = true
                 }, label: {
                     Text("초대하기")
                         .font(.subheadline)
@@ -363,6 +365,9 @@ struct JourneyDetailView: View {
                 }
                 .padding(.top, 5)
             }
+        }
+        .sheet(isPresented: $showingInvitationSheet) {
+            InvitationSheetView()
         }
     }
     

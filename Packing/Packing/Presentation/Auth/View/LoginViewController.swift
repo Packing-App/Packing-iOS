@@ -18,6 +18,8 @@ class LoginViewController: UIViewController {
     // MARK: - Properties
     
     private var viewModel: LoginViewModel
+    private let deviceService: DeviceServiceProtocol = DeviceService()
+
     private let disposeBag = DisposeBag()
     
     // MARK: - UI COMPONENTS
@@ -253,8 +255,21 @@ class LoginViewController: UIViewController {
             .subscribe(onNext: { [weak self] result in
                 switch result {
                 case .success:
+                    // 임시 저장된 디바이스 토큰이 있다면 서버에 등록
+                    guard let token = UserDefaults.standard.string(forKey: "deviceToken"), let self = self else { return }
+                    
+                    self.deviceService.updateDeviceToken(token: token)
+                        .subscribe(onNext: { success in
+                            print("로그인 후 디바이스 토큰 등록 성공: \(success)")
+                            // 등록 성공하면 임시 토큰 삭제
+                            if success {
+                                UserDefaults.standard.removeObject(forKey: "tempDeviceToken")
+                            }
+                        })
+                        .disposed(by: self.disposeBag)
+                    
                     // 로그인 성공 - 메인 화면으로 이동
-                    self?.navigateToMainScreen()
+                    self.navigateToMainScreen()
                 case .failure(let error):
                     // 로그인 실패 - 에러 메시지 표시
                     self?.showAlert(message: error.localizedDescription)

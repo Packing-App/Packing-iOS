@@ -146,6 +146,54 @@ class AuthCoordinator: AuthCoordinatorProtocol {
         }
     }
     
+    // AuthCoordinator.swift에 추가
+    func navigateToNotifications() {
+        // 홈 탭으로 이동 (0번 인덱스)
+        navigateToTab(0)
+        
+        // 현재 네비게이션 컨트롤러 가져오기
+        guard let navigationController = currentNavigationController() else { return }
+        
+        // 이미 NotificationsViewController가 스택에 있는지 확인
+        if navigationController.viewControllers.contains(where: { $0 is NotificationsViewController }) {
+            // 있으면 해당 뷰 컨트롤러까지 팝
+            navigationController.popToViewController(
+                navigationController.viewControllers.first(where: { $0 is NotificationsViewController })!,
+                animated: true
+            )
+        } else {
+            // 없으면 새로 푸시
+            let notificationsViewController = NotificationsViewController()
+            navigationController.pushViewController(notificationsViewController, animated: true)
+        }
+    }
+
+    func navigateToJourneyDetail(journey: Journey) {
+        // 홈 탭으로 이동 (0번 인덱스)
+        navigateToTab(0)
+        
+        // 현재 네비게이션 컨트롤러 가져오기
+        guard let navigationController = currentNavigationController() else { return }
+        
+        // 이미 JourneyDetailViewController가 스택에 있는지 확인
+        let existingDetailVC = navigationController.viewControllers.first { vc in
+            if let detailVC = vc as? JourneyDetailViewController {
+                return detailVC.journey == journey
+            }
+            return false
+        }
+        
+        if let detailVC = existingDetailVC {
+            // 있으면 해당 뷰 컨트롤러까지 팝
+            navigationController.popToViewController(detailVC, animated: true)
+        } else {
+            // 없으면 새로 푸시
+            let journeyDetailViewController = JourneyDetailViewController()
+            journeyDetailViewController.journey = journey
+            navigationController.pushViewController(journeyDetailViewController, animated: true)
+        }
+    }
+    
     // 특정 탭으로 이동
     func navigateToTab(_ index: Int) {
         guard let tabBarController = window?.rootViewController as? UITabBarController else { return }

@@ -34,7 +34,7 @@ enum FriendshipStatus: String, Codable {
 }
 
 // MARK: - 친구 목록 조회 응답의 Friend 항목
-struct Friend: Codable, Identifiable {
+struct Friend: Codable, Identifiable, Equatable {
     let id: String
     let name: String
     let email: String
@@ -53,7 +53,7 @@ struct Friend: Codable, Identifiable {
 }
 
 // MARK: - 간소화된 사용자 정보
-struct UserInfo: Codable, Identifiable {
+struct UserInfo: Codable, Identifiable, Equatable {
     let id: String
     let name: String
     let email: String
@@ -68,7 +68,7 @@ struct UserInfo: Codable, Identifiable {
 }
 
 // MARK: - 받은 친구 요청 항목
-struct ReceivedFriendRequest: Codable, Identifiable {
+struct ReceivedFriendRequest: Codable, Identifiable, Equatable {
     let id: String
     let requesterId: UserInfo  // 요청한 사용자의 정보 (객체)
     let receiverId: String     // 현재 사용자 ID (문자열)
@@ -87,7 +87,7 @@ struct ReceivedFriendRequest: Codable, Identifiable {
 }
 
 // MARK: - 보낸 친구 요청 항목
-struct SentFriendRequest: Codable, Identifiable {
+struct SentFriendRequest: Codable, Identifiable, Equatable {
     let id: String
     let requesterId: String    // 현재 사용자 ID (문자열)
     let receiverId: UserInfo   // 요청 받은 사용자의 정보 (객체)
@@ -112,13 +112,13 @@ struct FriendRequestsResponse: Codable {
 }
 
 // MARK: - 친구 검색 결과 항목
-struct FriendSearchResult: Codable, Identifiable {
+struct FriendSearchResult: Codable, Identifiable, Equatable {
     let id: String
     let name: String
     let email: String
     let profileImage: String?
-    let friendshipStatus: FriendshipStatus?
-    let friendshipId: String?
+    var friendshipStatus: FriendshipStatus?
+    var friendshipId: String?
     
     enum CodingKeys: String, CodingKey {
         case id = "_id"

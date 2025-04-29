@@ -1,5 +1,5 @@
 //
-//  FriendsViewController.swift
+//  FriendRequestsViewController.swift
 //  Packing
 //
 //  Created by 이융의 on 4/29/25.
@@ -10,24 +10,26 @@ import RxSwift
 import RxCocoa
 import ReactorKit
 
-class FriendsViewController: UIViewController, View {
+class FriendRequestsViewController: UIViewController, View {
     
     // MARK: - Properties
     var disposeBag = DisposeBag()
     
+    // 테이블뷰 데이터소스 바인딩용 별도 DisposeBag
+    private var tableViewDisposeBag = DisposeBag()
+    
     // MARK: - UI Components
-    private lazy var searchController: UISearchController = {
-        let controller = UISearchController(searchResultsController: nil)
-        controller.searchBar.placeholder = "이메일로 친구 검색"
-        controller.obscuresBackgroundDuringPresentation = false
-        controller.searchBar.returnKeyType = .search
-        return controller
+    private lazy var segmentedControl: UISegmentedControl = {
+        let segmented = UISegmentedControl(items: ["받은 요청", "보낸 요청"])
+        segmented.selectedSegmentIndex = 0
+        segmented.translatesAutoresizingMaskIntoConstraints = false
+        return segmented
     }()
     
     private lazy var tableView: UITableView = {
         let tableView = UITableView()
-        tableView.register(FriendCell.self, forCellReuseIdentifier: FriendCell.identifier)
-        tableView.register(FriendRequestCell.self, forCellReuseIdentifier: FriendRequestCell.identifier)
+        tableView.register(ReceivedRequestCell.self, forCellReuseIdentifier: ReceivedRequestCell.identifier)
+        tableView.register(SentRequestCell.self, forCellReuseIdentifier: SentRequestCell.identifier)
         tableView.separatorStyle = .singleLine
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 80
@@ -45,7 +47,7 @@ class FriendsViewController: UIViewController, View {
     
     private lazy var emptyStateLabel: UILabel = {
         let label = UILabel()
-        label.text = "친구 목록이 비어있습니다."
+        label.text = "친구 요청이 없습니다."
         label.textAlignment = .center
         label.textColor = .gray
         label.isHidden = true
@@ -53,13 +55,17 @@ class FriendsViewController: UIViewController, View {
         return label
     }()
     
-    // MARK: - INITIALIZE
+    private lazy var refreshControl: UIRefreshControl = {
+        let refreshControl = UIRefreshControl()
+        return refreshControl
+    }()
     
+    // MARK: - Initialize
     init() {
         super.init(nibName: nil, bundle: nil)
         
         let friendshipService = FriendshipService()
-        let reactor = FriendsViewReactor(friendshipService: friendshipService)
+        let reactor = FriendRequestsViewReactor(friendshipService: friendshipService)
         self.reactor = reactor
     }
     
@@ -78,8 +84,12 @@ class FriendsViewController: UIViewController, View {
     private func setupUI() {
         view.backgroundColor = .white
         
+        // 세그먼트 컨트롤 추가
+        view.addSubview(segmentedControl)
+        
         // 테이블 뷰 추가
         view.addSubview(tableView)
+        tableView.refreshControl = refreshControl
         
         // 액티비티 인디케이터 추가
         view.addSubview(activityIndicator)
@@ -89,7 +99,11 @@ class FriendsViewController: UIViewController, View {
         
         // 레이아웃 설정
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            segmentedControl.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            segmentedControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            segmentedControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            
+            tableView.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor, constant: 8),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -105,53 +119,31 @@ class FriendsViewController: UIViewController, View {
     }
     
     private func setupNavigationBar() {
-        title = "친구"
-        
-        // 검색 컨트롤러 설정
-        navigationItem.searchController = searchController
-        navigationItem.hidesSearchBarWhenScrolling = false
-        
-        // 알림 버튼 추가
-        let bellButton = UIBarButtonItem(
-            image: UIImage(systemName: "bell"),
-            style: .plain,
-            target: self,
-            action: #selector(bellButtonTapped)
-        )
-        navigationItem.rightBarButtonItem = bellButton
-    }
-    
-    @objc private func bellButtonTapped() {
-        // 벨 버튼 탭 시 친구 요청 화면으로 이동
-        let requestsViewController = FriendRequestsViewController()
-        let requestsReactor = FriendRequestsViewReactor()
-        requestsViewController.reactor = requestsReactor
-        
-        navigationController?.pushViewController(requestsViewController, animated: true)
+        title = "친구 요청"
     }
     
     // MARK: - ReactorKit Binding
-    func bind(reactor: FriendsViewReactor) {
+    func bind(reactor: FriendRequestsViewReactor) {
         // Action 바인딩
         
-        // 화면 로드 시 친구 목록 로드
+        // 화면 로드 시 친구 요청 목록 로드
         Observable.just(())
             .map { Reactor.Action.viewDidLoad }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
         
-        // 검색바 입력 관찰
-        searchController.searchBar.rx.text.orEmpty
-            .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
-            .distinctUntilChanged()
-            .map { Reactor.Action.searchFriend($0) }
+        // 새로고침 액션
+        refreshControl.rx.controlEvent(.valueChanged)
+            .map { Reactor.Action.refresh }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
         
-        // 검색 취소 버튼 클릭 관찰
-        searchController.searchBar.rx.cancelButtonClicked
-            .map { Reactor.Action.clearSearch }
-            .bind(to: reactor.action)
+        // 세그먼트 컨트롤 변경 시 테이블 뷰 업데이트
+        segmentedControl.rx.selectedSegmentIndex
+            .distinctUntilChanged()
+            .subscribe(onNext: { [weak self] index in
+                self?.setupTableViewDataSource(selectedIndex: index, reactor: reactor)
+            })
             .disposed(by: disposeBag)
         
         // State 바인딩
@@ -163,14 +155,15 @@ class FriendsViewController: UIViewController, View {
             .bind(to: activityIndicator.rx.isAnimating)
             .disposed(by: disposeBag)
         
-        // 뷰 모드에 따른 데이터 소스 설정
-        reactor.state.map { $0.viewMode }
+        // 리프레시 컨트롤 종료
+        reactor.state.map { !$0.isLoading }
             .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
-            .subscribe(onNext: { [weak self] mode in
-                self?.setupDataSource(mode: mode, reactor: reactor)
-            })
+            .bind(to: refreshControl.rx.isRefreshing)
             .disposed(by: disposeBag)
+        
+        // 초기 테이블 뷰 데이터 소스 설정
+        setupTableViewDataSource(selectedIndex: segmentedControl.selectedSegmentIndex, reactor: reactor)
         
         // 에러 처리
         reactor.state.map { $0.error }
@@ -182,136 +175,74 @@ class FriendsViewController: UIViewController, View {
             })
             .disposed(by: disposeBag)
         
-        // 빈 상태 표시 처리 - 친구 목록
-        reactor.state.map { $0.friends }
-            .observe(on: MainScheduler.instance)
-            .distinctUntilChanged()
-            .map { !$0.isEmpty }
-            .bind(to: emptyStateLabel.rx.isHidden)
-            .disposed(by: disposeBag)
-        
-        // 빈 상태 텍스트 변경
-        reactor.state.map { $0.viewMode }
-            .distinctUntilChanged()
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] mode in
-                switch mode {
-                case .friendsList:
-                    self?.emptyStateLabel.text = "친구 목록이 비어있습니다."
-                case .searchResults:
-                    self?.emptyStateLabel.text = "검색 결과가 없습니다."
+        // 빈 상태 표시 업데이트 - 세그먼트 변경 시
+        segmentedControl.rx.selectedSegmentIndex
+            .subscribe(onNext: { [weak self] index in
+                if index == 0 {
+                    self?.emptyStateLabel.text = "받은 친구 요청이 없습니다."
+                    self?.emptyStateLabel.isHidden = !reactor.currentState.receivedRequests.isEmpty
+                } else {
+                    self?.emptyStateLabel.text = "보낸 친구 요청이 없습니다."
+                    self?.emptyStateLabel.isHidden = !reactor.currentState.sentRequests.isEmpty
                 }
             })
             .disposed(by: disposeBag)
         
-        // 검색 결과 상태에 따른 빈 상태 표시
-        reactor.state.map { state -> Bool in
-            if state.viewMode == .searchResults {
-                return !state.searchResults.isEmpty
-            }
-            return true  // 검색 결과 모드가 아닐 때는 숨김 상태 유지
-        }
+        // 빈 상태 표시 업데이트 - 데이터 변경 시
+        Observable.combineLatest(
+            segmentedControl.rx.selectedSegmentIndex,
+            reactor.state.map { $0.receivedRequests.isEmpty },
+            reactor.state.map { $0.sentRequests.isEmpty }
+        )
         .observe(on: MainScheduler.instance)
-        .distinctUntilChanged()
-        .bind(to: emptyStateLabel.rx.isHidden)
+        .subscribe(onNext: { [weak self] index, receivedEmpty, sentEmpty in
+            if index == 0 {
+                self?.emptyStateLabel.isHidden = !receivedEmpty
+            } else {
+                self?.emptyStateLabel.isHidden = !sentEmpty
+            }
+        })
         .disposed(by: disposeBag)
     }
-
+    
     // MARK: - Private Methods
-    private func setupDataSource(mode: FriendsViewReactor.ViewMode, reactor: FriendsViewReactor) {
-        // 기존 데이터소스 구독 해제를 위해 disposeBag 초기화
-        disposeBag = DisposeBag()
-        
-        // 다시 Action 바인딩 (disposeBag이 초기화되었으므로)
-        Observable.just(())
-            .map { Reactor.Action.viewDidLoad }
-            .bind(to: reactor.action)
-            .disposed(by: disposeBag)
-        
-        searchController.searchBar.rx.text.orEmpty
-            .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
-            .distinctUntilChanged()
-            .map { Reactor.Action.searchFriend($0) }
-            .bind(to: reactor.action)
-            .disposed(by: disposeBag)
-        
-        searchController.searchBar.rx.cancelButtonClicked
-            .map { Reactor.Action.clearSearch }
-            .bind(to: reactor.action)
-            .disposed(by: disposeBag)
-        
-        // 기존 상태 바인딩 복원
-        reactor.state.map { $0.isLoading }
-            .distinctUntilChanged()
-            .bind(to: activityIndicator.rx.isAnimating)
-            .disposed(by: disposeBag)
-        
-        // 에러 처리 복원
-        reactor.state.map { $0.error }
-            .observe(on: MainScheduler.instance)
-            .distinctUntilChanged { $0?.localizedDescription == $1?.localizedDescription }
-            .compactMap { $0 }
-            .subscribe(onNext: { [weak self] error in
-                self?.showErrorAlert(error)
-            })
-            .disposed(by: disposeBag)
-        
-        // 모드에 따른 테이블뷰 데이터소스 설정
-        // 중요: tableView.dataSource = nil을 명시적으로 설정
+    private func setupTableViewDataSource(selectedIndex: Int, reactor: FriendRequestsViewReactor) {
+        // 테이블뷰 데이터소스 연결 해제
         tableView.dataSource = nil
         
-        switch mode {
-        case .friendsList:
-            // 친구 목록 모드
-            reactor.state.map { $0.friends }
+        // 이전 데이터소스 바인딩 해제
+        tableViewDisposeBag = DisposeBag()
+        
+        if selectedIndex == 0 {
+            // 받은 요청 탭
+            reactor.state.map { $0.receivedRequests }
+                .observe(on: MainScheduler.instance)
                 .distinctUntilChanged()
-                .bind(to: tableView.rx.items(cellIdentifier: FriendCell.identifier, cellType: FriendCell.self)) { [weak self] index, friend, cell in
-                    cell.configure(with: friend)
+                .bind(to: tableView.rx.items(cellIdentifier: ReceivedRequestCell.identifier, cellType: ReceivedRequestCell.self)) { [weak self] index, request, cell in
+                    cell.configure(with: request)
                     
-                    // 셀 액션 설정
-                    cell.removeFriendButton.rx.tap
-                        .map { Reactor.Action.removeFriend(friend.friendshipId) }
+                    // 수락 버튼 클릭
+                    cell.acceptButton.rx.tap
+                        .map { Reactor.Action.respondToRequest(id: request.id, accept: true) }
+                        .bind(to: reactor.action)
+                        .disposed(by: cell.disposeBag)
+                    
+                    // 거절 버튼 클릭
+                    cell.rejectButton.rx.tap
+                        .map { Reactor.Action.respondToRequest(id: request.id, accept: false) }
                         .bind(to: reactor.action)
                         .disposed(by: cell.disposeBag)
                 }
-                .disposed(by: disposeBag)
-            
-        case .searchResults:
-            // 검색 결과 모드
-            reactor.state.map { $0.searchResults }
+                .disposed(by: tableViewDisposeBag)
+        } else {
+            // 보낸 요청 탭
+            reactor.state.map { $0.sentRequests }
+                .observe(on: MainScheduler.instance)
                 .distinctUntilChanged()
-                .bind(to: tableView.rx.items(cellIdentifier: FriendRequestCell.identifier, cellType: FriendRequestCell.self)) { [weak self] index, result, cell in
-                    cell.configure(with: result)
-                    
-                    // 친구 상태에 따라 버튼 설정
-                    if let friendshipStatus = result.friendshipStatus, friendshipStatus == .accepted {
-                        // 이미 친구인 경우 - 삭제 버튼 표시
-                        cell.actionButton.setTitle("친구 삭제", for: .normal)
-                        cell.actionButton.setTitleColor(.red, for: .normal)
-                        
-                        if let friendshipId = result.friendshipId {
-                            cell.actionButton.rx.tap
-                                .map { Reactor.Action.removeFriend(friendshipId) }
-                                .bind(to: reactor.action)
-                                .disposed(by: cell.disposeBag)
-                        }
-                    } else if let friendshipStatus = result.friendshipStatus, friendshipStatus == .pending {
-                        // 요청 중인 경우 - 비활성화된 버튼 표시
-                        cell.actionButton.setTitle("요청 중", for: .normal)
-                        cell.actionButton.isEnabled = false
-                    } else {
-                        // 친구 아닌 경우 - 요청 버튼 표시
-                        cell.actionButton.setTitle("친구 요청", for: .normal)
-                        cell.actionButton.setTitleColor(.systemBlue, for: .normal)
-                        cell.actionButton.isEnabled = true
-                        
-                        cell.actionButton.rx.tap
-                            .map { Reactor.Action.sendFriendRequest(result.email) }
-                            .bind(to: reactor.action)
-                            .disposed(by: cell.disposeBag)
-                    }
+                .bind(to: tableView.rx.items(cellIdentifier: SentRequestCell.identifier, cellType: SentRequestCell.self)) { [weak self] index, request, cell in
+                    cell.configure(with: request)
                 }
-                .disposed(by: disposeBag)
+                .disposed(by: tableViewDisposeBag)
         }
     }
     
@@ -326,9 +257,9 @@ class FriendsViewController: UIViewController, View {
     }
 }
 
-// MARK: - FriendCell
-class FriendCell: UITableViewCell {
-    static let identifier = "FriendCell"
+// MARK: - ReceivedRequestCell
+class ReceivedRequestCell: UITableViewCell {
+    static let identifier = "ReceivedRequestCell"
     
     var disposeBag = DisposeBag()
     
@@ -358,21 +289,35 @@ class FriendCell: UITableViewCell {
         return label
     }()
     
-    private let introLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .darkGray
-        label.numberOfLines = 2
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    
-    let removeFriendButton: UIButton = {
+    let acceptButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("삭제", for: .normal)
-        button.setTitleColor(.red, for: .normal)
+        button.setTitle("수락", for: .normal)
+        button.setTitleColor(.systemGreen, for: .normal)
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.systemGreen.cgColor
+        button.layer.cornerRadius = 15
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
+    }()
+    
+    let rejectButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("거절", for: .normal)
+        button.setTitleColor(.red, for: .normal)
+        button.layer.borderWidth = 1
+        button.layer.borderColor = UIColor.red.cgColor
+        button.layer.cornerRadius = 15
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    private lazy var buttonStackView: UIStackView = {
+        let stackView = UIStackView(arrangedSubviews: [acceptButton, rejectButton])
+        stackView.axis = .horizontal
+        stackView.spacing = 8
+        stackView.distribution = .fillEqually
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        return stackView
     }()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -395,8 +340,7 @@ class FriendCell: UITableViewCell {
         contentView.addSubview(profileImageView)
         contentView.addSubview(nameLabel)
         contentView.addSubview(emailLabel)
-        contentView.addSubview(introLabel)
-        contentView.addSubview(removeFriendButton)
+        contentView.addSubview(buttonStackView)
         
         // Constraints
         NSLayoutConstraint.activate([
@@ -409,31 +353,27 @@ class FriendCell: UITableViewCell {
             
             nameLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
             nameLabel.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 12),
-            nameLabel.trailingAnchor.constraint(equalTo: removeFriendButton.leadingAnchor, constant: -12),
+            nameLabel.trailingAnchor.constraint(equalTo: buttonStackView.leadingAnchor, constant: -12),
             
             emailLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
             emailLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
             emailLabel.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
+            emailLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -12),
             
-            introLabel.topAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 4),
-            introLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
-            introLabel.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
-            introLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
-            
-            removeFriendButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            removeFriendButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            removeFriendButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 60),
-            removeFriendButton.heightAnchor.constraint(equalToConstant: 30)
+            buttonStackView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            buttonStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            buttonStackView.widthAnchor.constraint(equalToConstant: 140),
+            acceptButton.heightAnchor.constraint(equalToConstant: 30),
+            rejectButton.heightAnchor.constraint(equalToConstant: 30)
         ])
     }
     
-    func configure(with friend: Friend) {
-        nameLabel.text = friend.name
-        emailLabel.text = friend.email
-        introLabel.text = friend.intro ?? "자기소개가 없습니다."
+    func configure(with request: ReceivedFriendRequest) {
+        nameLabel.text = request.requesterId.name
+        emailLabel.text = request.requesterId.email
         
         // 프로필 이미지 로드 (실제 구현에서는 이미지 라이브러리 사용)
-        if let profileImageUrlString = friend.profileImage, let url = URL(string: profileImageUrlString) {
+        if let profileImageUrlString = request.requesterId.profileImage, let url = URL(string: profileImageUrlString) {
             // 실제 구현에서는 Kingfisher, SDWebImage 등의 라이브러리를 사용해 이미지 로드
             // 예: profileImageView.kf.setImage(with: url)
         } else {
@@ -443,9 +383,9 @@ class FriendCell: UITableViewCell {
     }
 }
 
-// MARK: - FriendRequestCell
-class FriendRequestCell: UITableViewCell {
-    static let identifier = "FriendRequestCell"
+// MARK: - SentRequestCell
+class SentRequestCell: UITableViewCell {
+    static let identifier = "SentRequestCell"
     
     var disposeBag = DisposeBag()
     
@@ -475,10 +415,13 @@ class FriendRequestCell: UITableViewCell {
         return label
     }()
     
-    let actionButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
+    private let statusLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 14)
+        label.text = "대기 중"
+        label.textColor = .systemBlue
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
     }()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -501,7 +444,7 @@ class FriendRequestCell: UITableViewCell {
         contentView.addSubview(profileImageView)
         contentView.addSubview(nameLabel)
         contentView.addSubview(emailLabel)
-        contentView.addSubview(actionButton)
+        contentView.addSubview(statusLabel)
         
         // Constraints
         NSLayoutConstraint.activate([
@@ -514,26 +457,25 @@ class FriendRequestCell: UITableViewCell {
             
             nameLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
             nameLabel.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 12),
-            nameLabel.trailingAnchor.constraint(equalTo: actionButton.leadingAnchor, constant: -12),
+            nameLabel.trailingAnchor.constraint(equalTo: statusLabel.leadingAnchor, constant: -12),
             
             emailLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
             emailLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
             emailLabel.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
             emailLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -12),
             
-            actionButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            actionButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            actionButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 80),
-            actionButton.heightAnchor.constraint(equalToConstant: 30)
+            statusLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            statusLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            statusLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 60)
         ])
     }
     
-    func configure(with searchResult: FriendSearchResult) {
-        nameLabel.text = searchResult.name
-        emailLabel.text = searchResult.email
+    func configure(with request: SentFriendRequest) {
+        nameLabel.text = request.receiverId.name
+        emailLabel.text = request.receiverId.email
         
         // 프로필 이미지 로드 (실제 구현에서는 이미지 라이브러리 사용)
-        if let profileImageUrlString = searchResult.profileImage, let url = URL(string: profileImageUrlString) {
+        if let profileImageUrlString = request.receiverId.profileImage, let url = URL(string: profileImageUrlString) {
             // 실제 구현에서는 Kingfisher, SDWebImage 등의 라이브러리를 사용해 이미지 로드
             // 예: profileImageView.kf.setImage(with: url)
         } else {

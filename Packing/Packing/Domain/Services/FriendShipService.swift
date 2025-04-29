@@ -75,6 +75,7 @@ class FriendshipService: FriendshipServiceProtocol {
     
     // 이메일로 친구 검색
     func searchFriendByEmail(email: String) -> Observable<[FriendSearchResult]> {
+        print(#fileID, #function, #line, "- ")
         return apiClient.request(APIEndpoint.searchFriendByEmail(email: email))
             .map { (response: APIResponse<[FriendSearchResult]>) -> [FriendSearchResult] in
                 guard let searchResults = response.data else {

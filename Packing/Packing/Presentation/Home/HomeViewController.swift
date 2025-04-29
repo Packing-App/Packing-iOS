@@ -14,7 +14,8 @@ import Kingfisher
 class HomeViewController: UIViewController, View {
     
     var disposeBag = DisposeBag()
-    
+    typealias Reactor = HomeViewReactor
+
     // MARK: - UI COMPONENTS
     
     private lazy var scrollView: UIScrollView = {
@@ -200,6 +201,20 @@ class HomeViewController: UIViewController, View {
     
     private var gradientLayer: CAGradientLayer!
     
+    // MARK: - INITIALIZE
+    
+    
+    init() {
+        super.init(nibName: nil, bundle: nil)
+        
+        let journeyService = JourneyService()
+        let reactor = HomeViewReactor(journeyService: journeyService)
+        self.reactor = reactor
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     // MARK: - LIFECYCLE
     
@@ -210,11 +225,13 @@ class HomeViewController: UIViewController, View {
         setupGradientBackground()
         setupAllAnimations()
         
-        let journeyService = JourneyService()
-        let reactor = HomeViewReactor(journeyService: journeyService)
-        self.reactor = reactor
     }
-    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // 화면이 나타날 때마다 최신 데이터 로드
+        reactor?.action.onNext(.refreshJourneys)
+    }
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         // Update gradient frame when view layout changes

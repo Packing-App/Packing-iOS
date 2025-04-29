@@ -6,6 +6,7 @@
 //
 import UIKit
 import SwiftUI
+import RxSwift
 
 class JourneyDetailViewController: UIViewController {
     
@@ -35,6 +36,17 @@ class JourneyDetailViewController: UIViewController {
             navigationController?.navigationBar.backgroundColor = nil
         }
         navigationController?.navigationBar.tintColor = .systemBlue
+        
+        
+        // 삭제 버튼 추가
+        let deleteButton = UIBarButtonItem(
+            image: UIImage(systemName: "trash"),
+            style: .plain,
+            target: self,
+            action: #selector(deleteJourneyTapped)
+        )
+        deleteButton.tintColor = .systemRed
+        navigationItem.rightBarButtonItem = deleteButton
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -78,10 +90,65 @@ class JourneyDetailViewController: UIViewController {
         
         hostingController.didMove(toParent: self)
     }
+    
+    // 삭제 액션 메서드 추가
+    @objc private func deleteJourneyTapped() {
+        // 확인 알림 표시
+        let alert = UIAlertController(
+            title: "여행 삭제",
+            message: "이 여행을 삭제하시겠습니까?",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+            guard let self = self, let journey = self.journey else { return }
+            
+            // SwiftUI 뷰의 함수를 직접 호출할 수는 없으므로
+            // NotificationCenter를 통해 알리거나 콜백을 통해 처리
+            self.deleteJourney(id: journey.id)
+        })
+        
+        present(alert, animated: true)
+    }
+    
+    // 여행 삭제 메서드 추가
+    private func deleteJourney(id: String) {
+        // 로딩 인디케이터 표시
+        let loadingIndicator = UIActivityIndicatorView(style: .large)
+        loadingIndicator.center = view.center
+        loadingIndicator.startAnimating()
+        view.addSubview(loadingIndicator)
+        
+        // JourneyService 인스턴스 생성 및 삭제 요청
+        let journeyService = JourneyService()
+        
+        Task {
+            do {
+                _ = try await journeyService.deleteJourney(id: id)
+                
+                await MainActor.run {
+                    loadingIndicator.removeFromSuperview()
+                    // 삭제 성공 시 이전 화면으로 돌아가기
+                    self.navigationController?.popViewController(animated: true)
+                }
+            } catch {
+                await MainActor.run {
+                    loadingIndicator.removeFromSuperview()
+                    // 오류 알림 표시
+                    let errorAlert = UIAlertController(
+                        title: "오류",
+                        message: "여행을 삭제하는데 실패했습니다: \(error.localizedDescription)",
+                        preferredStyle: .alert
+                    )
+                    errorAlert.addAction(UIAlertAction(title: "확인", style: .default))
+                    self.present(errorAlert, animated: true)
+                }
+            }
+        }
+    }
+    
 }
-
-import SwiftUI
-import RxSwift
 
 // MARK: - SwiftUI JourneyDetailView
 
@@ -99,7 +166,7 @@ struct JourneyDetailView: View {
     
     // Service
     private let packingService = PackingItemService()
-    
+    private let journeyService = JourneyService()
     // MARK: - Body
     var body: some View {
         Group {

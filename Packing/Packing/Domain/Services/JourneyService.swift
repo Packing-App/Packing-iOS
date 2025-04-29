@@ -33,7 +33,7 @@ protocol JourneyServiceProtocol {
                       isPrivate: Bool?) -> Observable<Journey>
     
     // 여행 삭제
-    func deleteJourney(id: String) -> Observable<Bool>
+    func deleteJourney(id: String) async throws -> Bool
     
     // 여행에 참가자 초대
     func inviteParticipant(journeyId: String, email: String) -> Observable<NotificationResponse>
@@ -150,14 +150,12 @@ class JourneyService: JourneyServiceProtocol {
     }
     
     // MARK: - 여행 삭제
-    func deleteJourney(id: String) -> Observable<Bool> {
-        return apiClient.request(APIEndpoint.deleteJourney(id: id))
-            .map { (response: APIResponse<Bool>) -> Bool in
-                return response.success
-            }
-            .catch { error in
-                return Observable.error(error)
-            }
+    func deleteJourney(id: String) async throws -> Bool {
+        let response: APIResponse<Bool> = try await apiClient.requestAsync(APIEndpoint.deleteJourney(id: id))
+        guard response.success else {
+            throw NetworkError.serverError(response.message)
+        }
+        return response.success
     }
     
     // MARK: - 여행에 참가자 초대

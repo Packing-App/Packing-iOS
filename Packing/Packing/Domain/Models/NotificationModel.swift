@@ -8,7 +8,7 @@
 import Foundation
 
 struct NotificationModel: Identifiable, Codable {
-    let id: String
+    let id: String?
     let userId: String
     let journeyId: String?
     let type: NotificationType

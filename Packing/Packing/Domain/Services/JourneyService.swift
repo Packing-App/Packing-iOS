@@ -160,7 +160,7 @@ class JourneyService: JourneyServiceProtocol {
     
     // MARK: - 여행에 참가자 초대
     func inviteParticipant(journeyId: String, email: String) -> Observable<NotificationResponse> {
-        return apiClient.request(APIEndpoint.inviteParticipant(journeyId: journeyId, email: email))
+        return apiClient.requestWithDateDecoding(APIEndpoint.inviteParticipant(journeyId: journeyId, email: email))
             .map { (response: APIResponse<NotificationResponse>) -> NotificationResponse in
                 guard let notificationResponse = response.data else {
                     throw NetworkError.invalidResponse

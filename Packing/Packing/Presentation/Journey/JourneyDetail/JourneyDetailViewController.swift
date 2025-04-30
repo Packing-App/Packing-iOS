@@ -335,6 +335,7 @@ struct JourneyDetailView: View {
                 Spacer()
                 Button(action: {
                     self.showingInvitationSheet = true
+                    // 친구 목록 뷰로 이동.
                 }, label: {
                     Text("초대하기")
                         .font(.subheadline)
@@ -365,9 +366,6 @@ struct JourneyDetailView: View {
                 }
                 .padding(.top, 5)
             }
-        }
-        .sheet(isPresented: $showingInvitationSheet) {
-            InvitationSheetView()
         }
     }
     
@@ -848,10 +846,6 @@ struct PackingItemRow: View {
             Text("\(item.name) 준비물을 삭제하시겠습니까?")
         }
     }
-}
-
-#Preview {
-    JourneyDetailView(journey: Journey.examples.first!)
 }
 
 

@@ -9,7 +9,6 @@ import UIKit
 import RxSwift
 import ReactorKit
 
-
 // MARK: - NotificationsViewController
 class NotificationsViewController: UIViewController, View {
     var disposeBag = DisposeBag()
@@ -20,6 +19,20 @@ class NotificationsViewController: UIViewController, View {
     private let refreshControl = UIRefreshControl()
     private let activityIndicator = UIActivityIndicatorView(style: .large)
     private let emptyStateLabel = UILabel()
+    
+    // Services
+    private var journeyService: JourneyServiceProtocol
+    
+    // MARK: - Initialization
+    init(reactor: NotificationsReactor, journeyService: JourneyServiceProtocol) {
+        self.journeyService = journeyService
+        super.init(nibName: nil, bundle: nil)
+        self.reactor = reactor
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     // MARK: - Lifecycle Methods
     override func viewDidLoad() {
@@ -72,6 +85,7 @@ class NotificationsViewController: UIViewController, View {
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 120
         tableView.refreshControl = refreshControl
+        tableView.delegate = self
         
         view.addSubview(tableView)
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -116,6 +130,71 @@ class NotificationsViewController: UIViewController, View {
         reactor?.action.onNext(.markAllAsRead)
     }
     
+    // MARK: - Journey Invitation Response
+    private func respondToInvitation(notificationId: String, accept: Bool) {
+        print("Responding to invitation: \(notificationId), accept: \(accept)") // Debug log
+        
+        // Show loading indicator
+        let loadingAlert = UIAlertController(
+            title: accept ? "초대 수락 중..." : "초대 거절 중...",
+            message: "잠시만 기다려주세요.",
+            preferredStyle: .alert
+        )
+        present(loadingAlert, animated: true)
+        
+        journeyService.respondToInvitation(notificationId: notificationId, accept: accept)
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] success in
+                print("API response received: \(success)") // Debug log
+                
+                // Dismiss loading alert
+                loadingAlert.dismiss(animated: true) {
+                    if success {
+                        // Show success message
+                        let title = accept ? "초대 수락됨" : "초대 거절됨"
+                        let message = accept ? "여행에 참여하셨습니다." : "초대가 거절되었습니다."
+                        
+                        let alert = UIAlertController(
+                            title: title,
+                            message: message,
+                            preferredStyle: .alert
+                        )
+                        alert.addAction(UIAlertAction(title: "확인", style: .default))
+                        self?.present(alert, animated: true)
+                        
+                        // Mark notification as read and refresh the list
+                        if let reactor = self?.reactor {
+                            reactor.action.onNext(.markAsRead(notificationId))
+                            reactor.action.onNext(.fetchNotifications)
+                        }
+                    } else {
+                        // Show error message
+                        let alert = UIAlertController(
+                            title: "오류",
+                            message: "요청을 처리하는 중 문제가 발생했습니다. 다시 시도해주세요.",
+                            preferredStyle: .alert
+                        )
+                        alert.addAction(UIAlertAction(title: "확인", style: .default))
+                        self?.present(alert, animated: true)
+                    }
+                }
+            }, onError: { [weak self] error in
+                print("API error: \(error.localizedDescription)") // Debug log
+                
+                // Dismiss loading alert and show error
+                loadingAlert.dismiss(animated: true) {
+                    let alert = UIAlertController(
+                        title: "오류",
+                        message: error.localizedDescription,
+                        preferredStyle: .alert
+                    )
+                    alert.addAction(UIAlertAction(title: "확인", style: .default))
+                    self?.present(alert, animated: true)
+                }
+            })
+            .disposed(by: disposeBag)
+    }
+    
     // MARK: - ReactorKit Setup
     func bind(reactor: NotificationsReactor) {
         // Action bindings
@@ -141,8 +220,31 @@ class NotificationsViewController: UIViewController, View {
         reactor.state.map { $0.filteredNotifications }
             .distinctUntilChanged()
             .observe(on: MainScheduler.instance)
-            .bind(to: tableView.rx.items(cellIdentifier: NotificationTableViewCell.identifier, cellType: NotificationTableViewCell.self)) { _, notification, cell in
+            .do(onNext: { notifications in
+                print("Filtered notifications count: \(notifications.count)") // Debug log
+            })
+            .bind(to: tableView.rx.items(cellIdentifier: NotificationTableViewCell.identifier, cellType: NotificationTableViewCell.self)) { [weak self] indexPath, notification, cell in
                 cell.configure(with: notification)
+                
+                // Set up invitation response callbacks
+                if notification.type == .invitation, let id = notification.id {
+                    print("Setting up callbacks for invitation notification: \(id)") // Debug log
+                    
+                    // Clear existing callbacks
+                    cell.onAcceptTapped = nil
+                    cell.onRejectTapped = nil
+                    
+                    // Set new callbacks
+                    cell.onAcceptTapped = { [weak self] in
+                        print("Accept callback triggered for notification: \(id)") // Debug log
+                        self?.respondToInvitation(notificationId: id, accept: true)
+                    }
+                    
+                    cell.onRejectTapped = { [weak self] in
+                        print("Reject callback triggered for notification: \(id)") // Debug log
+                        self?.respondToInvitation(notificationId: id, accept: false)
+                    }
+                }
             }
             .disposed(by: disposeBag)
         
@@ -211,6 +313,30 @@ class NotificationsViewController: UIViewController, View {
     }
 }
 
+// MARK: - UITableViewDelegate
+extension NotificationsViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        guard let reactor = reactor,
+              let notificationCell = cell as? NotificationTableViewCell,
+              let notification = reactor.currentState.filteredNotifications[safe: indexPath.row],
+              notification.type == .invitation,
+              let id = notification.id else {
+            return
+        }
+        
+        // Make sure we update the callbacks when cell is about to display
+        notificationCell.onAcceptTapped = { [weak self] in
+            print("Accept callback triggered in willDisplay for notification: \(id)") // Debug log
+            self?.respondToInvitation(notificationId: id, accept: true)
+        }
+        
+        notificationCell.onRejectTapped = { [weak self] in
+            print("Reject callback triggered in willDisplay for notification: \(id)") // Debug log
+            self?.respondToInvitation(notificationId: id, accept: false)
+        }
+    }
+}
+
 // MARK: - Date Formatter Helper
 extension DateFormatter {
     static let notificationDateFormatter: DateFormatter = {
@@ -232,5 +358,12 @@ extension Observable where Element == Bool {
 extension ObservableType {
     func filterNil<T>() -> Observable<T> where Element == Optional<T> {
         return self.filter { $0 != nil }.map { $0! }
+    }
+}
+
+// MARK: - Array Extension
+extension Array {
+    subscript(safe index: Index) -> Element? {
+        return indices.contains(index) ? self[index] : nil
     }
 }

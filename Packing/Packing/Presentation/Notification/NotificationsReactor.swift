@@ -20,6 +20,7 @@ final class NotificationsReactor: Reactor {
         case markAllAsRead
         case deleteNotification(String)
         case selectTab(Int)
+        case respondToInvitation(String, Bool) // Added invitation response action
     }
     
     enum Mutation {
@@ -51,10 +52,12 @@ final class NotificationsReactor: Reactor {
     
     let initialState: State = State()
     private let notificationService: NotificationServiceProtocol
+    private let journeyService: JourneyServiceProtocol
     private let disposeBag = DisposeBag()
     
-    init(notificationService: NotificationServiceProtocol) {
+    init(notificationService: NotificationServiceProtocol, journeyService: JourneyServiceProtocol) {
         self.notificationService = notificationService
+        self.journeyService = journeyService
     }
     
     func mutate(action: Action) -> Observable<Mutation> {
@@ -101,6 +104,31 @@ final class NotificationsReactor: Reactor {
             // 안전하게 인덱스 범위 확인
             let safeIndex = max(0, min(index, initialState.notificationTypes.count - 1))
             return Observable.just(Mutation.setSelectedTabIndex(safeIndex))
+            
+        case let .respondToInvitation(notificationId, accept):
+            return Observable.concat([
+                Observable.just(Mutation.setLoading(true)),
+                
+                journeyService.respondToInvitation(notificationId: notificationId, accept: accept)
+                    .flatMap { success -> Observable<Mutation> in
+                        if success {
+                            // If successful, mark the notification as read
+                            return Observable.just(Mutation.updateNotification(notificationId, true))
+                        } else {
+                            // Handle failure
+                            return Observable.just(Mutation.setError(NSError(
+                                domain: "JourneyServiceError",
+                                code: 1001,
+                                userInfo: [NSLocalizedDescriptionKey: "Failed to respond to invitation"]
+                            )))
+                        }
+                    }
+                    .catch { error in
+                        return Observable.just(Mutation.setError(error))
+                    },
+                
+                Observable.just(Mutation.setLoading(false))
+            ])
         }
     }
     
@@ -172,129 +200,5 @@ final class NotificationsReactor: Reactor {
         }
         
         return newState
-    }
-}
-
-// MARK: - Custom UI Components
-
-// MARK: - NotificationTableViewCell
-class NotificationTableViewCell: UITableViewCell {
-    static let identifier = "NotificationTableViewCell"
-    
-    // UI Components
-    private let containerView = UIView()
-    private let titleLabel = UILabel()
-    private let dateLabel = UILabel()
-    private let contentLabel = UILabel()
-    private let unreadIndicator = UIView()
-    
-    // MARK: - Initialization
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setupUI()
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    // MARK: - UI Setup
-    private func setupUI() {
-        selectionStyle = .none
-        backgroundColor = .clear
-        
-        // Container view setup
-        containerView.backgroundColor = .systemBackground
-        containerView.layer.cornerRadius = 12
-        containerView.layer.shadowColor = UIColor.black.cgColor
-        containerView.layer.shadowOpacity = 0.05
-        containerView.layer.shadowRadius = 4
-        containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
-        contentView.addSubview(containerView)
-        
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
-            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6)
-        ])
-        
-        // Unread indicator setup
-        unreadIndicator.backgroundColor = .systemBlue
-        unreadIndicator.layer.cornerRadius = 4
-        containerView.addSubview(unreadIndicator)
-        
-        unreadIndicator.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            unreadIndicator.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
-            unreadIndicator.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            unreadIndicator.widthAnchor.constraint(equalToConstant: 8),
-            unreadIndicator.heightAnchor.constraint(equalToConstant: 8)
-        ])
-        
-        // Title Label setup
-        titleLabel.font = UIFont.preferredFont(forTextStyle: .headline)
-        titleLabel.textColor = .label
-        containerView.addSubview(titleLabel)
-        
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 12),
-            titleLabel.leadingAnchor.constraint(equalTo: unreadIndicator.trailingAnchor, constant: 12),
-            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12)
-        ])
-        
-        // Date Label setup
-        dateLabel.font = UIFont.preferredFont(forTextStyle: .caption1)
-        dateLabel.textColor = .secondaryLabel
-        containerView.addSubview(dateLabel)
-        
-        dateLabel.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            dateLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
-            dateLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            dateLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor)
-        ])
-        
-        // Content Label setup
-        contentLabel.font = UIFont.preferredFont(forTextStyle: .body)
-        contentLabel.textColor = .label
-        contentLabel.numberOfLines = 2
-        containerView.addSubview(contentLabel)
-        
-        contentLabel.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            contentLabel.topAnchor.constraint(equalTo: dateLabel.bottomAnchor, constant: 8),
-            contentLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            contentLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor),
-            contentLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12)
-        ])
-    }
-    
-    // MARK: - Configuration
-    func configure(with notification: NotificationModel) {
-        // Set notification type as title
-        switch notification.type {
-        case .invitation:
-            titleLabel.text = "초대장"
-        case .weather:
-            titleLabel.text = "날씨 알림"
-        case .reminder:
-            titleLabel.text = "리마인더"
-        }
-        
-        // Date formatting
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .medium
-        dateFormatter.timeStyle = .short
-        dateFormatter.doesRelativeDateFormatting = true
-        dateLabel.text = dateFormatter.string(from: notification.createdAt)
-        
-        // Content
-        contentLabel.text = notification.content
-        
-        // Unread indicator
-        unreadIndicator.isHidden = notification.isRead
     }
 }

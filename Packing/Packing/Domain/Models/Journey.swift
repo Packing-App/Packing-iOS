@@ -47,7 +47,7 @@ struct Journey: Identifiable, Codable {
     let updatedAt: Date
     
     enum CodingKeys: String, CodingKey {
-        case id = "_id"  // 몽고DB의 _id를 Swift의 id로 매핑
+        case id = "_id"
         case creatorId, title, transportType, origin, destination
         case startDate, endDate, theme, imageUrl, isPrivate, participants
         case createdAt, updatedAt

@@ -855,10 +855,10 @@ extension HomeViewController {
     // 알림 화면 표시 메서드
     private func showNotificationsScreen() {
         let notificationService = NotificationService(apiClient: APIClient.shared)
+        let journeyService: JourneyServiceProtocol = JourneyService()
+        let notificationsReactor = NotificationsReactor(notificationService: notificationService, journeyService: journeyService)
         
-        let notificationsReactor = NotificationsReactor(notificationService: notificationService)
-        
-        let notificationsViewController = NotificationsViewController()
+        let notificationsViewController = NotificationsViewController(reactor: notificationsReactor, journeyService: journeyService)
         notificationsViewController.reactor = notificationsReactor
         
         navigationController?.pushViewController(notificationsViewController, animated: true)

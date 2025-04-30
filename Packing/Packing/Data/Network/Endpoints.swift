@@ -368,6 +368,7 @@ enum APIEndpoint: Endpoints {
             return "/notifications/\(id)"
         case .getUnreadCount:
             return "/notifications/unread/count"
+            
         case .createJourneyReminder:
             return "/notifications/journey-reminder"
         case .createWeatherAlert:

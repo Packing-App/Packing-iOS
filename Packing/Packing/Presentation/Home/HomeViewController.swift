@@ -223,7 +223,6 @@ class HomeViewController: UIViewController, View {
         configureNavigationBar()
         setupGradientBackground()
         setupAllAnimations()
-        
     }
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -238,6 +237,8 @@ class HomeViewController: UIViewController, View {
     }
     
     func bind(reactor: HomeViewReactor) {
+        bindNotificationButton(reactor: reactor)
+
         // Action 바인딩
         
         // 화면 로드 시 여행 목록 가져오기
@@ -835,4 +836,115 @@ extension UIColor {
     static let background = UIColor(red: 248/255, green: 250/255, blue: 252/255, alpha: 1.0)
     static let textPrimary = UIColor(red: 51/255, green: 51/255, blue: 51/255, alpha: 1.0)
     static let textSecondary = UIColor(red: 102/255, green: 102/255, blue: 102/255, alpha: 1.0)
+}
+
+
+// MARK: - HomeViewController의 알림 버튼 연결 부분 수정
+extension HomeViewController {
+    
+    // MARK: - 알림 버튼 연결 메서드
+    func setupNotificationButton() {
+        // 알림 버튼 탭 이벤트 처리
+        notificationButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.showNotificationsScreen()
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // 알림 화면 표시 메서드
+    private func showNotificationsScreen() {
+        let notificationService = NotificationService(apiClient: APIClient.shared)
+        
+        let notificationsReactor = NotificationsReactor(notificationService: notificationService)
+        
+        let notificationsViewController = NotificationsViewController()
+        notificationsViewController.reactor = notificationsReactor
+        
+        navigationController?.pushViewController(notificationsViewController, animated: true)
+    }
+}
+
+extension HomeViewController {
+    // 기존 bind 메서드에 추가할 부분
+    func bindNotificationButton(reactor: HomeViewReactor) {
+        // 알림 버튼 설정
+        setupNotificationButton()
+        
+        // 화면이 나타날 때마다 읽지 않은 알림 수 업데이트
+        rx.viewWillAppear
+            .subscribe(onNext: { [weak self] _ in
+                self?.updateUnreadNotificationCount()
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // 읽지 않은 알림 수 업데이트 메서드
+    private func updateUnreadNotificationCount() {
+        // 기존 구현된 NotificationService 사용
+        let notificationService = NotificationService(apiClient: APIClient.shared)
+        
+        // 읽지 않은 알림 수 가져오기
+//        notificationService.getUnreadCount()
+//            .observe(on: MainScheduler.instance)
+//            .subscribe(onNext: { [weak self] count in
+//                // 읽지 않은 알림이 있을 경우 배지 표시
+//                self?.updateNotificationBadge(count: count)
+//            }, onError: { error in
+//                print("읽지 않은 알림 수 조회 오류: \(error.localizedDescription)")
+//            })
+//            .disposed(by: disposeBag)
+    }
+    
+    // 알림 버튼 배지 업데이트
+    private func updateNotificationBadge(count: Int) {
+        if count > 0 {
+            // 배지 표시를 위한 UIView 생성
+            let badgeView = UIView()
+            badgeView.backgroundColor = .systemRed
+            badgeView.layer.cornerRadius = 8
+            badgeView.tag = 999  // 기존 배지 제거를 위한 태그 설정
+            
+            // 기존 배지 제거
+            notificationButton.subviews.filter { $0.tag == 999 }.forEach { $0.removeFromSuperview() }
+            
+            // 배지 레이블 설정
+            let badgeLabel = UILabel()
+            badgeLabel.text = count > 99 ? "99+" : "\(count)"
+            badgeLabel.textColor = .white
+            badgeLabel.font = UIFont.systemFont(ofSize: 10, weight: .bold)
+            badgeLabel.textAlignment = .center
+            
+            // 배지 레이아웃 설정
+            notificationButton.addSubview(badgeView)
+            badgeView.addSubview(badgeLabel)
+            
+            badgeView.translatesAutoresizingMaskIntoConstraints = false
+            badgeLabel.translatesAutoresizingMaskIntoConstraints = false
+            
+            // 배지 위치 설정 - 버튼의 오른쪽 상단
+            NSLayoutConstraint.activate([
+                badgeView.topAnchor.constraint(equalTo: notificationButton.topAnchor, constant: -5),
+                badgeView.trailingAnchor.constraint(equalTo: notificationButton.trailingAnchor, constant: 5),
+                badgeView.widthAnchor.constraint(greaterThanOrEqualToConstant: 16),
+                badgeView.heightAnchor.constraint(equalToConstant: 16),
+                
+                badgeLabel.centerXAnchor.constraint(equalTo: badgeView.centerXAnchor),
+                badgeLabel.centerYAnchor.constraint(equalTo: badgeView.centerYAnchor),
+                badgeLabel.leadingAnchor.constraint(greaterThanOrEqualTo: badgeView.leadingAnchor, constant: 2),
+                badgeLabel.trailingAnchor.constraint(lessThanOrEqualTo: badgeView.trailingAnchor, constant: -2)
+            ])
+        } else {
+            // 읽지 않은 알림이 없으면 배지 제거
+            notificationButton.subviews.filter { $0.tag == 999 }.forEach { $0.removeFromSuperview() }
+        }
+    }
+}
+
+// UIViewController에 rx.viewWillAppear 추가 (이미 유사한 확장이 있다면 무시)
+extension Reactive where Base: UIViewController {
+    var viewWillAppear: Observable<Bool> {
+        return methodInvoked(#selector(UIViewController.viewWillAppear))
+            .map { $0.first as? Bool ?? false }
+    }
 }

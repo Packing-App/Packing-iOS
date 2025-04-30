@@ -72,6 +72,8 @@ class FriendsViewController: UIViewController, View {
         super.viewDidLoad()
         setupUI()
         setupNavigationBar()
+        tableView.delegate = self
+
     }
     
     // MARK: - UI Setup
@@ -152,6 +154,18 @@ class FriendsViewController: UIViewController, View {
         searchController.searchBar.rx.cancelButtonClicked
             .map { Reactor.Action.clearSearch }
             .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+        
+        tableView.rx.itemDeleted
+            .withLatestFrom(reactor.state.map { $0.friends }) { indexPath, friends in
+                return (indexPath, friends)
+            }
+            .subscribe(onNext: { [weak self] indexPath, friends in
+                if indexPath.row < friends.count {
+                    let friend = friends[indexPath.row]
+                    reactor.action.onNext(.removeFriend(friend.friendshipId))
+                }
+            })
             .disposed(by: disposeBag)
         
         // State 바인딩
@@ -268,10 +282,11 @@ class FriendsViewController: UIViewController, View {
                 .bind(to: tableView.rx.items(cellIdentifier: FriendCell.identifier, cellType: FriendCell.self)) { [weak self] index, friend, cell in
                     cell.configure(with: friend)
                     
-                    // 셀 액션 설정
-                    cell.removeFriendButton.rx.tap
-                        .map { Reactor.Action.removeFriend(friend.friendshipId) }
-                        .bind(to: reactor.action)
+                    // Use invite button to navigate to journey selection
+                    cell.inviteButton.rx.tap
+                        .subscribe(onNext: { [weak self] _ in
+                            self?.showJourneySelectionForFriend(friend)
+                        })
                         .disposed(by: cell.disposeBag)
                 }
                 .disposed(by: disposeBag)
@@ -314,7 +329,13 @@ class FriendsViewController: UIViewController, View {
                 .disposed(by: disposeBag)
         }
     }
-    
+    private func showJourneySelectionForFriend(_ friend: Friend) {
+        let journeySelectionVC = JourneySelectionViewController()
+        journeySelectionVC.selectedFriend = friend
+        journeySelectionVC.hidesBottomBarWhenPushed = true
+
+        navigationController?.pushViewController(journeySelectionVC, animated: true)
+    }
     private func showErrorAlert(_ error: Error) {
         let alert = UIAlertController(
             title: "오류",
@@ -325,8 +346,26 @@ class FriendsViewController: UIViewController, View {
         present(alert, animated: true)
     }
 }
+extension FriendsViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let deleteAction = UIContextualAction(style: .destructive, title: "삭제") { [weak self] (action, view, completion) in
+            guard let self = self, let reactor = self.reactor else {
+                completion(false)
+                return
+            }
+            
+            let friend = reactor.currentState.friends[indexPath.row]
+            reactor.action.onNext(.removeFriend(friend.friendshipId))
+            completion(true)
+        }
+        
+        return UISwipeActionsConfiguration(actions: [deleteAction])
+    }
+}
+
 
 // MARK: - FriendCell
+
 class FriendCell: UITableViewCell {
     static let identifier = "FriendCell"
     
@@ -367,10 +406,10 @@ class FriendCell: UITableViewCell {
         return label
     }()
     
-    let removeFriendButton: UIButton = {
+    let inviteButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("삭제", for: .normal)
-        button.setTitleColor(.red, for: .normal)
+        button.setTitle("초대하기", for: .normal)
+        button.setTitleColor(.systemBlue, for: .normal)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -396,7 +435,7 @@ class FriendCell: UITableViewCell {
         contentView.addSubview(nameLabel)
         contentView.addSubview(emailLabel)
         contentView.addSubview(introLabel)
-        contentView.addSubview(removeFriendButton)
+        contentView.addSubview(inviteButton)
         
         // Constraints
         NSLayoutConstraint.activate([
@@ -409,7 +448,7 @@ class FriendCell: UITableViewCell {
             
             nameLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
             nameLabel.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 12),
-            nameLabel.trailingAnchor.constraint(equalTo: removeFriendButton.leadingAnchor, constant: -12),
+            nameLabel.trailingAnchor.constraint(equalTo: inviteButton.leadingAnchor, constant: -12),
             
             emailLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
             emailLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
@@ -420,10 +459,10 @@ class FriendCell: UITableViewCell {
             introLabel.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
             introLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
             
-            removeFriendButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            removeFriendButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            removeFriendButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 60),
-            removeFriendButton.heightAnchor.constraint(equalToConstant: 30)
+            inviteButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            inviteButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            inviteButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 70),
+            inviteButton.heightAnchor.constraint(equalToConstant: 30)
         ])
     }
     
@@ -540,5 +579,178 @@ class FriendRequestCell: UITableViewCell {
             profileImageView.image = UIImage(systemName: "person.circle.fill")
             profileImageView.tintColor = .gray
         }
+    }
+    
+}
+
+
+// MARK: - JOURNEY SELECTION VIEW CONTROLLER
+
+
+class JourneySelectionViewController: UIViewController {
+    
+    // MARK: - Properties
+    var selectedFriend: Friend!
+    private let journeyService = JourneyService()
+    private var journeys: [Journey] = []
+    private let disposeBag = DisposeBag()
+    
+    // MARK: - UI Components
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.boldSystemFont(ofSize: 18)
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private lazy var collectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .vertical
+        layout.itemSize = CGSize(width: UIScreen.main.bounds.width - 40, height: 180)
+        layout.minimumLineSpacing = 15
+        
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.backgroundColor = .clear
+        collectionView.showsVerticalScrollIndicator = false
+        collectionView.contentInset = UIEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
+        collectionView.translatesAutoresizingMaskIntoConstraints = false
+        collectionView.register(TravelPlanCell.self, forCellWithReuseIdentifier: "TravelPlanCell")
+        
+        return collectionView
+    }()
+    
+    private let loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .large)
+        indicator.hidesWhenStopped = true
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        return indicator
+    }()
+    
+    private let emptyLabel: UILabel = {
+        let label = UILabel()
+        label.text = "여행 계획이 없습니다."
+        label.textAlignment = .center
+        label.textColor = .gray
+        label.isHidden = true
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    // MARK: - Lifecycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
+        setupBindings()
+        loadJourneys()
+    }
+    
+    // MARK: - Setup
+    private func setupUI() {
+        view.backgroundColor = .white
+        title = "여행 선택"
+        
+        titleLabel.text = "\(selectedFriend.name)님을 초대할 여행을 선택해주세요"
+        
+        view.addSubview(titleLabel)
+        view.addSubview(collectionView)
+        view.addSubview(loadingIndicator)
+        view.addSubview(emptyLabel)
+        
+        NSLayoutConstraint.activate([
+            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            titleLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            titleLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            
+            collectionView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
+            collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
+            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            
+            emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            emptyLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
+    }
+    
+    private func setupBindings() {
+        collectionView.rx.modelSelected(Journey.self)
+            .subscribe(onNext: { [weak self] journey in
+                self?.inviteFriendToJourney(journey: journey)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - Data Loading
+    private func loadJourneys() {
+        loadingIndicator.startAnimating()
+        
+        journeyService.getJourneys()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] journeys in
+                self?.journeys = journeys
+                self?.updateUI()
+                self?.loadingIndicator.stopAnimating()
+            }, onError: { [weak self] error in
+                self?.showErrorAlert(message: error.localizedDescription)
+                self?.loadingIndicator.stopAnimating()
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    private func updateUI() {
+        emptyLabel.isHidden = !journeys.isEmpty
+        
+        // Bind journeys to collection view
+        Observable.just(journeys)
+            .bind(to: collectionView.rx.items(cellIdentifier: "TravelPlanCell", cellType: TravelPlanCell.self)) { index, journey, cell in
+                cell.configure(with: journey)
+            }
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - Actions
+    private func inviteFriendToJourney(journey: Journey) {
+        loadingIndicator.startAnimating()
+        
+        journeyService.inviteParticipant(journeyId: journey.id, email: selectedFriend.email)
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] response in
+                self?.loadingIndicator.stopAnimating()
+                self?.showSuccessAlert(journey: journey)
+            }, onError: { [weak self] error in
+                self?.loadingIndicator.stopAnimating()
+                self?.showErrorAlert(message: error.localizedDescription)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    // MARK: - Alerts
+    private func showSuccessAlert(journey: Journey) {
+        let alert = UIAlertController(
+            title: "초대 완료",
+            message: "\(selectedFriend.name)님을 '\(journey.title)' 여행에 초대했습니다.",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
+            self?.navigationController?.popViewController(animated: true)
+        })
+        
+        present(alert, animated: true)
+    }
+    
+    private func showErrorAlert(message: String) {
+        let alert = UIAlertController(
+            title: "오류",
+            message: message,
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        
+        present(alert, animated: true)
     }
 }

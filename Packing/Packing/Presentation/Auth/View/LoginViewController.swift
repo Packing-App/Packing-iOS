@@ -256,7 +256,10 @@ class LoginViewController: UIViewController {
                 switch result {
                 case .success:
                     // 임시 저장된 디바이스 토큰이 있다면 서버에 등록
-                    guard let token = UserDefaults.standard.string(forKey: "deviceToken"), let self = self else { return }
+                    guard let token = UserDefaults.standard.string(forKey: "deviceToken"), let self = self else {
+                        self?.navigateToMainScreen()
+                        return
+                    }
                     
                     self.deviceService.updateDeviceToken(token: token)
                         .subscribe(onNext: { success in

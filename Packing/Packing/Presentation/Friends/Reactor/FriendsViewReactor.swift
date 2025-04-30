@@ -23,6 +23,7 @@ final class FriendsViewReactor: Reactor {
         case sendFriendRequest(String)
         case removeFriend(String)
         case navigateToRequestsView
+        case inviteFriendToJourney(String, String)
     }
     
     // Mutation: 상태 변화를 위한 중간 단계
@@ -83,6 +84,10 @@ final class FriendsViewReactor: Reactor {
             
         case .navigateToRequestsView:
             // 여기서는 상태 변화가 없음 (네비게이션은 뷰컨트롤러에서 처리)
+            return .empty()
+        case .inviteFriendToJourney(_, _):
+            // 여행 초대 기능은 JourneySelectionViewController에서 직접 처리
+            // 여기서는 상태 변화가 없음
             return .empty()
         }
     }

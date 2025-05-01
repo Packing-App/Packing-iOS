@@ -82,7 +82,6 @@ class HomeViewController: UIViewController, View {
         let label = UILabel()
         label.font = .systemFont(ofSize: 28, weight: .bold)
         label.textColor = .white
-        label.text = "라라님!\n여행 준비를 같이 해볼까요?"
         label.numberOfLines = 0
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -126,7 +125,6 @@ class HomeViewController: UIViewController, View {
     
     private lazy var myTravelPlansSectionLabel: UILabel = {
         let label = UILabel()
-        label.text = "라라님의 여행 계획"
         label.font = .systemFont(ofSize: 18, weight: .semibold)
         label.textColor = .black
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -224,12 +222,17 @@ class HomeViewController: UIViewController, View {
         setupGradientBackground()
         setupAllAnimations()
     }
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         // 화면이 나타날 때마다 최신 데이터 로드
         reactor?.action.onNext(.refreshJourneys)
+        
+        // 사용자 이름 업데이트
+        updateUserNameLabels()
     }
+    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         // Update gradient frame when view layout changes
@@ -425,6 +428,19 @@ class HomeViewController: UIViewController, View {
             templatesCollectionView.heightAnchor.constraint(greaterThanOrEqualToConstant: 450),
             templatesCollectionView.bottomAnchor.constraint(equalTo: templatesSectionView.bottomAnchor, constant: -10)
         ])
+    }
+    
+    private func updateUserNameLabels() {
+        if let name = UserManager.shared.currentUser?.name {
+            // 타이틀 레이블 업데이트
+            titleLabel.text = "\(name)님!\n여행 준비를 같이 해볼까요?"
+            
+            // 여행 계획 섹션 레이블 업데이트
+            myTravelPlansSectionLabel.text = "\(name)님의 여행 계획"
+        } else {
+            titleLabel.text = "회원님!\n여행 준비를 같이 해볼까요?"
+            myTravelPlansSectionLabel.text = "회원님의 여행 계획"
+        }
     }
     
     private func setupGradientBackground() {

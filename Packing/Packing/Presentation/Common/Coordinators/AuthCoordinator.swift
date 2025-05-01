@@ -164,9 +164,8 @@ class AuthCoordinator: AuthCoordinatorProtocol {
         } else {
             // 없으면 새로 푸시
             let journeyService: JourneyServiceProtocol = JourneyService()
-            let notificationService: NotificationServiceProtocol = NotificationService()
-
-            let notificationsViewController = NotificationsViewController(notificationService: notificationService, journeyService: journeyService)
+            let reactor: NotificationsReactor = NotificationsReactor(notificationService: NotificationService(), journeyService: journeyService)
+            let notificationsViewController = NotificationsViewController(reactor: reactor)
             navigationController.pushViewController(notificationsViewController, animated: true)
         }
     }

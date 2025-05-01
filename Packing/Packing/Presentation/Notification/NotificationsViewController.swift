@@ -7,6 +7,7 @@
 
 import UIKit
 import RxSwift
+import RxCocoa
 import ReactorKit
 
 // MARK: - NotificationsViewController
@@ -20,12 +21,8 @@ class NotificationsViewController: UIViewController, View {
     private let activityIndicator = UIActivityIndicatorView(style: .large)
     private let emptyStateLabel = UILabel()
     
-    // Services
-    private var journeyService: JourneyServiceProtocol
-    
     // MARK: - Initialization
-    init(reactor: NotificationsReactor, journeyService: JourneyServiceProtocol) {
-        self.journeyService = journeyService
+    init(reactor: NotificationsReactor) {
         super.init(nibName: nil, bundle: nil)
         self.reactor = reactor
     }
@@ -85,7 +82,6 @@ class NotificationsViewController: UIViewController, View {
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 120
         tableView.refreshControl = refreshControl
-        tableView.delegate = self
         
         view.addSubview(tableView)
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -130,71 +126,6 @@ class NotificationsViewController: UIViewController, View {
         reactor?.action.onNext(.markAllAsRead)
     }
     
-    // MARK: - Journey Invitation Response
-    private func respondToInvitation(notificationId: String, accept: Bool) {
-        print("Responding to invitation: \(notificationId), accept: \(accept)") // Debug log
-        
-        // Show loading indicator
-        let loadingAlert = UIAlertController(
-            title: accept ? "초대 수락 중..." : "초대 거절 중...",
-            message: "잠시만 기다려주세요.",
-            preferredStyle: .alert
-        )
-        present(loadingAlert, animated: true)
-        
-        journeyService.respondToInvitation(notificationId: notificationId, accept: accept)
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] success in
-                print("API response received: \(success)") // Debug log
-                
-                // Dismiss loading alert
-                loadingAlert.dismiss(animated: true) {
-                    if success {
-                        // Show success message
-                        let title = accept ? "초대 수락됨" : "초대 거절됨"
-                        let message = accept ? "여행에 참여하셨습니다." : "초대가 거절되었습니다."
-                        
-                        let alert = UIAlertController(
-                            title: title,
-                            message: message,
-                            preferredStyle: .alert
-                        )
-                        alert.addAction(UIAlertAction(title: "확인", style: .default))
-                        self?.present(alert, animated: true)
-                        
-                        // Mark notification as read and refresh the list
-                        if let reactor = self?.reactor {
-                            reactor.action.onNext(.markAsRead(notificationId))
-                            reactor.action.onNext(.fetchNotifications)
-                        }
-                    } else {
-                        // Show error message
-                        let alert = UIAlertController(
-                            title: "오류",
-                            message: "요청을 처리하는 중 문제가 발생했습니다. 다시 시도해주세요.",
-                            preferredStyle: .alert
-                        )
-                        alert.addAction(UIAlertAction(title: "확인", style: .default))
-                        self?.present(alert, animated: true)
-                    }
-                }
-            }, onError: { [weak self] error in
-                print("API error: \(error.localizedDescription)") // Debug log
-                
-                // Dismiss loading alert and show error
-                loadingAlert.dismiss(animated: true) {
-                    let alert = UIAlertController(
-                        title: "오류",
-                        message: error.localizedDescription,
-                        preferredStyle: .alert
-                    )
-                    alert.addAction(UIAlertAction(title: "확인", style: .default))
-                    self?.present(alert, animated: true)
-                }
-            })
-            .disposed(by: disposeBag)
-    }
-    
     // MARK: - ReactorKit Setup
     func bind(reactor: NotificationsReactor) {
         // Action bindings
@@ -221,29 +152,29 @@ class NotificationsViewController: UIViewController, View {
             .distinctUntilChanged()
             .observe(on: MainScheduler.instance)
             .do(onNext: { notifications in
-                print("Filtered notifications count: \(notifications.count)") // Debug log
+                print("Filtered notifications count: \(notifications.count)")
             })
-            .bind(to: tableView.rx.items(cellIdentifier: NotificationTableViewCell.identifier, cellType: NotificationTableViewCell.self)) { [weak self] indexPath, notification, cell in
-                cell.configure(with: notification)
-                
-                // Set up invitation response callbacks
+            .bind(to: tableView.rx.items(cellIdentifier: NotificationTableViewCell.identifier)) { [weak self] indexPath, notification, cell in
+                guard let notificationCell = cell as? NotificationTableViewCell else { return }
+                notificationCell.configure(with: notification)
+
                 if notification.type == .invitation, let id = notification.id {
-                    print("Setting up callbacks for invitation notification: \(id)") // Debug log
+                    print("Setting up invitation callbacks for cell at \(indexPath), ID: \(id)")
                     
-                    // Clear existing callbacks
-                    cell.onAcceptTapped = nil
-                    cell.onRejectTapped = nil
-                    
-                    // Set new callbacks
-                    cell.onAcceptTapped = { [weak self] in
-                        print("Accept callback triggered for notification: \(id)") // Debug log
-                        self?.respondToInvitation(notificationId: id, accept: true)
+                    // 콜백 설정
+                    notificationCell.onAcceptTapped = {
+                        print("Accept button tapped for notification: \(id)")
+                        self?.handleInvitationResponse(notificationId: id, accept: true)
                     }
                     
-                    cell.onRejectTapped = { [weak self] in
-                        print("Reject callback triggered for notification: \(id)") // Debug log
-                        self?.respondToInvitation(notificationId: id, accept: false)
+                    notificationCell.onRejectTapped = {
+                        print("Reject button tapped for notification: \(id)")
+                        self?.handleInvitationResponse(notificationId: id, accept: false)
                     }
+                } else {
+                    // 초대장이 아닌 경우 콜백 제거
+                    notificationCell.onAcceptTapped = nil
+                    notificationCell.onRejectTapped = nil
                 }
             }
             .disposed(by: disposeBag)
@@ -283,7 +214,7 @@ class NotificationsViewController: UIViewController, View {
             })
             .disposed(by: disposeBag)
         
-        // TableView item selection
+        // TableView item selection - 아이템 선택 시 읽음 처리
         tableView.rx.modelSelected(NotificationModel.self)
             .bind(onNext: { [weak self] notification in
                 if !notification.isRead {
@@ -292,14 +223,14 @@ class NotificationsViewController: UIViewController, View {
                     }
                 }
                 
-                // Deselect row
+                // 선택 해제
                 if let selectedIndexPath = self?.tableView.indexPathForSelectedRow {
                     self?.tableView.deselectRow(at: selectedIndexPath, animated: true)
                 }
             })
             .disposed(by: disposeBag)
         
-        // Swipe to delete
+        // 스와이프로 삭제
         tableView.rx.itemDeleted
             .withLatestFrom(reactor.state) { indexPath, state in
                 (indexPath, state.filteredNotifications[indexPath.row])
@@ -310,42 +241,82 @@ class NotificationsViewController: UIViewController, View {
                 }
             })
             .disposed(by: disposeBag)
+        
+        // 초대 응답 결과 처리
+        reactor.state.map { $0.lastRespondedInvitation }
+            .distinctUntilChanged { $0?.id == $1?.id }
+            .filterNil()
+            .observe(on: MainScheduler.instance)
+            .bind(onNext: { [weak self] responseInfo in
+                // 응답 결과에 따른 알림 표시
+                self?.showInvitationResponseResult(
+                    id: responseInfo.id,
+                    accepted: responseInfo.accepted,
+                    success: responseInfo.success
+                )
+            })
+            .disposed(by: disposeBag)
     }
-}
-
-// MARK: - UITableViewDelegate
-extension NotificationsViewController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        guard let reactor = reactor,
-              let notificationCell = cell as? NotificationTableViewCell,
-              let notification = reactor.currentState.filteredNotifications[safe: indexPath.row],
-              notification.type == .invitation,
-              let id = notification.id else {
-            return
+    
+    // MARK: - 초대장 응답 처리
+    private func handleInvitationResponse(notificationId: String, accept: Bool) {
+        print("Handling invitation response: \(notificationId), accept: \(accept)")
+        
+        // 해당 셀의 버튼 비활성화 (UI 피드백)
+        if let index = reactor?.currentState.filteredNotifications.firstIndex(where: { $0.id == notificationId }),
+           let cell = tableView.cellForRow(at: IndexPath(row: index, section: 0)) as? NotificationTableViewCell {
+            // 버튼 비활성화
+            cell.acceptButton.isEnabled = false
+            cell.rejectButton.isEnabled = false
+            cell.acceptButton.alpha = 0.5
+            cell.rejectButton.alpha = 0.5
         }
         
-        // Make sure we update the callbacks when cell is about to display
-        notificationCell.onAcceptTapped = { [weak self] in
-            print("Accept callback triggered in willDisplay for notification: \(id)") // Debug log
-            self?.respondToInvitation(notificationId: id, accept: true)
-        }
-        
-        notificationCell.onRejectTapped = { [weak self] in
-            print("Reject callback triggered in willDisplay for notification: \(id)") // Debug log
-            self?.respondToInvitation(notificationId: id, accept: false)
+        // 로딩 표시
+        let loadingAlert = UIAlertController(
+            title: accept ? "초대 수락 중..." : "초대 거절 중...",
+            message: "잠시만 기다려주세요.",
+            preferredStyle: .alert
+        )
+        present(loadingAlert, animated: true) {
+            // 로딩 표시 후 액션 실행
+            self.reactor?.action.onNext(.respondToInvitation(notificationId, accept))
+            
+            // 2초 후 로딩 알림 닫기 (실제로는 Reactor의 상태 변화로 처리할 수 있음)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                loadingAlert.dismiss(animated: true)
+            }
         }
     }
-}
-
-// MARK: - Date Formatter Helper
-extension DateFormatter {
-    static let notificationDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        formatter.doesRelativeDateFormatting = true
-        return formatter
-    }()
+    
+    // 초대장 응답 결과 표시
+    private func showInvitationResponseResult(id: String, accepted: Bool, success: Bool) {
+        if success {
+            // 성공 메시지
+            let title = accepted ? "초대 수락됨" : "초대 거절됨"
+            let message = accepted ? "여행에 참여하셨습니다." : "초대가 거절되었습니다."
+            
+            let alert = UIAlertController(
+                title: title,
+                message: message,
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            present(alert, animated: true)
+            
+            // 알림 새로고침
+            reactor?.action.onNext(.fetchNotifications)
+        } else {
+            // 실패 메시지
+            let alert = UIAlertController(
+                title: "오류",
+                message: "요청을 처리하는 중 문제가 발생했습니다. 다시 시도해주세요.",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            present(alert, animated: true)
+        }
+    }
 }
 
 // MARK: - Observable Extensions

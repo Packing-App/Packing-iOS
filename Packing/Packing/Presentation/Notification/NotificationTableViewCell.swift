@@ -19,9 +19,9 @@ class NotificationTableViewCell: UITableViewCell {
     private let unreadIndicator = UIView()
     
     // Add response buttons for invitation
-    private let responseButtonsContainer = UIView()
-    private let acceptButton = UIButton(type: .system)
-    private let rejectButton = UIButton(type: .system)
+    let responseButtonsContainer = UIView()
+    let acceptButton = UIButton(type: .system)
+    let rejectButton = UIButton(type: .system)
     
     // Callback for response actions
     var onAcceptTapped: (() -> Void)?
@@ -42,6 +42,15 @@ class NotificationTableViewCell: UITableViewCell {
         // Reset callbacks to prevent wrong cell handling
         onAcceptTapped = nil
         onRejectTapped = nil
+        
+        // Reset button states
+        acceptButton.isEnabled = true
+        rejectButton.isEnabled = true
+        acceptButton.alpha = 1.0
+        rejectButton.alpha = 1.0
+        
+        // Hide response buttons by default
+        responseButtonsContainer.isHidden = true
     }
     
     // MARK: - UI Setup
@@ -175,12 +184,12 @@ class NotificationTableViewCell: UITableViewCell {
     }
     
     @objc private func acceptButtonTapped() {
-        print("Accept button tapped") // Debug log
+        print("Accept button tapped - handler exists: \(onAcceptTapped != nil)") // 향상된 디버그 로그
         onAcceptTapped?()
     }
     
     @objc private func rejectButtonTapped() {
-        print("Reject button tapped") // Debug log
+        print("Reject button tapped - handler exists: \(onRejectTapped != nil)") // 향상된 디버그 로그
         onRejectTapped?()
     }
     
@@ -191,6 +200,7 @@ class NotificationTableViewCell: UITableViewCell {
         case .invitation:
             titleLabel.text = "초대장"
             responseButtonsContainer.isHidden = false
+            print("Configuring invitation cell, ID: \(notification.id ?? "unknown"), showing buttons")
         case .weather:
             titleLabel.text = "날씨 알림"
             responseButtonsContainer.isHidden = true

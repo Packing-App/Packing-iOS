@@ -858,7 +858,7 @@ extension HomeViewController {
         let journeyService: JourneyServiceProtocol = JourneyService()
         let notificationsReactor = NotificationsReactor(notificationService: notificationService, journeyService: journeyService)
         
-        let notificationsViewController = NotificationsViewController(reactor: notificationsReactor, journeyService: journeyService)
+        let notificationsViewController = NotificationsViewController(reactor: notificationsReactor)
         notificationsViewController.reactor = notificationsReactor
         
         navigationController?.pushViewController(notificationsViewController, animated: true)

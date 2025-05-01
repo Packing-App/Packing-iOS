@@ -20,7 +20,7 @@ final class NotificationsReactor: Reactor {
         case markAllAsRead
         case deleteNotification(String)
         case selectTab(Int)
-        case respondToInvitation(String, Bool) // Added invitation response action
+        case respondToInvitation(String, Bool) // 초대 응답 액션
     }
     
     enum Mutation {
@@ -30,6 +30,7 @@ final class NotificationsReactor: Reactor {
         case removeNotification(String)
         case setLoading(Bool)
         case setError(Error)
+        case updateInvitationResponseStatus(String, Bool, Bool) // notificationId, isAccepted, isSuccess
     }
     
     struct State {
@@ -40,6 +41,7 @@ final class NotificationsReactor: Reactor {
         var error: Error? = nil
         var unreadCount: Int = 0
         var notificationTypes: [NotificationType?] = [nil, .invitation, .weather, .reminder]
+        var lastRespondedInvitation: (id: String, accepted: Bool, success: Bool)? = nil
         
         var selectedType: NotificationType? {
             // 안전하게 인덱스 범위 확인
@@ -111,19 +113,22 @@ final class NotificationsReactor: Reactor {
                 
                 journeyService.respondToInvitation(notificationId: notificationId, accept: accept)
                     .flatMap { success -> Observable<Mutation> in
+                        // 응답 상태 업데이트 (성공/실패 여부 포함)
+                        let statusMutation = Mutation.updateInvitationResponseStatus(notificationId, accept, success)
+                        
                         if success {
-                            // If successful, mark the notification as read
-                            return Observable.just(Mutation.updateNotification(notificationId, true))
+                            // 성공 시 알림을 읽음 상태로 변경
+                            return Observable.concat([
+                                Observable.just(statusMutation),
+                                Observable.just(Mutation.updateNotification(notificationId, true))
+                            ])
                         } else {
-                            // Handle failure
-                            return Observable.just(Mutation.setError(NSError(
-                                domain: "JourneyServiceError",
-                                code: 1001,
-                                userInfo: [NSLocalizedDescriptionKey: "Failed to respond to invitation"]
-                            )))
+                            // 실패 시 상태만 업데이트
+                            return Observable.just(statusMutation)
                         }
                     }
                     .catch { error in
+                        print("Journey service error: \(error.localizedDescription)")
                         return Observable.just(Mutation.setError(error))
                     },
                 
@@ -159,11 +164,8 @@ final class NotificationsReactor: Reactor {
             
         case let .updateNotification(id, isRead):
             if let index = newState.notifications.firstIndex(where: { $0.id == id }) {
-                // In a real app, you'd need to handle immutable models properly
-                // This is a conceptual approach
+                // 불변 모델을 업데이트하는 개념적 접근 방식
                 var updatedNotifications = newState.notifications
-                // We need to create a new notification with isRead updated
-                // Since NotificationModel is immutable, we'd need a proper way to do this
                 updatedNotifications[index] = NotificationModel(
                     id: updatedNotifications[index].id,
                     userId: updatedNotifications[index].userId,
@@ -176,10 +178,10 @@ final class NotificationsReactor: Reactor {
                 )
                 newState.notifications = updatedNotifications
                 
-                // Recalculate unread count
+                // 읽지 않은 알림 수 재계산
                 newState.unreadCount = newState.notifications.filter { !$0.isRead }.count
                 
-                // Update filtered list if necessary
+                // 필요한 경우 필터링된 목록 업데이트
                 if let type = newState.selectedType {
                     newState.filteredNotifications = newState.notifications.filter { $0.type == type }
                 } else {
@@ -197,6 +199,10 @@ final class NotificationsReactor: Reactor {
             
         case let .setError(error):
             newState.error = error
+            
+        case let .updateInvitationResponseStatus(id, accepted, success):
+            // 가장 최근에 응답한 초대장 정보 저장
+            newState.lastRespondedInvitation = (id: id, accepted: accepted, success: success)
         }
         
         return newState

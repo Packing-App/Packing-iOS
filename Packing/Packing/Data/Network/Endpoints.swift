@@ -165,14 +165,8 @@ enum APIEndpoint: Endpoints {
         assignedTo: String?
     )
     
-    // 준비물 일괄 생성 (테마 템플릿에서 가져오기)
-    case createBulkPackingItems(
-        journeyId: String,
-        templateName: String,
-        selectedItems: [String],
-        mergeDuplicates: Bool
-    )
-    
+    case createBulkPackingItems(journeyId: String, names: [String], categories: [String])
+
     // 추천 준비물에서 선택한 준비물들을 일괄 등록
     case createSelectedRecommendedItems(
         journeyId: String,
@@ -573,14 +567,9 @@ enum APIEndpoint: Endpoints {
             
             return params
             
-        case .createBulkPackingItems(let journeyId, let templateName, let selectedItems, let mergeDuplicates):
-            return [
-                "journeyId": journeyId,
-                "templateName": templateName,
-                "selectedItems": selectedItems,
-                "mergeDuplicates": mergeDuplicates
-            ]
-            
+        case .createBulkPackingItems(let journeyId, let names, let categories):
+            return ["journeyId": journeyId, "names": names, "categories": categories]
+
         case .createSelectedRecommendedItems(let journeyId, let selectedItems, let mergeDuplicates):
             return [
                 "journeyId": journeyId,

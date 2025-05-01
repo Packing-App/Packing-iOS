@@ -10,7 +10,7 @@ import Foundation
 // MARK: - Recommendation Models
 
 struct RecommendationCategory: Codable, Equatable {
-    let name: String
+    let name: String    // 여행 테마
     let items: [RecommendedItem]
 }
 

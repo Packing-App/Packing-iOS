@@ -24,9 +24,8 @@ protocol PackingItemServiceProtocol {
     // 준비물 일괄 생성 (테마 템플릿에서 가져오기)
     func createBulkPackingItems(
         journeyId: String,
-        templateName: String,
-        selectedItems: [String],
-        mergeDuplicates: Bool
+        names: [String],
+        categories: [String]
     ) -> Observable<APIResponse<[PackingItem]>>
     
     // 추천 준비물에서 선택한 준비물들을 일괄 등록
@@ -108,19 +107,12 @@ class PackingItemService: PackingItemServiceProtocol {
         return item
     }
 
-    // 준비물 일괄 생성 (테마 템플릿에서 가져오기)
     func createBulkPackingItems(
         journeyId: String,
-        templateName: String,
-        selectedItems: [String],
-        mergeDuplicates: Bool
+        names: [String],
+        categories: [String]
     ) -> Observable<APIResponse<[PackingItem]>> {
-        let endpoint = APIEndpoint.createBulkPackingItems(
-            journeyId: journeyId,
-            templateName: templateName,
-            selectedItems: selectedItems,
-            mergeDuplicates: mergeDuplicates
-        )
+        let endpoint = APIEndpoint.createBulkPackingItems(journeyId: journeyId, names: names, categories: categories)
         return apiClient.requestWithDateDecoding(endpoint)
     }
     

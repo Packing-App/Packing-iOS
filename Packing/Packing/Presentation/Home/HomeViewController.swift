@@ -856,10 +856,9 @@ extension HomeViewController {
     private func showNotificationsScreen() {
         let notificationService = NotificationService(apiClient: APIClient.shared)
         let journeyService: JourneyServiceProtocol = JourneyService()
-        let notificationsReactor = NotificationsReactor(notificationService: notificationService, journeyService: journeyService)
+//        let notificationsReactor = NotificationsReactor(notificationService: notificationService, journeyService: journeyService)
         
-        let notificationsViewController = NotificationsViewController(reactor: notificationsReactor)
-        notificationsViewController.reactor = notificationsReactor
+        let notificationsViewController = NotificationsViewController(notificationService: notificationService, journeyService: journeyService)
         
         navigationController?.pushViewController(notificationsViewController, animated: true)
     }

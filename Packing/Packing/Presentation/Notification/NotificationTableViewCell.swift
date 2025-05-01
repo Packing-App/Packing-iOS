@@ -2,30 +2,33 @@
 //  NotificationTableViewCell.swift
 //  Packing
 //
-//  Created by 이융의 on 4/30/25.
+//  Created by 이융의 on 5/1/25.
 //
 
 import UIKit
 
-// MARK: - NotificationTableViewCell
 class NotificationTableViewCell: UITableViewCell {
     static let identifier = "NotificationTableViewCell"
     
-    // UI Components
+    // MARK: - Properties
+    var notificationId: String? {
+        didSet {
+            // notificationId가 설정될 때마다 로그 출력
+            print("🔄 Cell \(self.hashValue) notificationId changed: \(oldValue ?? "nil") -> \(notificationId ?? "nil")")
+        }
+    }
+    var invitationCallbackHandler: ((String, Bool) -> Void)?
+    
+    // MARK: - UI Components
     private let containerView = UIView()
     private let titleLabel = UILabel()
     private let dateLabel = UILabel()
     private let contentLabel = UILabel()
     private let unreadIndicator = UIView()
     
-    // Add response buttons for invitation
     let responseButtonsContainer = UIView()
     let acceptButton = UIButton(type: .system)
     let rejectButton = UIButton(type: .system)
-    
-    // Callback for response actions
-    var onAcceptTapped: (() -> Void)?
-    var onRejectTapped: (() -> Void)?
     
     // MARK: - Initialization
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -39,9 +42,9 @@ class NotificationTableViewCell: UITableViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        // Reset callbacks to prevent wrong cell handling
-        onAcceptTapped = nil
-        onRejectTapped = nil
+        
+        // Reset properties
+        notificationId = nil
         
         // Reset button states
         acceptButton.isEnabled = true
@@ -58,83 +61,95 @@ class NotificationTableViewCell: UITableViewCell {
         selectionStyle = .none
         backgroundColor = .clear
         
-        // Container view setup
+        setupContainerView()
+        setupUnreadIndicator()
+        setupLabels()
+        setupResponseButtons()
+    }
+    
+    private func setupContainerView() {
         containerView.backgroundColor = .systemBackground
         containerView.layer.cornerRadius = 12
         containerView.layer.shadowColor = UIColor.black.cgColor
         containerView.layer.shadowOpacity = 0.05
         containerView.layer.shadowRadius = 4
         containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
-        contentView.addSubview(containerView)
         
+        contentView.addSubview(containerView)
         containerView.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
             containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
             containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6)
         ])
-        
-        // Unread indicator setup
+    }
+    
+    private func setupUnreadIndicator() {
         unreadIndicator.backgroundColor = .systemBlue
         unreadIndicator.layer.cornerRadius = 4
-        containerView.addSubview(unreadIndicator)
         
+        containerView.addSubview(unreadIndicator)
         unreadIndicator.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
             unreadIndicator.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
             unreadIndicator.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
             unreadIndicator.widthAnchor.constraint(equalToConstant: 8),
             unreadIndicator.heightAnchor.constraint(equalToConstant: 8)
         ])
-        
-        // Title Label setup
+    }
+    
+    private func setupLabels() {
+        // Title Label
         titleLabel.font = UIFont.preferredFont(forTextStyle: .headline)
         titleLabel.textColor = .label
-        containerView.addSubview(titleLabel)
         
+        containerView.addSubview(titleLabel)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
             titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 12),
             titleLabel.leadingAnchor.constraint(equalTo: unreadIndicator.trailingAnchor, constant: 12),
             titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12)
         ])
         
-        // Date Label setup
+        // Date Label
         dateLabel.font = UIFont.preferredFont(forTextStyle: .caption1)
         dateLabel.textColor = .secondaryLabel
-        containerView.addSubview(dateLabel)
         
+        containerView.addSubview(dateLabel)
         dateLabel.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
             dateLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
             dateLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             dateLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor)
         ])
         
-        // Content Label setup
+        // Content Label
         contentLabel.font = UIFont.preferredFont(forTextStyle: .body)
         contentLabel.textColor = .label
         contentLabel.numberOfLines = 2
-        containerView.addSubview(contentLabel)
         
+        containerView.addSubview(contentLabel)
         contentLabel.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
             contentLabel.topAnchor.constraint(equalTo: dateLabel.bottomAnchor, constant: 8),
             contentLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
             contentLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor)
         ])
-        
-        // Set up response buttons container
-        setupResponseButtons()
     }
     
     private func setupResponseButtons() {
         // Response buttons container
         responseButtonsContainer.backgroundColor = .clear
-        containerView.addSubview(responseButtonsContainer)
         
+        containerView.addSubview(responseButtonsContainer)
         responseButtonsContainer.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
             responseButtonsContainer.topAnchor.constraint(equalTo: contentLabel.bottomAnchor, constant: 12),
             responseButtonsContainer.leadingAnchor.constraint(equalTo: contentLabel.leadingAnchor),
@@ -145,15 +160,16 @@ class NotificationTableViewCell: UITableViewCell {
         
         // Accept button
         acceptButton.setTitle("수락", for: .normal)
-        acceptButton.tintColor = .systemGreen
+        acceptButton.tintColor = .white
         acceptButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
-        acceptButton.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.1)
+        acceptButton.backgroundColor = .systemGreen
         acceptButton.layer.cornerRadius = 8
         acceptButton.contentEdgeInsets = UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
         acceptButton.addTarget(self, action: #selector(acceptButtonTapped), for: .touchUpInside)
-        responseButtonsContainer.addSubview(acceptButton)
         
+        responseButtonsContainer.addSubview(acceptButton)
         acceptButton.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
             acceptButton.topAnchor.constraint(equalTo: responseButtonsContainer.topAnchor),
             acceptButton.leadingAnchor.constraint(equalTo: responseButtonsContainer.leadingAnchor),
@@ -163,15 +179,16 @@ class NotificationTableViewCell: UITableViewCell {
         
         // Reject button
         rejectButton.setTitle("거절", for: .normal)
-        rejectButton.tintColor = .systemRed
+        rejectButton.tintColor = .white
         rejectButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
-        rejectButton.backgroundColor = UIColor.systemRed.withAlphaComponent(0.1)
+        rejectButton.backgroundColor = .systemRed
         rejectButton.layer.cornerRadius = 8
         rejectButton.contentEdgeInsets = UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
         rejectButton.addTarget(self, action: #selector(rejectButtonTapped), for: .touchUpInside)
-        responseButtonsContainer.addSubview(rejectButton)
         
+        responseButtonsContainer.addSubview(rejectButton)
         rejectButton.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
             rejectButton.topAnchor.constraint(equalTo: responseButtonsContainer.topAnchor),
             rejectButton.trailingAnchor.constraint(equalTo: responseButtonsContainer.trailingAnchor),
@@ -183,18 +200,38 @@ class NotificationTableViewCell: UITableViewCell {
         responseButtonsContainer.isHidden = true
     }
     
+    // MARK: - Button Actions
     @objc private func acceptButtonTapped() {
-        print("Accept button tapped - handler exists: \(onAcceptTapped != nil)") // 향상된 디버그 로그
-        onAcceptTapped?()
+        guard let id = notificationId, !id.isEmpty else {
+            print("Error: No notification ID available")
+            return
+        }
+        
+        print("Accept button tapped - ID: \(id)")
+        invitationCallbackHandler?(id, true)
     }
     
     @objc private func rejectButtonTapped() {
-        print("Reject button tapped - handler exists: \(onRejectTapped != nil)") // 향상된 디버그 로그
-        onRejectTapped?()
+        guard let id = notificationId, !id.isEmpty else {
+            print("Error: No notification ID available")
+            return
+        }
+        
+        print("Reject button tapped - ID: \(id)")
+        invitationCallbackHandler?(id, false)
     }
     
-    // MARK: - Configuration
+    // MARK: - Configure Cell
     func configure(with notification: NotificationModel) {
+        // Store notification ID - 중요: 옵셔널 언래핑 확인
+        if let id = notification.id {
+            self.notificationId = id
+            print("⭐️ Cell configured with ID: \(id)")
+        } else {
+            print("⚠️ Warning: Notification has no ID!")
+            self.notificationId = nil
+        }
+        
         // Set notification type as title
         switch notification.type {
         case .invitation:
@@ -209,17 +246,17 @@ class NotificationTableViewCell: UITableViewCell {
             responseButtonsContainer.isHidden = true
         }
         
-        // Date formatting
+        // Format date
         let dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .medium
         dateFormatter.timeStyle = .short
         dateFormatter.doesRelativeDateFormatting = true
         dateLabel.text = dateFormatter.string(from: notification.createdAt)
         
-        // Content
+        // Set content
         contentLabel.text = notification.content
         
-        // Unread indicator
+        // Update unread indicator
         unreadIndicator.isHidden = notification.isRead
     }
 }

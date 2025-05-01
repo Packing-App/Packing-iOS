@@ -185,6 +185,7 @@ class JourneyService: JourneyServiceProtocol {
     
     // MARK: - 여행 초대 응답 (수락/거절)
     func respondToInvitation(notificationId: String, accept: Bool) -> Observable<Bool> {
+        print(#fileID, #function, #line, "- ")
         return apiClient.request(APIEndpoint.respondToInvitation(notificationId: notificationId, accept: accept))
             .map { (response: APIResponse<Bool>) -> Bool in
                 return response.success

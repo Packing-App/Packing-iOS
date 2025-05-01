@@ -4,17 +4,27 @@
 //
 //  Created by 이융의 on 4/30/25.
 //
-
 import UIKit
 import RxSwift
+
+// Add enum for selection mode
+enum JourneySelectionMode {
+    case inviteFriend
+    case addPackingItems
+}
+
 
 // MARK: - JOURNEY SELECTION VIEW CONTROLLER
 
 class JourneySelectionViewController: UIViewController {
     
     // MARK: - Properties
-    var selectedFriend: Friend!
+    var selectedFriend: Friend?
+    var selectedItems: [SelectedRecommendedItem] = []
+    var selectionMode: JourneySelectionMode = .inviteFriend
+    
     private let journeyService = JourneyService()
+    private let packingItemService = PackingItemService()
     private var journeys: [Journey] = []
     private let disposeBag = DisposeBag()
     
@@ -71,9 +81,17 @@ class JourneySelectionViewController: UIViewController {
     // MARK: - Setup
     private func setupUI() {
         view.backgroundColor = .white
-        title = "여행 선택"
         
-        titleLabel.text = "\(selectedFriend.name)님을 초대할 여행을 선택해주세요"
+        // Set title based on mode
+        switch selectionMode {
+        case .inviteFriend:
+            title = "여행 선택"
+            guard let friend = selectedFriend else { return }
+            titleLabel.text = "\(friend.name)님을 초대할 여행을 선택해주세요"
+        case .addPackingItems:
+            title = "여행 선택"
+            titleLabel.text = "준비물을 추가할 여행을 선택해주세요"
+        }
         
         view.addSubview(titleLabel)
         view.addSubview(collectionView)
@@ -101,7 +119,14 @@ class JourneySelectionViewController: UIViewController {
     private func setupBindings() {
         collectionView.rx.modelSelected(Journey.self)
             .subscribe(onNext: { [weak self] journey in
-                self?.inviteFriendToJourney(journey: journey)
+                guard let self = self else { return }
+                
+                switch self.selectionMode {
+                case .inviteFriend:
+                    self.inviteFriendToJourney(journey: journey)
+                case .addPackingItems:
+                    self.addItemsToJourney(journey: journey)
+                }
             })
             .disposed(by: disposeBag)
     }
@@ -136,13 +161,19 @@ class JourneySelectionViewController: UIViewController {
     
     // MARK: - Actions
     private func inviteFriendToJourney(journey: Journey) {
+        guard let friend = selectedFriend else { return }
+        
         loadingIndicator.startAnimating()
         
-        journeyService.inviteParticipant(journeyId: journey.id, email: selectedFriend.email)
+        journeyService.inviteParticipant(journeyId: journey.id, email: friend.email)
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] response in
                 self?.loadingIndicator.stopAnimating()
-                self?.showSuccessAlert(journey: journey)
+                self?.showSuccessAlert(
+                    title: "초대 완료",
+                    message: "\(friend.name)님을 '\(journey.title)' 여행에 초대했습니다.",
+                    shouldNavigateToMain: true
+                )
             }, onError: { [weak self] error in
                 self?.loadingIndicator.stopAnimating()
                 self?.showErrorAlert(message: error.localizedDescription)
@@ -150,16 +181,53 @@ class JourneySelectionViewController: UIViewController {
             .disposed(by: disposeBag)
     }
     
+    private func addItemsToJourney(journey: Journey) {
+        loadingIndicator.startAnimating()
+        
+        // Extract names and categories from selectedItems
+        let names = selectedItems.map { $0.name }
+        let categories = selectedItems.map { $0.category }
+        
+        // Call the service to create bulk packing items
+        packingItemService.createBulkPackingItems(
+            journeyId: journey.id,
+            names: names,
+            categories: categories
+        )
+        .observe(on: MainScheduler.instance)
+        .subscribe(onNext: { [weak self] response in
+            self?.loadingIndicator.stopAnimating()
+            
+            let itemCount = names.count
+            let itemCountText = itemCount > 1 ? "\(itemCount)개의 준비물이" : "준비물이"
+            
+            self?.showSuccessAlert(
+                title: "준비물 추가 완료",
+                message: "\(itemCountText) '\(journey.title)' 여행에 추가되었습니다.",
+                shouldNavigateToMain: true
+            )
+        }, onError: { [weak self] error in
+            self?.loadingIndicator.stopAnimating()
+            self?.showErrorAlert(message: error.localizedDescription)
+        })
+        .disposed(by: disposeBag)
+    }
+    
     // MARK: - Alerts
-    private func showSuccessAlert(journey: Journey) {
+    private func showSuccessAlert(title: String, message: String, shouldNavigateToMain: Bool = false) {
         let alert = UIAlertController(
-            title: "초대 완료",
-            message: "\(selectedFriend.name)님을 '\(journey.title)' 여행에 초대했습니다.",
+            title: title,
+            message: message,
             preferredStyle: .alert
         )
         
         alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
-            self?.navigationController?.popViewController(animated: true)
+            if shouldNavigateToMain {
+                // Navigate to main screen
+                AuthCoordinator.shared.showMainScreen()
+            } else {
+                self?.navigationController?.popViewController(animated: true)
+            }
         })
         
         present(alert, animated: true)

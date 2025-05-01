@@ -82,7 +82,8 @@ class ThemeTemplateViewController: UIViewController, View {
         // 비활성화 상태로 시작 (선택된 항목이 없기 때문)
         button.isEnabled = false
         button.alpha = 0.7
-        
+        button.addTarget(self, action: #selector(addSelectedItemsButtonTapped), for: .touchUpInside)
+
         return button
     }()
     
@@ -241,6 +242,33 @@ class ThemeTemplateViewController: UIViewController, View {
             selectionCountLabel.centerXAnchor.constraint(equalTo: selectionCountView.centerXAnchor),
             selectionCountLabel.centerYAnchor.constraint(equalTo: selectionCountView.centerYAnchor)
         ])
+    }
+    
+    
+    @objc private func addSelectedItemsButtonTapped() {
+        guard let reactor = reactor else { return }
+        
+        // Collect selected items information
+        var selectedRecommendedItems: [SelectedRecommendedItem] = []
+        
+        for indexPath in selectedItems {
+            if let category = reactor.currentState.categories[safe: indexPath.section],
+               let items = reactor.currentState.groupedItems[category],
+               indexPath.row < items.count {
+                let item = items[indexPath.row]
+                let selectedItem = SelectedRecommendedItem(
+                    name: item.name,
+                    category: item.category
+                )
+                selectedRecommendedItems.append(selectedItem)
+            }
+        }
+        
+        // Show journey selection view
+        let journeySelectionVC = JourneySelectionViewController()
+        journeySelectionVC.selectedItems = selectedRecommendedItems
+        journeySelectionVC.selectionMode = .addPackingItems
+        navigationController?.pushViewController(journeySelectionVC, animated: true)
     }
     
     private func showErrorAlert(message: String) {

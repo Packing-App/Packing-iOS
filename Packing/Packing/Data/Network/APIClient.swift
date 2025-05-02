@@ -77,7 +77,6 @@ class APIClient: APIClientProtocol {
             // 인증이 필요한 endpoints에는 token 추가
             if self.requiresAuthentication(endpoint) {
                 if let token = self.tokenManager.accessToken {
-//                    print("Current Token: \(token)")
                     request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
                 } else {
                     observer.onError(NetworkError.unauthorized(nil))
@@ -85,7 +84,6 @@ class APIClient: APIClientProtocol {
                 }
             }
             
-            // HTTP body 설정
             // HTTP body 설정 (GET 요청에는 body를 설정하지 않음)
             if endpoint.method != .get, let params = endpoint.parameters {
                 do {
@@ -95,6 +93,7 @@ class APIClient: APIClientProtocol {
                     return Disposables.create()
                 }
             }
+            
             // 네트워크 요청 실행
             let task = self.session.dataTask(with: request) { data, response, error in
                 if let error = error {
@@ -140,16 +139,27 @@ class APIClient: APIClientProtocol {
                         observer.onError(NetworkError.decodingFailed(error))
                     }
                 case 401:
-                    if let data = data {
-                        do {
-                            let errorResponse = try JSONDecoder().decode(ErrorResponse.self, from: data)
-                            observer.onError(NetworkError.unauthorized(errorResponse.message))
-                        } catch {
-                            observer.onError(NetworkError.unauthorized(nil))
-                        }
-                    } else {
+                    // endpoint 가 refreshToken 인데, 401 에러다! -> networkerror 뱉고 로그아웃 해야함.
+                    if case .refreshToken = endpoint {
                         observer.onError(NetworkError.unauthorized(nil))
+                        return
                     }
+                    
+                    self.refreshToken()
+                        .flatMap { _ -> Observable<T> in
+                            // 토큰 갱신 성공 시 원래 요청 재시도
+                            return self.request(endpoint)
+                        }
+                        .subscribe(
+                            onNext: { result in
+                                observer.onNext(result)
+                                observer.onCompleted()
+                            },
+                            onError: { error in
+                                observer.onError(error)
+                            }
+                        )
+                        .disposed(by: DisposeBag())
                     
                 case 404:
                     observer.onError(NetworkError.notFound)
@@ -268,17 +278,27 @@ class APIClient: APIClientProtocol {
                     }
                 
                 case 401:
-                    if let data = data {
-                        do {
-                            let errorResponse = try JSONDecoder().decode(ErrorResponse.self, from: data)
-                            observer.onError(NetworkError.unauthorized(errorResponse.message))
-                        } catch {
-                            observer.onError(NetworkError.unauthorized(nil))
-                        }
-                    } else {
+                    // endpoint 가 refreshToken 인데, 401 에러다! -> networkerror 뱉고 로그아웃 해야함.
+                    if case .refreshToken = endpoint {
                         observer.onError(NetworkError.unauthorized(nil))
+                        return
                     }
                     
+                    self.refreshToken()
+                        .flatMap { _ -> Observable<T> in
+                            // 토큰 갱신 성공 시 원래 요청 재시도
+                            return self.requestWithDateDecoding(endpoint)
+                        }
+                        .subscribe(
+                            onNext: { result in
+                                observer.onNext(result)
+                                observer.onCompleted()
+                            },
+                            onError: { error in
+                                observer.onError(error)
+                            }
+                        )
+                        .disposed(by: DisposeBag())
                 case 404:
                     observer.onError(NetworkError.notFound)
                     
@@ -315,8 +335,34 @@ class APIClient: APIClientProtocol {
         }
     }
     
-    // MARK: - 토큰 갱신 및 재시도 로직
     
+    private func refreshToken() -> Observable<TokenData> {
+        guard let refreshToken = tokenManager.refreshToken else {
+            tokenManager.clearTokens()
+            return Observable.error(NetworkError.unauthorized(nil))
+        }
+        
+        let refreshEndpoint = APIEndpoint.refreshToken(refreshToken: refreshToken)
+        
+        return self.request(refreshEndpoint)
+            .map { (response: APIResponse<TokenData>) -> TokenData in
+                guard let tokenData = response.data else {
+                    throw NetworkError.invalidResponse
+                    // return Observable.error(NetworkError.invalidResponse) 는 아닌지?
+                }
+                self.tokenManager.accessToken = tokenData.accessToken
+                self.tokenManager.refreshToken = tokenData.refreshToken
+                
+                return tokenData
+            }
+            .catch { error in
+                self.tokenManager.clearTokens()
+                return Observable.error(NetworkError.unauthorized(nil))
+            }
+    }
+    
+    // MARK: - 토큰 갱신 및 재시도 로직
+    /*
     private func refreshTokenAndRetry<T: Decodable>(
         endpoint: APIEndpoint,
         observer: AnyObserver<T>
@@ -353,7 +399,7 @@ class APIClient: APIClientProtocol {
         })
         .disposed(by: DisposeBag())
     }
-
+*/
     
     // 멀티파트 폼 데이터 요청 (이미지 업로드용)
     func uploadImage(imageData: Data, endpoint: APIEndpoint) -> Observable<ProfileImageResponse> {
@@ -424,16 +470,22 @@ class APIClient: APIClientProtocol {
                     }
                     
                 case 401:
-                    if let data = data {
-                        do {
-                            let errorResponse = try JSONDecoder().decode(ErrorResponse.self, from: data)
-                            observer.onError(NetworkError.unauthorized(errorResponse.message))
-                        } catch {
-                            observer.onError(NetworkError.unauthorized(nil))
+                    
+                    self.refreshToken()
+                        .flatMap { _ -> Observable<ProfileImageResponse> in
+                            // 토큰 갱신 성공 시 원래 요청 재시도
+                            return self.uploadImage(imageData: imageData, endpoint: endpoint)
                         }
-                    } else {
-                        observer.onError(NetworkError.unauthorized(nil))
-                    }
+                        .subscribe(
+                            onNext: { result in
+                                observer.onNext(result)
+                                observer.onCompleted()
+                            },
+                            onError: { error in
+                                observer.onError(error)
+                            }
+                        )
+                        .disposed(by: DisposeBag())
                 default:
                     if let data = data {
                         do {
@@ -463,7 +515,7 @@ extension APIClientProtocol {
         return try await withCheckedThrowingContinuation { continuation in
             var disposable: Disposable?
             
-            disposable = requestWithDateDecoding(endpoint)
+            disposable = request(endpoint)
                 .subscribe(
                     onNext: { (response: T) in
                         continuation.resume(returning: response)

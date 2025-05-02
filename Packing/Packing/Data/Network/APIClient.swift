@@ -337,7 +337,9 @@ class APIClient: APIClientProtocol {
     
     
     private func refreshToken() -> Observable<TokenData> {
+        print(#fileID, #function, #line, "- ")
         guard let refreshToken = tokenManager.refreshToken else {
+            print("refreshToken is nil or unavailable")
             tokenManager.clearTokens()
             return Observable.error(NetworkError.unauthorized(nil))
         }
@@ -347,8 +349,8 @@ class APIClient: APIClientProtocol {
         return self.request(refreshEndpoint)
             .map { (response: APIResponse<TokenData>) -> TokenData in
                 guard let tokenData = response.data else {
+                    print("tokenData is invalid")
                     throw NetworkError.invalidResponse
-                    // return Observable.error(NetworkError.invalidResponse) 는 아닌지?
                 }
                 self.tokenManager.accessToken = tokenData.accessToken
                 self.tokenManager.refreshToken = tokenData.refreshToken
@@ -356,50 +358,11 @@ class APIClient: APIClientProtocol {
                 return tokenData
             }
             .catch { error in
+                print("refreshToken error: \(error.localizedDescription)")
                 self.tokenManager.clearTokens()
                 return Observable.error(NetworkError.unauthorized(nil))
             }
     }
-    
-    // MARK: - 토큰 갱신 및 재시도 로직
-    /*
-    private func refreshTokenAndRetry<T: Decodable>(
-        endpoint: APIEndpoint,
-        observer: AnyObserver<T>
-    ) {
-        guard let refreshToken = tokenManager.refreshToken else {
-            observer.onError(NetworkError.unauthorized(nil))
-            return
-        }
-        
-        let refreshEndpoint = APIEndpoint.refreshToken(refreshToken: refreshToken)
-        let refreshRequest: Observable<APIResponse<TokenData>> = self.request(refreshEndpoint)
-        
-        refreshRequest.subscribe(onNext: { [weak self] (authResponse: APIResponse<TokenData>) in
-            guard let self = self else { return }
-            
-            // 새 토큰 저장
-            self.tokenManager.accessToken = authResponse.data?.accessToken
-            
-            // 원래 요청 재시도
-            let originalRequest: Observable<T> = self.request(endpoint)
-            
-            originalRequest.subscribe(onNext: { (result: T) in
-                observer.onNext(result)
-                observer.onCompleted()
-            }, onError: { error in
-                observer.onError(error)
-            })
-            .disposed(by: DisposeBag())
-            
-        }, onError: { [weak self] error in
-            // 토큰 갱신 실패, 로그아웃 필요
-            self?.tokenManager.clearTokens()
-            observer.onError(NetworkError.unauthorized(nil))
-        })
-        .disposed(by: DisposeBag())
-    }
-*/
     
     // 멀티파트 폼 데이터 요청 (이미지 업로드용)
     func uploadImage(imageData: Data, endpoint: APIEndpoint) -> Observable<ProfileImageResponse> {

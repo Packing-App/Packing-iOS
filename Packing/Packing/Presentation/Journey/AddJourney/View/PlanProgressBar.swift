@@ -172,8 +172,8 @@ class PlanProgressBar: UIView {
         // 레이아웃 설정
         NSLayoutConstraint.activate([
             // 스택 뷰 레이아웃
-            stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 40),
-            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -40),
+            stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 20),
+            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -20),
             stackView.centerYAnchor.constraint(equalTo: centerYAnchor),
             
             // 프로그레스 라인 레이아웃

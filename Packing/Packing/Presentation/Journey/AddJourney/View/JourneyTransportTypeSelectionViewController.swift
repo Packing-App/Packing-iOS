@@ -1,3 +1,10 @@
+//
+//  JourneyTransportTypeSelectionViewController.swift
+//  Packing
+//
+//  Created by 이융의 on 4/17/25.
+//
+
 import UIKit
 import ReactorKit
 import RxSwift
@@ -15,14 +22,16 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
         let attachmentString = NSMutableAttributedString(string: "")
         let imageAttachment: NSTextAttachment = NSTextAttachment()
         imageAttachment.image = UIImage(named: "logoIconWhite")
-        imageAttachment.bounds = CGRect(x: 0, y: -7, width: 24, height: 24)
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        let iconSize: CGFloat = isSmallDevice ? 20 : 24
+        imageAttachment.bounds = CGRect(x: 0, y: -6, width: iconSize, height: iconSize)
         attachmentString.append(NSAttributedString(attachment: imageAttachment))
         attachmentString.append(NSAttributedString(string: " PACKING"))
         label.attributedText = attachmentString
         label.sizeToFit()
         
         label.textAlignment = .center
-        label.font = .systemFont(ofSize: 20, weight: .semibold)
+        label.font = .systemFont(ofSize: isSmallDevice ? 18 : 20, weight: .semibold)
         label.textColor = .white
         label.translatesAutoresizingMaskIntoConstraints = false
         
@@ -50,7 +59,8 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
     private let questionLabel: UILabel = {
         let label = UILabel()
         label.text = "여행을 어떻게 가시나요?"
-        label.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        label.font = UIFont.systemFont(ofSize: isSmallDevice ? 16 : 17, weight: .semibold)
         label.textColor = .black
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -60,6 +70,7 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
     private let transportStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
+        let isSmallDevice = UIScreen.main.bounds.height < 700
         stackView.spacing = 10
         stackView.distribution = .fillEqually
         stackView.translatesAutoresizingMaskIntoConstraints = false
@@ -81,7 +92,8 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
         button.setTitleColor(.white, for: .normal)
         button.backgroundColor = .lightGray // Start with disabled state
         button.layer.cornerRadius = 8
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        button.titleLabel?.font = UIFont.systemFont(ofSize: isSmallDevice ? 15 : 16, weight: .medium)
         button.isEnabled = false
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
@@ -143,7 +155,6 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
                 self?.nextButton.backgroundColor = canProceed ? .black : .lightGray
             })
             .disposed(by: disposeBag)
-        
     }
     
     // MARK: - Setup UI
@@ -151,6 +162,10 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(customView: navigationTitleLabel)
         
         view.backgroundColor = .systemGray6
+        
+        // 디바이스 크기에 따른 조정
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        let containerHeight: CGFloat = isSmallDevice ? 360 : 450
         
         // Add progress bar
         view.addSubview(planProgressBar)
@@ -175,34 +190,35 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
             planProgressBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             planProgressBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             planProgressBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            planProgressBar.heightAnchor.constraint(equalToConstant: 40),
+            planProgressBar.heightAnchor.constraint(equalToConstant: isSmallDevice ? 15 : 20),
             
             // Container view constraints
-            containerView.topAnchor.constraint(equalTo: planProgressBar.bottomAnchor, constant: 30),
+            containerView.topAnchor.constraint(equalTo: planProgressBar.bottomAnchor, constant: 40),
             containerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             containerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            containerView.heightAnchor.constraint(equalToConstant: 450),
+            containerView.heightAnchor.constraint(equalToConstant: containerHeight),
             
             // Question label constraints
-            questionLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 30),
+            questionLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: isSmallDevice ? 20 : 30),
             questionLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             questionLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             
             // Transport stack view constraints
-            transportStackView.topAnchor.constraint(equalTo: questionLabel.bottomAnchor, constant: 20),
-            transportStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 30),
-            transportStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -30),
-            transportStackView.bottomAnchor.constraint(lessThanOrEqualTo: containerView.bottomAnchor, constant: -20),
+            transportStackView.topAnchor.constraint(equalTo: questionLabel.bottomAnchor, constant: isSmallDevice ? 15 : 20),
+            transportStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: isSmallDevice ? 20 : 30),
+            transportStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: isSmallDevice ? -20 : -30),
+            transportStackView.bottomAnchor.constraint(lessThanOrEqualTo: containerView.bottomAnchor, constant: -10),
             
             // Skip button constraints
             skipButton.topAnchor.constraint(equalTo: containerView.bottomAnchor, constant: 20),
             skipButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
-            // Next button constraints
-            nextButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            // Next button constraints - 모든 화면에서 보이도록 조정
+            nextButton.topAnchor.constraint(equalTo: skipButton.bottomAnchor, constant: 20),
             nextButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             nextButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            nextButton.heightAnchor.constraint(equalToConstant: 50)
+            nextButton.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10),
+            nextButton.heightAnchor.constraint(equalToConstant: isSmallDevice ? 45 : 50)
         ])
     }
     
@@ -218,6 +234,8 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
         
         // TransportType.allCases와 크기가 동일한지 확인
         assert(transportOptions.count == TransportType.allCases.count, "transportOptions와 TransportType.allCases의 개수가 일치해야 합니다")
+        
+        let isSmallDevice = UIScreen.main.bounds.height < 700
         
         for (i, (icon, title)) in transportOptions.enumerated() {
             // transportType을 직접 연결하여 인덱스 문제 방지
@@ -271,6 +289,8 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
         containerView.layer.borderColor = UIColor.systemGray5.cgColor
         containerView.translatesAutoresizingMaskIntoConstraints = false
         
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        
         let iconImageView = UIImageView()
         iconImageView.image = UIImage(systemName: icon)
         iconImageView.tintColor = UIColor.systemBlue
@@ -281,7 +301,7 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
         titleLabel.text = title
         titleLabel.textAlignment = .center
         titleLabel.textColor = .black
-        titleLabel.font = UIFont.systemFont(ofSize: 16)
+        titleLabel.font = UIFont.systemFont(ofSize: isSmallDevice ? 14 : 16)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
         containerView.addSubview(iconImageView)
@@ -292,15 +312,15 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
         titleLabel.tag = 1002
         
         NSLayoutConstraint.activate([
-            containerView.heightAnchor.constraint(equalToConstant: 50),
+            containerView.heightAnchor.constraint(equalToConstant: isSmallDevice ? 40 : 50),
             
-            iconImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            iconImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: isSmallDevice ? 15 : 20),
             iconImageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            iconImageView.widthAnchor.constraint(equalToConstant: 24),
-            iconImageView.heightAnchor.constraint(equalToConstant: 24),
+            iconImageView.widthAnchor.constraint(equalToConstant: isSmallDevice ? 20 : 24),
+            iconImageView.heightAnchor.constraint(equalToConstant: isSmallDevice ? 20 : 24),
             
-            titleLabel.leadingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: 20),
-            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            titleLabel.leadingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: isSmallDevice ? 15 : 20),
+            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: isSmallDevice ? -15 : -20),
             titleLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor)
         ])
         
@@ -342,3 +362,6 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
         selectedTransportOption = selectedView
     }
 }
+
+
+

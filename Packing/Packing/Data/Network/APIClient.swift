@@ -357,7 +357,7 @@ class APIClient: APIClientProtocol {
     }
     
     
-    private func refreshToken() -> Observable<TokenData> {
+    private func refreshToken() -> Observable<String> {
         print(#fileID, #function, #line, "- ")
         guard let refreshToken = tokenManager.refreshToken else {
             print("refreshToken is nil or unavailable")
@@ -369,15 +369,14 @@ class APIClient: APIClientProtocol {
         let refreshEndpoint = APIEndpoint.refreshToken(refreshToken: refreshToken)
         
         return self.request(refreshEndpoint)
-            .map { (response: APIResponse<TokenData>) -> TokenData in
+            .map { (response: APIResponse<RefreshTokenResponse>) -> String in
                 guard let tokenData = response.data else {
                     print("tokenData is invalid")
                     throw NetworkError.invalidResponse
                 }
                 self.tokenManager.accessToken = tokenData.accessToken
-                self.tokenManager.refreshToken = tokenData.refreshToken
                 
-                return tokenData
+                return tokenData.accessToken
             }
             .catch { error in
                 print("refreshToken error: \(error.localizedDescription)")

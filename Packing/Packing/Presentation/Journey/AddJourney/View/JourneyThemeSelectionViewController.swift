@@ -194,7 +194,7 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         view.addSubview(nextButton)
         
         let isSmallDevice = UIScreen.main.bounds.height < 700
-        let containerHeight: CGFloat = isSmallDevice ? 430 : 520
+        let containerHeight: CGFloat = isSmallDevice ? 430 : 500
 
         NSLayoutConstraint.activate([
             // Progress bar constraints

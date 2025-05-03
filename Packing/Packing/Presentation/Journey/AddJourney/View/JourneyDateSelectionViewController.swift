@@ -547,7 +547,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
     }
     
     private func setupWeekdaysLabels() {
-        let weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+        let weekdays = ["일", "월", "화", "수", "목", "금", "토"]
         let isSmallDevice = UIScreen.main.bounds.height < 700
 
         for weekday in weekdays {
@@ -555,7 +555,13 @@ class JourneyDateSelectionViewController: UIViewController, View {
             label.text = weekday
             label.textAlignment = .center
             label.font = UIFont.systemFont(ofSize: isSmallDevice ? 12 : 14)
-            label.textColor = .darkGray
+            
+            if weekday == "일" {
+                label.textColor = .systemRed
+            } else {
+                label.textColor = .darkGray
+            }
+            
             weekdaysStackView.addArrangedSubview(label)
         }
     }
@@ -590,11 +596,14 @@ class JourneyDateSelectionViewController: UIViewController, View {
         // Create a calendar grid with adaptive button sizes
         let isSmallDevice = UIScreen.main.bounds.height < 700
         
-//        let buttonSize: CGFloat = (calendarView.bounds.width > 0 ? calendarView.bounds.width : UIScreen.main.bounds.width - 60) / 7
-
-        // 달력 그리드 동적 크기 계산
-        let calendarWidth = calendarView.bounds.width > 0 ? calendarView.bounds.width : UIScreen.main.bounds.width - 80
-        let buttonSize = min(calendarWidth / 7, isSmallDevice ? 36 : 45)
+        // 강제로 레이아웃 업데이트하여 실제 너비 확보
+        calendarView.layoutIfNeeded()
+        
+        // 버튼 너비는 요일 칼럼과 일치하도록 계산
+        let buttonWidth: CGFloat = (calendarView.bounds.width > 0 ? calendarView.bounds.width : UIScreen.main.bounds.width - 80) / 7
+        
+        // 버튼 높이는 너비보다 작게 설정하여 세로 간격 감소
+        let buttonHeight: CGFloat = isSmallDevice ? buttonWidth * 0.8 : buttonWidth * 0.9
         
         let rows = 6 // Max number of rows needed for any month
         
@@ -605,16 +614,16 @@ class JourneyDateSelectionViewController: UIViewController, View {
                 
                 let button = UIButton(type: .system)
                 button.frame = CGRect(
-                    x: CGFloat(col) * buttonSize,
-                    y: CGFloat(row) * buttonSize,
-                    width: buttonSize,
-                    height: buttonSize
+                    x: CGFloat(col) * buttonWidth,
+                    y: CGFloat(row) * buttonHeight,
+                    width: buttonWidth - 4,
+                    height: buttonHeight - 4
                 )
                 
                 // Configure button appearance
-                let fontSize: CGFloat = isSmallDevice ? 13 : 15
+                let fontSize: CGFloat = isSmallDevice ? 12 : 14
                 button.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
-                button.layer.cornerRadius = buttonSize / 2
+                button.layer.cornerRadius = buttonHeight / 2.4
                 button.tag = dayNumber
                 
                 if dayNumber > 0 && dayNumber <= numberOfDays {
@@ -637,7 +646,6 @@ class JourneyDateSelectionViewController: UIViewController, View {
                 calendarDayButtons.append(button)
             }
         }
-        
         // Highlight selected dates
         highlightSelectedDates()
     }
@@ -711,7 +719,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
                 while currentDate < arrivalDate {
                     if let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate) {
                         if nextDate < arrivalDate {
-                            highlightDate(nextDate, withColor: UIColor.main.withAlphaComponent(0.3))
+                            highlightDate(nextDate, withColor: UIColor.main.withAlphaComponent(0.4))
                         }
                         currentDate = nextDate
                     } else {
@@ -734,6 +742,10 @@ class JourneyDateSelectionViewController: UIViewController, View {
                 if button.tag == day {
                     button.backgroundColor = color
                     button.setTitleColor(.white, for: .normal)
+                    // make bold font
+                    let isSmallDevice = UIScreen.main.bounds.height < 700
+                    let fontSize: CGFloat = isSmallDevice ? 12 : 14
+                    button.titleLabel?.font = UIFont.boldSystemFont(ofSize: fontSize)
                     break
                 }
             }

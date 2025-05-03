@@ -22,14 +22,16 @@ class JourneyDateSelectionViewController: UIViewController, View {
         let attachmentString = NSMutableAttributedString(string: "")
         let imageAttachment: NSTextAttachment = NSTextAttachment()
         imageAttachment.image = UIImage(named: "logoIconWhite")
-        imageAttachment.bounds = CGRect(x: 0, y: -7, width: 24, height: 24)
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        let iconSize: CGFloat = isSmallDevice ? 20 : 24
+        imageAttachment.bounds = CGRect(x: 0, y: -6, width: iconSize, height: iconSize)
         attachmentString.append(NSAttributedString(attachment: imageAttachment))
         attachmentString.append(NSAttributedString(string: " PACKING"))
         label.attributedText = attachmentString
         label.sizeToFit()
         
         label.textAlignment = .center
-        label.font = .systemFont(ofSize: 20, weight: .semibold)
+        label.font = .systemFont(ofSize: isSmallDevice ? 18 : 20, weight: .semibold)
         label.textColor = .white
         label.translatesAutoresizingMaskIntoConstraints = false
         
@@ -57,7 +59,8 @@ class JourneyDateSelectionViewController: UIViewController, View {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "여행 정보를 입력해주세요"
-        label.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        label.font = UIFont.systemFont(ofSize: isSmallDevice ? 16 : 17, weight: .semibold)
         label.textColor = .black
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -148,7 +151,8 @@ class JourneyDateSelectionViewController: UIViewController, View {
         config.background.backgroundColor = .white
         button.configuration = config
         
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 12)
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        button.titleLabel?.font = UIFont.systemFont(ofSize: isSmallDevice ? 10 : 12)
         button.tintColor = .gray
         button.layer.cornerRadius = 10
         button.layer.borderWidth = 1
@@ -166,7 +170,8 @@ class JourneyDateSelectionViewController: UIViewController, View {
         config.background.backgroundColor = .white
         button.configuration = config
         
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 12)
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        button.titleLabel?.font = UIFont.systemFont(ofSize: isSmallDevice ? 10 : 12)
         button.tintColor = .gray
         button.layer.cornerRadius = 10
         button.layer.borderWidth = 1
@@ -195,7 +200,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
     private let monthYearLabel: UILabel = {
         let label = UILabel()
         label.text = "2024년 5월"
-        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        label.font = UIFont.systemFont(ofSize: 15, weight: .medium)
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -233,7 +238,8 @@ class JourneyDateSelectionViewController: UIViewController, View {
         config.cornerStyle = .medium
         button.configuration = config
         
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        button.titleLabel?.font = UIFont.systemFont(ofSize: isSmallDevice ? 15 : 16, weight: .medium)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -442,6 +448,10 @@ class JourneyDateSelectionViewController: UIViewController, View {
 
         view.backgroundColor = .systemGray6
         
+        // 디바이스 크기에 따른 조정
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        let containerHeight: CGFloat = isSmallDevice ? 450 : 560
+        
         // Add progress bar
         view.addSubview(planProgressBar)
 
@@ -479,71 +489,72 @@ class JourneyDateSelectionViewController: UIViewController, View {
             planProgressBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             planProgressBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             planProgressBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            planProgressBar.heightAnchor.constraint(equalToConstant: 40),
+            planProgressBar.heightAnchor.constraint(equalToConstant: isSmallDevice ? 15 : 20),
             
             // Container view constraints
             containerView.topAnchor.constraint(equalTo: planProgressBar.bottomAnchor, constant: 30),
             containerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             containerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            containerView.heightAnchor.constraint(equalToConstant: 560),
+            containerView.heightAnchor.constraint(equalToConstant: containerHeight),
             
             // Title label constraints
-            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 20),
+            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: isSmallDevice ? 15 : 20),
             titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             
             // Departure button constraints
-            departureButton.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
+            departureButton.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: isSmallDevice ? 15 : 20),
             departureButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             departureButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-            departureButton.heightAnchor.constraint(equalToConstant: 45),
+            departureButton.heightAnchor.constraint(equalToConstant: isSmallDevice ? 40 : 45),
             
             // Destination button constraints
-            destinationButton.topAnchor.constraint(equalTo: departureButton.bottomAnchor, constant: 10),
+            destinationButton.topAnchor.constraint(equalTo: departureButton.bottomAnchor, constant: isSmallDevice ? 8 : 10),
             destinationButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             destinationButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-            destinationButton.heightAnchor.constraint(equalToConstant: 45),
+            destinationButton.heightAnchor.constraint(equalToConstant: isSmallDevice ? 40 : 45),
             
             // Date stack view constraints
-            dateStackView.topAnchor.constraint(equalTo: destinationButton.bottomAnchor, constant: 15),
+            dateStackView.topAnchor.constraint(equalTo: destinationButton.bottomAnchor, constant: isSmallDevice ? 10 : 15),
             dateStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             dateStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-            dateStackView.heightAnchor.constraint(equalToConstant: 40),
+            dateStackView.heightAnchor.constraint(equalToConstant: isSmallDevice ? 35 : 40),
             
             // Month control stack view constraints
-            monthControlStackView.topAnchor.constraint(equalTo: dateStackView.bottomAnchor, constant: 20),
+            monthControlStackView.topAnchor.constraint(equalTo: dateStackView.bottomAnchor, constant: isSmallDevice ? 15 : 20),
             monthControlStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             monthControlStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-            monthControlStackView.heightAnchor.constraint(equalToConstant: 30),
+            monthControlStackView.heightAnchor.constraint(equalToConstant: isSmallDevice ? 25 : 30),
             
             // Weekdays stack view constraints
-            weekdaysStackView.topAnchor.constraint(equalTo: monthControlStackView.bottomAnchor, constant: 15),
+            weekdaysStackView.topAnchor.constraint(equalTo: monthControlStackView.bottomAnchor, constant: isSmallDevice ? 10 : 15),
             weekdaysStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             weekdaysStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-            weekdaysStackView.heightAnchor.constraint(equalToConstant: 30),
+            weekdaysStackView.heightAnchor.constraint(equalToConstant: isSmallDevice ? 25 : 30),
             
             // Calendar view constraints
-            calendarView.topAnchor.constraint(equalTo: weekdaysStackView.bottomAnchor, constant: 10),
+            calendarView.topAnchor.constraint(equalTo: weekdaysStackView.bottomAnchor, constant: isSmallDevice ? 5 : 10),
             calendarView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             calendarView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
-            calendarView.bottomAnchor.constraint(lessThanOrEqualTo: containerView.bottomAnchor, constant: -20),
+            calendarView.bottomAnchor.constraint(lessThanOrEqualTo: containerView.bottomAnchor, constant: -15),
             
             // Next button constraints
             nextButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
             nextButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             nextButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            nextButton.heightAnchor.constraint(equalToConstant: 50)
+            nextButton.heightAnchor.constraint(equalToConstant: isSmallDevice ? 45 : 50)
         ])
     }
     
     private func setupWeekdaysLabels() {
         let weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
-        
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+
         for weekday in weekdays {
             let label = UILabel()
             label.text = weekday
             label.textAlignment = .center
-            label.font = UIFont.systemFont(ofSize: 14)
+            label.font = UIFont.systemFont(ofSize: isSmallDevice ? 12 : 14)
             label.textColor = .darkGray
             weekdaysStackView.addArrangedSubview(label)
         }
@@ -576,8 +587,15 @@ class JourneyDateSelectionViewController: UIViewController, View {
         let numberOfDays = rangeOfDays.count
         let firstWeekday = calendar.component(.weekday, from: firstDayOfMonth) - 1 // 0-based index for our grid
         
-        // Create a 7x6 grid for the calendar
-        let buttonSize: CGFloat = (calendarView.bounds.width > 0 ? calendarView.bounds.width : UIScreen.main.bounds.width - 60) / 7
+        // Create a calendar grid with adaptive button sizes
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        
+//        let buttonSize: CGFloat = (calendarView.bounds.width > 0 ? calendarView.bounds.width : UIScreen.main.bounds.width - 60) / 7
+
+        // 달력 그리드 동적 크기 계산
+        let calendarWidth = calendarView.bounds.width > 0 ? calendarView.bounds.width : UIScreen.main.bounds.width - 80
+        let buttonSize = min(calendarWidth / 7, isSmallDevice ? 36 : 45)
+        
         let rows = 6 // Max number of rows needed for any month
         
         for row in 0..<rows {
@@ -594,7 +612,8 @@ class JourneyDateSelectionViewController: UIViewController, View {
                 )
                 
                 // Configure button appearance
-                button.titleLabel?.font = UIFont.systemFont(ofSize: 15)
+                let fontSize: CGFloat = isSmallDevice ? 13 : 15
+                button.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
                 button.layer.cornerRadius = buttonSize / 2
                 button.tag = dayNumber
                 
@@ -719,169 +738,5 @@ class JourneyDateSelectionViewController: UIViewController, View {
                 }
             }
         }
-    }
-}
-
-// MARK: - LocationSearchViewController
-class LocationSearchViewController: UIViewController {
-    
-    enum SearchType {
-        case departure
-        case destination
-    }
-    
-    private let searchType: SearchType
-    var completion: ((String) -> Void)?
-    
-    // MARK: - UI Elements
-    private let searchBar: UISearchBar = {
-        let searchBar = UISearchBar()
-        searchBar.placeholder = "여행지 검색"
-        searchBar.translatesAutoresizingMaskIntoConstraints = false
-        return searchBar
-    }()
-    
-    private let tableView: UITableView = {
-        let tableView = UITableView()
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        return tableView
-    }()
-    
-    // MARK: - Properties
-    private let locationService = LocationService()
-    private let disposeBag = DisposeBag()
-    private var searchResults: [CitySearchResult] = []
-    private var searchDebouncer = PublishSubject<String>()
-    
-    // MARK: - Init
-    init(searchType: SearchType) {
-        self.searchType = searchType
-        super.init(nibName: nil, bundle: nil)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    // MARK: - Lifecycle
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        setupUI()
-        configureTableView()
-        setupRx()
-    }
-    
-    // MARK: - Setup
-    private func setupUI() {
-        view.backgroundColor = .white
-        
-        // Add search bar
-        view.addSubview(searchBar)
-        searchBar.delegate = self
-        
-        // Add table view
-        view.addSubview(tableView)
-        
-        NSLayoutConstraint.activate([
-            searchBar.topAnchor.constraint(equalTo: view.topAnchor, constant: 20),
-            searchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            searchBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            
-            tableView.topAnchor.constraint(equalTo: searchBar.bottomAnchor),
-            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
-        
-        let title = searchType == .departure ? "출발지 선택" : "목적지 선택"
-        let titleLabel = UILabel()
-        titleLabel.text = title
-        titleLabel.font = UIFont.systemFont(ofSize: 18, weight: .medium)
-        titleLabel.textAlignment = .center
-        titleLabel.frame = CGRect(x: 0, y: 0, width: view.bounds.width, height: 44)
-        
-        tableView.tableHeaderView = titleLabel
-    }
-    
-    private func configureTableView() {
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "locationCell")
-        tableView.delegate = self
-        tableView.dataSource = self
-    }
-    
-    private func setupRx() {
-        // 검색어 디바운싱 처리
-        searchDebouncer
-            .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
-            .distinctUntilChanged()
-            .flatMapLatest { [weak self] query -> Observable<[CitySearchResult]> in
-                guard let self = self else { return Observable.just([]) }
-                
-                // 로딩 인디케이터 표시
-                let activityIndicator = UIActivityIndicatorView(style: .medium)
-                activityIndicator.startAnimating()
-                self.tableView.tableFooterView = activityIndicator
-                
-                // 쿼리가 비어있으면 기본 인기 도시 목록 표시
-                if query.isEmpty {
-                    let defaultCities: [CitySearchResult] = [
-                        CitySearchResult(korName: "서울", engName: "Seoul", countryCode: "KR"),
-                        CitySearchResult(korName: "부산", engName: "Busan", countryCode: "KR"),
-                        CitySearchResult(korName: "도쿄", engName: "Tokyo", countryCode: "JP"),
-                        CitySearchResult(korName: "오사카", engName: "Osaka", countryCode: "JP"),
-                        CitySearchResult(korName: "파리", engName: "Paris", countryCode: "FR"),
-                        CitySearchResult(korName: "뉴욕", engName: "New York", countryCode: "US"),
-                        CitySearchResult(korName: "방콕", engName: "Bangkok", countryCode: "TH")
-                    ]
-                    return Observable.just(defaultCities)
-                }
-                
-                return self.locationService.searchLocations(query: query, limit: 20)
-            }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] results in
-                self?.searchResults = results
-                self?.tableView.reloadData()
-                self?.tableView.tableFooterView = nil
-            })
-            .disposed(by: disposeBag)
-        
-        // 초기 검색 결과 로드 (인기 도시)
-        searchDebouncer.onNext("")  // 빈 검색어로 기본 인기 도시 로드
-    }
-}
-
-// MARK: - UISearchBarDelegate
-extension LocationSearchViewController: UISearchBarDelegate {
-    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        searchDebouncer.onNext(searchText)
-    }
-}
-
-// MARK: - UITableViewDelegate, UITableViewDataSource
-extension LocationSearchViewController: UITableViewDelegate, UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return searchResults.count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "locationCell", for: indexPath)
-        
-        let city = searchResults[indexPath.row]
-        
-        var content = UIListContentConfiguration.cell()
-        content.text = city.korName
-        content.secondaryText = "\(city.engName), \(city.countryCode)"
-        cell.contentConfiguration = content
-        
-        return cell
-    }
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-        
-        let selectedCity = searchResults[indexPath.row]
-        completion?(selectedCity.korName)
-        dismiss(animated: true)
     }
 }

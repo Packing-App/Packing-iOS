@@ -38,6 +38,14 @@ class RecommendationsViewController: UIViewController, View {
     private let loadingMessageLabel = UILabel()
     private let loadingIndicator = UIActivityIndicatorView(style: .large)
     
+    private lazy var loadingLogoImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "logoIcon")
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+
     private let contentView = UIView()
     private let scrollView = UIScrollView()
     private let containerStackView = UIStackView()
@@ -142,6 +150,7 @@ class RecommendationsViewController: UIViewController, View {
         // Loading view hierarchy
         loadingView.addSubview(loadingMessageLabel)
         loadingView.addSubview(loadingIndicator)
+        loadingView.addSubview(loadingLogoImageView)
         view.addSubview(loadingView)
         
         // Content view hierarchy
@@ -169,6 +178,11 @@ class RecommendationsViewController: UIViewController, View {
             loadingMessageLabel.centerYAnchor.constraint(equalTo: loadingView.centerYAnchor, constant: -30),
             loadingMessageLabel.leadingAnchor.constraint(equalTo: loadingView.leadingAnchor, constant: 20),
             loadingMessageLabel.trailingAnchor.constraint(equalTo: loadingView.trailingAnchor, constant: -20),
+            
+            loadingLogoImageView.centerXAnchor.constraint(equalTo: loadingView.centerXAnchor),
+            loadingLogoImageView.bottomAnchor.constraint(equalTo: loadingMessageLabel.topAnchor, constant: -20),
+            loadingLogoImageView.widthAnchor.constraint(equalToConstant: 100),
+            loadingLogoImageView.heightAnchor.constraint(equalToConstant: 100),
             
             loadingIndicator.centerXAnchor.constraint(equalTo: loadingView.centerXAnchor),
             loadingIndicator.topAnchor.constraint(equalTo: loadingMessageLabel.bottomAnchor, constant: 20),

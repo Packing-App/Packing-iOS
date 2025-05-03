@@ -22,14 +22,16 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         let attachmentString = NSMutableAttributedString(string: "")
         let imageAttachment: NSTextAttachment = NSTextAttachment()
         imageAttachment.image = UIImage(named: "logoIconWhite")
-        imageAttachment.bounds = CGRect(x: 0, y: -7, width: 24, height: 24)
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        let iconSize: CGFloat = isSmallDevice ? 20 : 24
+        imageAttachment.bounds = CGRect(x: 0, y: -6, width: iconSize, height: iconSize)
         attachmentString.append(NSAttributedString(attachment: imageAttachment))
         attachmentString.append(NSAttributedString(string: " PACKING"))
         label.attributedText = attachmentString
         label.sizeToFit()
         
         label.textAlignment = .center
-        label.font = .systemFont(ofSize: 20, weight: .semibold)
+        label.font = .systemFont(ofSize: isSmallDevice ? 18 : 20, weight: .semibold)
         label.textColor = .white
         label.translatesAutoresizingMaskIntoConstraints = false
         
@@ -57,7 +59,8 @@ class JourneyThemeSelectionViewController: UIViewController, View {
     private let questionLabel: UILabel = {
         let label = UILabel()
         label.text = "여행 테마를 선택해주세요"
-        label.font = UIFont.systemFont(ofSize: 20, weight: .semibold)
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        label.font = UIFont.systemFont(ofSize: isSmallDevice ? 16 : 17, weight: .semibold)
         label.textColor = .black
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -97,7 +100,8 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         button.setTitleColor(.white, for: .normal)
         button.backgroundColor = .lightGray
         button.layer.cornerRadius = 8
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        button.titleLabel?.font = UIFont.systemFont(ofSize: isSmallDevice ? 15 : 16, weight: .medium)
         button.isEnabled = false
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
@@ -189,40 +193,44 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         // Add next button
         view.addSubview(nextButton)
         
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        let containerHeight: CGFloat = isSmallDevice ? 430 : 520
+
         NSLayoutConstraint.activate([
             // Progress bar constraints
             planProgressBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             planProgressBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             planProgressBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            planProgressBar.heightAnchor.constraint(equalToConstant: 40),
-            
+            planProgressBar.heightAnchor.constraint(equalToConstant: isSmallDevice ? 15 : 20),
+
             // Container view constraints
-            containerView.topAnchor.constraint(equalTo: planProgressBar.bottomAnchor, constant: 30),
+            containerView.topAnchor.constraint(equalTo: planProgressBar.bottomAnchor, constant: isSmallDevice ? 25 : 30),
             containerView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             containerView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            containerView.heightAnchor.constraint(equalToConstant: 520),
-            
+            containerView.heightAnchor.constraint(equalToConstant: containerHeight),
+
             // Question label constraints
-            questionLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 30),
+            questionLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: isSmallDevice ? 20 : 30),
             questionLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             questionLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             
             // Collection view constraints
-            themeCollectionView.topAnchor.constraint(equalTo: questionLabel.bottomAnchor, constant: 20),
+            themeCollectionView.topAnchor.constraint(equalTo: questionLabel.bottomAnchor, constant: isSmallDevice ? 15 : 20),
             themeCollectionView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             themeCollectionView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             themeCollectionView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -20),
             
             // Helper label constraints
-            helperLabel.topAnchor.constraint(equalTo: containerView.bottomAnchor, constant: 20),
+            helperLabel.topAnchor.constraint(equalTo: containerView.bottomAnchor, constant: isSmallDevice ? 15 : 20),
             helperLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 40),
             helperLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -40),
             
             // Next button constraints
-            nextButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            nextButton.topAnchor.constraint(equalTo: helperLabel.bottomAnchor, constant: isSmallDevice ? 10 : 20),
             nextButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             nextButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            nextButton.heightAnchor.constraint(equalToConstant: 50)
+            nextButton.heightAnchor.constraint(equalToConstant: isSmallDevice ? 45 : 50),
+            nextButton.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10)
         ])
     }
 }
@@ -230,8 +238,10 @@ class JourneyThemeSelectionViewController: UIViewController, View {
 // MARK: - UICollectionViewDelegateFlowLayout
 extension JourneyThemeSelectionViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        let isSmallDevice = UIScreen.main.bounds.height < 700
         let width = (collectionView.bounds.width - 20) / 3
-        return CGSize(width: width, height: width + 25)
+        let height = isSmallDevice ? (width + 20) : (width + 25)
+        return CGSize(width: width, height: height)
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
@@ -257,7 +267,8 @@ class ThemeCell: UICollectionViewCell {
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 12)
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        label.font = UIFont.systemFont(ofSize: isSmallDevice ? 11 : 12)
         label.textColor = .black
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false

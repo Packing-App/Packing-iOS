@@ -15,6 +15,8 @@
 		CEBF1A402D97970000AF1B94 /* RxRelay in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A3F2D97970000AF1B94 /* RxRelay */; };
 		CEBF1A422D97970000AF1B94 /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A412D97970000AF1B94 /* RxSwift */; };
 		CEBF1AC02D9845F600AF1B94 /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1ABF2D9845F600AF1B94 /* KeychainAccess */; };
+		CED2AA982DC5A6AE008CCDC6 /* Differentiator in Frameworks */ = {isa = PBXBuildFile; productRef = CED2AA972DC5A6AE008CCDC6 /* Differentiator */; };
+		CED2AA9A2DC5A6AE008CCDC6 /* RxDataSources in Frameworks */ = {isa = PBXBuildFile; productRef = CED2AA992DC5A6AE008CCDC6 /* RxDataSources */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -50,10 +52,12 @@
 				CEBF1A422D97970000AF1B94 /* RxSwift in Frameworks */,
 				CEBF1A402D97970000AF1B94 /* RxRelay in Frameworks */,
 				CE7BDF772DB5554E00BCB9D6 /* RxGesture in Frameworks */,
+				CED2AA9A2DC5A6AE008CCDC6 /* RxDataSources in Frameworks */,
 				CE7BDF582DB3C2E200BCB9D6 /* Kingfisher in Frameworks */,
 				CEBF1AC02D9845F600AF1B94 /* KeychainAccess in Frameworks */,
 				CEBF1A392D9796D700AF1B94 /* SnapKit in Frameworks */,
 				CEBF1A362D9796B900AF1B94 /* ReactorKit in Frameworks */,
+				CED2AA982DC5A6AE008CCDC6 /* Differentiator in Frameworks */,
 				CEBF1A3E2D97970000AF1B94 /* RxCocoa in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -105,6 +109,8 @@
 				CEBF1ABF2D9845F600AF1B94 /* KeychainAccess */,
 				CE7BDF572DB3C2E200BCB9D6 /* Kingfisher */,
 				CE7BDF762DB5554E00BCB9D6 /* RxGesture */,
+				CED2AA972DC5A6AE008CCDC6 /* Differentiator */,
+				CED2AA992DC5A6AE008CCDC6 /* RxDataSources */,
 			);
 			productName = Packing;
 			productReference = CE797EFE2D91A3EB00EEA5B1 /* Packing.app */;
@@ -141,6 +147,7 @@
 				CEBF1ABE2D9845F600AF1B94 /* XCRemoteSwiftPackageReference "KeychainAccess" */,
 				CE7BDF562DB3C2E200BCB9D6 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 				CE7BDF752DB5554E00BCB9D6 /* XCRemoteSwiftPackageReference "RxGesture" */,
+				CED2AA962DC5A6AE008CCDC6 /* XCRemoteSwiftPackageReference "RxDataSources" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CE797EFF2D91A3EB00EEA5B1 /* Products */;
@@ -430,6 +437,14 @@
 				kind = branch;
 			};
 		};
+		CED2AA962DC5A6AE008CCDC6 /* XCRemoteSwiftPackageReference "RxDataSources" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RxSwiftCommunity/RxDataSources.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.2;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -472,6 +487,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CEBF1ABE2D9845F600AF1B94 /* XCRemoteSwiftPackageReference "KeychainAccess" */;
 			productName = KeychainAccess;
+		};
+		CED2AA972DC5A6AE008CCDC6 /* Differentiator */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CED2AA962DC5A6AE008CCDC6 /* XCRemoteSwiftPackageReference "RxDataSources" */;
+			productName = Differentiator;
+		};
+		CED2AA992DC5A6AE008CCDC6 /* RxDataSources */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CED2AA962DC5A6AE008CCDC6 /* XCRemoteSwiftPackageReference "RxDataSources" */;
+			productName = RxDataSources;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -9,12 +9,22 @@ import UIKit
 import ReactorKit
 import RxSwift
 import RxCocoa
+import RxDataSources
 import Kingfisher
 
 class HomeViewController: UIViewController, View {
     
     var disposeBag = DisposeBag()
     typealias Reactor = HomeViewReactor
+    
+    // 커스텀 데이터 소스 생성 (일반 여행 + 빈 셀 지원)
+    private lazy var journeyDataSource = RxCollectionViewSectionedReloadDataSource<SectionModel<String, Journey?>>(
+        configureCell: { _, collectionView, indexPath, item in
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "TravelPlanCell", for: indexPath) as! TravelPlanCell
+            cell.configure(with: item) // 수정된 셀은 nil도 처리 가능
+            return cell
+        }
+    )
 
     // MARK: - UI COMPONENTS
     
@@ -259,15 +269,6 @@ class HomeViewController: UIViewController, View {
             })
             .disposed(by: disposeBag)
         
-        travelPlansCollectionView.rx.modelSelected(Journey.self)
-            .subscribe(onNext: { [weak self] journey in
-                let detailVC = JourneyDetailViewController()
-                detailVC.journey = journey
-                self?.navigationController?.pushViewController(detailVC, animated: true)
-            })
-            .disposed(by: disposeBag)
-        
-        // 테마 템플릿 선택시 처리
         templatesCollectionView.rx.modelSelected(ThemeListModel.self)
             .subscribe(onNext: { [weak self] theme in
                 let themeTemplateVC = ThemeTemplateViewController()
@@ -276,18 +277,47 @@ class HomeViewController: UIViewController, View {
                 self?.navigationController?.pushViewController(themeTemplateVC, animated: true)
             })
             .disposed(by: disposeBag)
+
+//        travelPlansCollectionView.rx.modelSelected(Journey.self)
+//            .subscribe(onNext: { [weak self] journey in
+//                let detailVC = JourneyDetailViewController()
+//                detailVC.journey = journey
+//                self?.navigationController?.pushViewController(detailVC, animated: true)
+//            })
+//            .disposed(by: disposeBag)
         
-        // State 바인딩
-        
-        // 여행 목록 바인딩
+        // 데이터 바인딩 (마지막에 nil 추가)
         reactor.state
             .observe(on: MainScheduler.instance)
-            .map { $0.journeys }
-            .distinctUntilChanged()
-            .bind(to: travelPlansCollectionView.rx.items(cellIdentifier: "TravelPlanCell", cellType: TravelPlanCell.self)) { indexPath, journey, cell in
-                cell.configure(with: journey)
+            .map { state -> [SectionModel<String, Journey?>] in
+                let items = state.journeys.map { $0 as Journey? } + [nil] // 마지막에 nil 추가
+                return [SectionModel(model: "Journeys", items: items)]
             }
+            .bind(to: travelPlansCollectionView.rx.items(dataSource: journeyDataSource))
             .disposed(by: disposeBag)
+
+        // 셀 선택 처리 (여행 셀 vs 추가 버튼 구분)
+        travelPlansCollectionView.rx.itemSelected
+            .subscribe(onNext: { [weak self] indexPath in
+                let cell = self?.travelPlansCollectionView.cellForItem(at: indexPath) as? TravelPlanCell
+                
+                if let isAddCell = cell?.isAddJourneyCell(), isAddCell {
+                    // "추가" 셀 클릭 처리
+                    guard let navigationController = self?.navigationController else { return }
+                    JourneyCreationCoordinator.shared.startJourneyCreation(from: navigationController)
+                } else {
+                    // 일반 여행 셀 클릭 처리
+                    let journeys = reactor.currentState.journeys
+                    if indexPath.item < journeys.count {
+                        let journey = journeys[indexPath.item]
+                        let detailVC = JourneyDetailViewController()
+                        detailVC.journey = journey
+                        self?.navigationController?.pushViewController(detailVC, animated: true)
+                    }
+                }
+            })
+            .disposed(by: disposeBag)
+        // State 바인딩
         
         // 테마 템플릿 바인딩
         reactor.state

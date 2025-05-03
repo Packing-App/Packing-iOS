@@ -58,9 +58,7 @@ class APIClient: APIClientProtocol {
     static let shared = APIClient()
     private let session: URLSession
     private let tokenManager: KeyChainTokenStorage
-    // 하나의 DisposeBag 생성
     private let disposeBag = DisposeBag()
-
     private init(
         session: URLSession = .shared,
         tokenManager: KeyChainTokenStorage = .shared
@@ -145,37 +143,33 @@ class APIClient: APIClientProtocol {
                         observer.onError(NetworkError.decodingFailed(error))
                     }
                 case 401:
-                    // endpoint가 refreshToken인 경우는 재시도하지 않음
+                    // endpoint 가 refreshToken 인데, 401 에러다! -> networkerror 뱉고 로그아웃 해야함.
                     if case .refreshToken = endpoint {
-                        print("리프레시 토큰 갱신 실패, 로그아웃 처리")
-                        self.tokenManager.clearTokens()
+                        print("로그아웃 해야해")
                         observer.onError(NetworkError.unauthorized(nil))
                         return
                     }
                     
-                    print("401 에러 발생, 토큰 갱신 시도")
-                    
+                    print("refreshToken 호출 전")
                     self.refreshToken()
-                        .do(onNext: { _ in print("토큰 갱신 성공") },
-                            onError: { error in print("토큰 갱신 실패: \(error)") })
+                        
                         .flatMap { _ -> Observable<T> in
-                            print("원래 요청 재시도")
+                            // 토큰 갱신 성공 시 원래 요청 재시도
+                            print("원래 요청 재시도!")
                             return self.request(endpoint)
                         }
                         .subscribe(
                             onNext: { result in
-                                print("재시도 요청 성공: \(result)")
+                                print("Decodable data result: \(result)")
                                 observer.onNext(result)
                                 observer.onCompleted()
                             },
                             onError: { error in
-                                print("재시도 요청 실패: \(error)")
+                                print("refreshToken 호출 오류")
                                 observer.onError(error)
                             }
                         )
                         .disposed(by: self.disposeBag)
-                    
-                    // 중요: 요청이 계속 처리될 수 있도록 명시적인 return 하지 않음
                     
                 case 404:
                     observer.onError(NetworkError.notFound)
@@ -293,38 +287,35 @@ class APIClient: APIClientProtocol {
                         observer.onError(NetworkError.decodingFailed(error))
                     }
                 
+                    
                 case 401:
-                    // endpoint가 refreshToken인 경우는 재시도하지 않음
+                    // endpoint 가 refreshToken 인데, 401 에러다! -> networkerror 뱉고 로그아웃 해야함.
                     if case .refreshToken = endpoint {
-                        print("리프레시 토큰 갱신 실패, 로그아웃 처리")
-                        self.tokenManager.clearTokens()
+                        print("로그아웃 해야해")
                         observer.onError(NetworkError.unauthorized(nil))
                         return
                     }
                     
-                    print("401 에러 발생, 토큰 갱신 시도")
-                    
+                    print("refreshToken 호출 전")
                     self.refreshToken()
-                        .do(onNext: { _ in print("토큰 갱신 성공") },
-                            onError: { error in print("토큰 갱신 실패: \(error)") })
+                        
                         .flatMap { _ -> Observable<T> in
-                            print("원래 요청 재시도")
-                            return self.request(endpoint)
+                            // 토큰 갱신 성공 시 원래 요청 재시도
+                            print("원래 요청 재시도!")
+                            return self.requestWithDateDecoding(endpoint)
                         }
                         .subscribe(
                             onNext: { result in
-                                print("재시도 요청 성공: \(result)")
+                                print("Decodable data result: \(result)")
                                 observer.onNext(result)
                                 observer.onCompleted()
                             },
                             onError: { error in
-                                print("재시도 요청 실패: \(error)")
+                                print("refreshToken 호출 오류")
                                 observer.onError(error)
                             }
                         )
                         .disposed(by: self.disposeBag)
-                    
-                    // 중요: 요청이 계속 처리될 수 있도록 명시적인 return 하지 않음
                 case 404:
                     observer.onError(NetworkError.notFound)
                     
@@ -361,99 +352,33 @@ class APIClient: APIClientProtocol {
         }
     }
     
-    private func refreshToken() -> Observable<String> {
-        print("토큰 갱신 시작")
-        
+    
+    private func refreshToken() -> Observable<TokenData> {
+        print(#fileID, #function, #line, "- ")
         guard let refreshToken = tokenManager.refreshToken else {
-            print("리프레시 토큰 없음")
+            print("refreshToken is nil or unavailable")
             tokenManager.clearTokens()
             return Observable.error(NetworkError.unauthorized(nil))
         }
         
         let refreshEndpoint = APIEndpoint.refreshToken(refreshToken: refreshToken)
-        print("토큰 갱신 엔드포인트 설정: \(refreshEndpoint)")
         
-        // 직접 URLSession을 사용하여 요청 실행
-        return Observable.create { [weak self] observer in
-            guard let self = self, let url = refreshEndpoint.url() else {
-                print("URL 생성 실패")
-                observer.onError(NetworkError.invalidURL)
-                return Disposables.create()
+        return self.request(refreshEndpoint)
+            .map { (response: APIResponse<TokenData>) -> TokenData in
+                guard let tokenData = response.data else {
+                    print("tokenData is invalid")
+                    throw NetworkError.invalidResponse
+                }
+                self.tokenManager.accessToken = tokenData.accessToken
+                self.tokenManager.refreshToken = tokenData.refreshToken
+                
+                return tokenData
             }
-            
-            print("토큰 갱신 URL: \(url.absoluteString)")
-            
-            var request = URLRequest(url: url)
-            request.httpMethod = refreshEndpoint.method.rawValue
-            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-            
-            if let params = refreshEndpoint.parameters {
-                do {
-                    request.httpBody = try JSONSerialization.data(withJSONObject: params, options: [])
-                    print("요청 본문 설정 완료")
-                } catch {
-                    print("요청 본문 생성 실패: \(error)")
-                    observer.onError(NetworkError.requestFailed(error))
-                    return Disposables.create()
-                }
+            .catch { error in
+                print("refreshToken error: \(error.localizedDescription)")
+                self.tokenManager.clearTokens()
+                return Observable.error(NetworkError.unauthorized(nil))
             }
-            
-            print("토큰 갱신 요청 실행")
-            let task = self.session.dataTask(with: request) { data, response, error in
-                print("토큰 갱신 응답 수신")
-                
-                if let error = error {
-                    print("토큰 갱신 네트워크 오류: \(error)")
-                    observer.onError(NetworkError.requestFailed(error))
-                    return
-                }
-                
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    print("HTTP 응답 캐스팅 실패")
-                    observer.onError(NetworkError.invalidResponse)
-                    return
-                }
-                
-                print("토큰 갱신 HTTP 상태 코드: \(httpResponse.statusCode)")
-                
-                guard (200...299).contains(httpResponse.statusCode), let data = data else {
-                    print("토큰 갱신 실패: 상태 코드 \(httpResponse.statusCode)")
-                    if httpResponse.statusCode == 401 {
-                        self.tokenManager.clearTokens()
-                    }
-                    observer.onError(NetworkError.serverError("토큰 갱신 실패: \(httpResponse.statusCode)"))
-                    return
-                }
-                
-                do {
-                    print("토큰 갱신 데이터 디코딩 시작")
-                    let response = try JSONDecoder().decode(APIResponse<RefreshTokenResponse>.self, from: data)
-                    
-                    guard let tokenData = response.data else {
-                        print("토큰 데이터 없음")
-                        observer.onError(NetworkError.invalidResponse)
-                        return
-                    }
-                    
-                    print("토큰 갱신 성공: 새 액세스 토큰 저장")
-                    self.tokenManager.accessToken = tokenData.accessToken
-                    
-                    observer.onNext(tokenData.accessToken)
-                    observer.onCompleted()
-                } catch {
-                    print("토큰 데이터 디코딩 실패: \(error)")
-                    observer.onError(NetworkError.decodingFailed(error))
-                }
-            }
-            
-            task.resume()
-            print("토큰 갱신 요청 시작됨")
-            
-            return Disposables.create {
-                print("토큰 갱신 요청 취소됨")
-                task.cancel()
-            }
-        }
     }
     
     // 멀티파트 폼 데이터 요청 (이미지 업로드용)

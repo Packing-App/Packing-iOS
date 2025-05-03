@@ -238,10 +238,11 @@ class JourneyThemeSelectionViewController: UIViewController, View {
 // MARK: - UICollectionViewDelegateFlowLayout
 extension JourneyThemeSelectionViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let isSmallDevice = UIScreen.main.bounds.height < 700
+//        let isSmallDevice = UIScreen.main.bounds.height < 700
         let width = (collectionView.bounds.width - 20) / 3
-        let height = isSmallDevice ? (width + 20) : (width + 25)
-        return CGSize(width: width, height: height)
+        return CGSize(width: width, height: width + 20)
+//        let height = isSmallDevice ? (width + 20) : (width + 25)
+//        return CGSize(width: width, height: height)
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
@@ -268,7 +269,7 @@ class ThemeCell: UICollectionViewCell {
     private let titleLabel: UILabel = {
         let label = UILabel()
         let isSmallDevice = UIScreen.main.bounds.height < 700
-        label.font = UIFont.systemFont(ofSize: isSmallDevice ? 11 : 12)
+        label.font = UIFont.systemFont(ofSize: isSmallDevice ? 10 : 12)
         label.textColor = .black
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -279,13 +280,13 @@ class ThemeCell: UICollectionViewCell {
         let view = UIView()
         view.backgroundColor = UIColor.black.withAlphaComponent(0.5)
         view.isHidden = true
-        view.layer.cornerRadius = 15
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
     
     private let checkmarkView: UIImageView = {
         let imageView = UIImageView()
+        let isSmallDevice = UIScreen.main.bounds.height < 700
         imageView.image = UIImage(systemName: "checkmark")
         imageView.tintColor = .white
         imageView.contentMode = .scaleAspectFit
@@ -313,7 +314,7 @@ class ThemeCell: UICollectionViewCell {
             imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
             imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            imageView.heightAnchor.constraint(equalTo: imageView.widthAnchor),
+            imageView.heightAnchor.constraint(equalTo: imageView.widthAnchor), // This makes it square
             
             titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 5),
             titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -326,9 +327,20 @@ class ThemeCell: UICollectionViewCell {
             
             checkmarkView.centerXAnchor.constraint(equalTo: imageView.centerXAnchor),
             checkmarkView.centerYAnchor.constraint(equalTo: imageView.centerYAnchor),
-            checkmarkView.widthAnchor.constraint(equalToConstant: 32),
-            checkmarkView.heightAnchor.constraint(equalToConstant: 32)
+            checkmarkView.widthAnchor.constraint(equalToConstant: UIScreen.main.bounds.height < 700 ? 24 : 32),
+            checkmarkView.heightAnchor.constraint(equalToConstant: UIScreen.main.bounds.height < 700 ? 24 : 32)
         ])
+    }
+    
+    // Override layoutSubviews to update cornerRadius of overlayView
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        // Make imageView perfectly circular (if square)
+        imageView.layer.cornerRadius = imageView.frame.width / 2
+        
+        // Make overlayView match imageView's cornerRadius
+        overlayView.layer.cornerRadius = imageView.layer.cornerRadius
     }
     
     func configure(with template: ThemeListModel, isSelected: Bool = false) {

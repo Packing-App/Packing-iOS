@@ -43,6 +43,9 @@ class JourneyCreationCoordinator: NSObject {
     }
     
     func startJourneyCreation(from navigation: UINavigationController) {
+        createJourneyReactor.action.onNext(.resetModel)
+        createdJourney = nil
+
         self.navigationController = navigation
         self.navigationController?.tabBarController?.isTabBarHidden = true
         self.navigationController?.delegate = self

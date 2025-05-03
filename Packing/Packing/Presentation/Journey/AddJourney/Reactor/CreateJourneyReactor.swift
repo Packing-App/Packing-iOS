@@ -55,6 +55,7 @@ class CreateJourneyReactor: Reactor {
         case setTitle(String)
         case setIsPrivate(Bool)
         case createJourney
+        case resetModel
     }
     
     enum Mutation {
@@ -68,6 +69,7 @@ class CreateJourneyReactor: Reactor {
         case setCreatingJourney(Bool)
         case setError(Error?)
         case setCreatedJourney(Journey?)
+        case resetModel
     }
     
     struct State {
@@ -140,6 +142,8 @@ class CreateJourneyReactor: Reactor {
                 
                 .just(.setCreatingJourney(false))
             ])
+            
+        case .resetModel: return .just(.resetModel)
         }
     }
     
@@ -177,6 +181,12 @@ class CreateJourneyReactor: Reactor {
             
         case .setCreatedJourney(let journey):
             newState.createdJourney = journey
+            
+        case .resetModel:
+            newState.journeyModel = JourneyCreationModel()
+            newState.error = nil
+            newState.createdJourney = nil
+            newState.isCreatingJourney = false
         }
         
         return newState

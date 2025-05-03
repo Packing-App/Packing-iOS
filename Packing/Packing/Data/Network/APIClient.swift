@@ -146,6 +146,7 @@ class APIClient: APIClientProtocol {
                     // endpoint 가 refreshToken 인데, 401 에러다! -> networkerror 뱉고 로그아웃 해야함.
                     if case .refreshToken = endpoint {
                         print("로그아웃 해야해")
+                        AuthCoordinator.shared.navigateToLogin()
                         observer.onError(NetworkError.unauthorized(nil))
                         return
                     }
@@ -166,6 +167,7 @@ class APIClient: APIClientProtocol {
                             },
                             onError: { error in
                                 print("refreshToken 호출 오류")
+                                AuthCoordinator.shared.navigateToLogin()
                                 observer.onError(error)
                             }
                         )
@@ -292,6 +294,7 @@ class APIClient: APIClientProtocol {
                     // endpoint 가 refreshToken 인데, 401 에러다! -> networkerror 뱉고 로그아웃 해야함.
                     if case .refreshToken = endpoint {
                         print("로그아웃 해야해")
+                        AuthCoordinator.shared.navigateToLogin()
                         observer.onError(NetworkError.unauthorized(nil))
                         return
                     }
@@ -312,6 +315,7 @@ class APIClient: APIClientProtocol {
                             },
                             onError: { error in
                                 print("refreshToken 호출 오류")
+                                AuthCoordinator.shared.navigateToLogin()
                                 observer.onError(error)
                             }
                         )
@@ -358,6 +362,7 @@ class APIClient: APIClientProtocol {
         guard let refreshToken = tokenManager.refreshToken else {
             print("refreshToken is nil or unavailable")
             tokenManager.clearTokens()
+            AuthCoordinator.shared.navigateToLogin()
             return Observable.error(NetworkError.unauthorized(nil))
         }
         
@@ -377,6 +382,7 @@ class APIClient: APIClientProtocol {
             .catch { error in
                 print("refreshToken error: \(error.localizedDescription)")
                 self.tokenManager.clearTokens()
+                AuthCoordinator.shared.navigateToLogin()
                 return Observable.error(NetworkError.unauthorized(nil))
             }
     }
@@ -462,6 +468,7 @@ class APIClient: APIClientProtocol {
                                 observer.onCompleted()
                             },
                             onError: { error in
+                                AuthCoordinator.shared.navigateToLogin()
                                 observer.onError(error)
                             }
                         )

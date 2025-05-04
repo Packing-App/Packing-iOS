@@ -16,6 +16,8 @@ final class ProfileViewController: UIViewController, View {
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.showsVerticalScrollIndicator = true
+        scrollView.alwaysBounceVertical = true
         return scrollView
     }()
     
@@ -29,6 +31,10 @@ final class ProfileViewController: UIViewController, View {
         let view = UIView()
         view.backgroundColor = .white
         view.layer.cornerRadius = 12
+        view.layer.shadowColor = UIColor.black.withAlphaComponent(0.1).cgColor
+        view.layer.shadowOffset = CGSize(width: 0, height: 2)
+        view.layer.shadowRadius = 4
+        view.layer.shadowOpacity = 0.5
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -37,7 +43,8 @@ final class ProfileViewController: UIViewController, View {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
-        imageView.layer.cornerRadius = 50
+        imageView.layer.borderWidth = 2
+        imageView.layer.borderColor = UIColor.systemGray5.cgColor
         imageView.backgroundColor = .systemBlue
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
@@ -45,8 +52,11 @@ final class ProfileViewController: UIViewController, View {
     
     private lazy var nameLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 24, weight: .bold)
+        label.font = .systemFont(ofSize: 22, weight: .bold)
         label.textAlignment = .center
+        label.numberOfLines = 1
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.7
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -56,6 +66,7 @@ final class ProfileViewController: UIViewController, View {
         label.font = UIFont.systemFont(ofSize: 15)
         label.textAlignment = .center
         label.textColor = .darkGray
+        label.numberOfLines = 5
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -65,6 +76,9 @@ final class ProfileViewController: UIViewController, View {
         button.setTitle("수정", for: .normal)
         button.setTitleColor(.systemBlue, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 16)
+        button.backgroundColor = UIColor.systemGray6
+        button.layer.cornerRadius = 8
+        button.contentEdgeInsets = UIEdgeInsets(top: 8, left: 16, bottom: 8, right: 16)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -74,7 +88,8 @@ final class ProfileViewController: UIViewController, View {
         table.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
         table.separatorStyle = .singleLine
         table.translatesAutoresizingMaskIntoConstraints = false
-        table.isScrollEnabled = false // 테이블뷰 자체 스크롤 비활성화
+        table.isScrollEnabled = false
+        table.backgroundColor = .clear
         return table
     }()
     
@@ -89,7 +104,6 @@ final class ProfileViewController: UIViewController, View {
     var disposeBag = DisposeBag()
     
     private let menuItems = ProfileMenuItem.allCases
-    private var tableViewHeightConstraint: NSLayoutConstraint?
     
     // MARK: - Initializers
     init(reactor: ProfileViewReactor) {
@@ -117,14 +131,18 @@ final class ProfileViewController: UIViewController, View {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         
-        // 테이블뷰 높이를 동적으로 조정
-        let height = tableView.contentSize.height
-        if let heightConstraint = tableViewHeightConstraint {
-            heightConstraint.constant = height
-        } else {
-            tableViewHeightConstraint = tableView.heightAnchor.constraint(equalToConstant: height)
-            tableViewHeightConstraint?.isActive = true
-        }
+        // 테이블뷰 높이를 내용에 맞게 조정
+        tableView.layoutIfNeeded()
+        let tableViewHeight = tableView.contentSize.height
+        tableView.heightAnchor.constraint(equalToConstant: tableViewHeight).isActive = true
+        
+        // 스크롤뷰 컨텐츠 크기 업데이트
+        updateScrollViewContentSize()
+    }
+    
+    private func updateScrollViewContentSize() {
+        // 스크롤뷰 컨텐츠 크기 재계산 (명시적으로 수행하여 레이아웃 이슈 방지)
+        view.layoutIfNeeded()
     }
     
     // MARK: - UI Setup
@@ -146,6 +164,19 @@ final class ProfileViewController: UIViewController, View {
         profileContainerView.addSubview(bioLabel)
         profileContainerView.addSubview(editProfileButton)
         
+        // 프로필 이미지 원형 처리
+        profileImageView.layer.cornerRadius = 40
+        
+        // 레이블이 작은 화면에서도 보이도록 압축 저항 우선순위 설정
+        nameLabel.setContentCompressionResistancePriority(.required, for: .vertical)
+        bioLabel.setContentCompressionResistancePriority(.required, for: .vertical)
+        bioLabel.setContentHuggingPriority(.defaultLow, for: .vertical)
+        
+        setupConstraints()
+    }
+    
+    private func setupConstraints() {
+        // 모든 제약 조건을 하나의 NSLayoutConstraint.activate 블록에 통합
         NSLayoutConstraint.activate([
             // 스크롤뷰
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -161,49 +192,44 @@ final class ProfileViewController: UIViewController, View {
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             
             // 프로필 컨테이너 뷰
-            profileContainerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
-            profileContainerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            profileContainerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            profileContainerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
+            profileContainerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            profileContainerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            profileContainerView.heightAnchor.constraint(greaterThanOrEqualToConstant: 200),
+            profileContainerView.bottomAnchor.constraint(greaterThanOrEqualTo: editProfileButton.bottomAnchor, constant: 16),
             
             // 프로필 이미지
             profileImageView.topAnchor.constraint(equalTo: profileContainerView.topAnchor, constant: 20),
             profileImageView.centerXAnchor.constraint(equalTo: profileContainerView.centerXAnchor),
-            profileImageView.widthAnchor.constraint(equalToConstant: 100),
-            profileImageView.heightAnchor.constraint(equalToConstant: 100),
+            profileImageView.widthAnchor.constraint(equalToConstant: 80),
+            profileImageView.heightAnchor.constraint(equalToConstant: 80),
             
             // 이름 레이블
-            nameLabel.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 20),
-            nameLabel.centerXAnchor.constraint(equalTo: profileContainerView.centerXAnchor),
-            nameLabel.leadingAnchor.constraint(lessThanOrEqualTo: profileContainerView.leadingAnchor, constant: 20),
-            nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: profileContainerView.trailingAnchor, constant: -20),
+            nameLabel.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 8),
+            nameLabel.leadingAnchor.constraint(equalTo: profileContainerView.leadingAnchor, constant: 16),
+            nameLabel.trailingAnchor.constraint(equalTo: profileContainerView.trailingAnchor, constant: -16),
             
             // 소개 레이블
-            bioLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 10),
-            bioLabel.centerXAnchor.constraint(equalTo: profileContainerView.centerXAnchor),
-            bioLabel.leadingAnchor.constraint(lessThanOrEqualTo: profileContainerView.leadingAnchor, constant: 20),
-            bioLabel.trailingAnchor.constraint(lessThanOrEqualTo: profileContainerView.trailingAnchor, constant: -20),
+            bioLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 8),
+            bioLabel.leadingAnchor.constraint(equalTo: profileContainerView.leadingAnchor, constant: 16),
+            bioLabel.trailingAnchor.constraint(equalTo: profileContainerView.trailingAnchor, constant: -16),
             
             // 편집 버튼
-            editProfileButton.topAnchor.constraint(equalTo: bioLabel.bottomAnchor, constant: 20),
+            editProfileButton.topAnchor.constraint(equalTo: bioLabel.bottomAnchor, constant: 16),
             editProfileButton.centerXAnchor.constraint(equalTo: profileContainerView.centerXAnchor),
-            editProfileButton.bottomAnchor.constraint(equalTo: profileContainerView.bottomAnchor, constant: -20),
+            editProfileButton.bottomAnchor.constraint(equalTo: profileContainerView.bottomAnchor, constant: -16),
+            editProfileButton.heightAnchor.constraint(equalToConstant: 30),
             
             // 테이블뷰
-            tableView.topAnchor.constraint(equalTo: profileContainerView.bottomAnchor, constant: 10),
+            tableView.topAnchor.constraint(equalTo: profileContainerView.bottomAnchor, constant: 8),
             tableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            
-            // 콘텐츠뷰의 하단을 테이블뷰의 하단에 연결 (중요!)
-            contentView.bottomAnchor.constraint(equalTo: tableView.bottomAnchor, constant: 20),
+            tableView.bottomAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.bottomAnchor, constant: -16),
             
             // 로딩 인디케이터
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
-        
-        // 초기 테이블뷰 높이 설정 (이후 viewDidLayoutSubviews에서 동적으로 조정됨)
-        tableViewHeightConstraint = tableView.heightAnchor.constraint(equalToConstant: CGFloat(menuItems.count * 44))
-        tableViewHeightConstraint?.isActive = true
     }
     
     private func setupTableView() {
@@ -312,27 +338,17 @@ final class ProfileViewController: UIViewController, View {
         // 프로필 이미지 설정
         profileImageView.backgroundColor = .clear
         guard let imageURL = user.profileImage else {
-//            profileImageView.image = UIImage(systemName: "person.circle.fill")
+            profileImageView.image = UIImage(systemName: "person.circle.fill")
             return
         }
         if let url = URL(string: imageURL), !imageURL.isEmpty {
-//            let pngSerializer = FormatIndicatedCacheSerializer.png
             profileImageView.kf.indicatorType = .activity
-            profileImageView.kf.setImage(with: url)
+            profileImageView.kf.setImage(with: url,
+                                        placeholder: UIImage(systemName: "person.circle.fill"),
+                                        options: [.transition(.fade(0.3))])
         } else {
-//            profileImageView.image = UIImage(systemName: "person.circle.fill")
+            profileImageView.image = UIImage(systemName: "person.circle.fill")
         }
-        /*
-         cell.sampleImageView.kf.indicatorType = .activity
-         
-         let roundCorner = RoundCornerImageProcessor(radius: .widthFraction(0.5), roundingCorners: [.topLeft, .bottomRight])
-         let pngSerializer = FormatIndicatedCacheSerializer.png
-         cell.sampleImageView.kf.setImage(
-             with: url,
-             options: [.processor(roundCorner), .cacheSerializer(pngSerializer)]
-         )
-         cell.sampleImageView.backgroundColor = .clear
-         */
         
         // 이름과 소개 설정
         nameLabel.text = user.name
@@ -340,6 +356,9 @@ final class ProfileViewController: UIViewController, View {
         
         // 테이블뷰 리로드 (소셜 로그인 타입이 변경될 수 있으므로)
         tableView.reloadData()
+        
+        // 스크롤뷰 업데이트
+        updateScrollViewContentSize()
     }
     
     // MARK: - Navigation & Helpers

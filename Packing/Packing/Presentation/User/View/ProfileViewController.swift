@@ -343,9 +343,7 @@ final class ProfileViewController: UIViewController, View {
         }
         if let url = URL(string: imageURL), !imageURL.isEmpty {
             profileImageView.kf.indicatorType = .activity
-            profileImageView.kf.setImage(with: url,
-                                        placeholder: UIImage(systemName: "person.circle.fill"),
-                                        options: [.transition(.fade(0.3))])
+            profileImageView.kf.setImage(with: url)
         } else {
             profileImageView.image = UIImage(systemName: "person.circle.fill")
         }

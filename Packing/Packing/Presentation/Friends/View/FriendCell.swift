@@ -7,6 +7,7 @@
 
 import UIKit
 import RxSwift
+import Kingfisher
 
 // MARK: - FriendCell
 
@@ -16,19 +17,30 @@ class FriendCell: UITableViewCell {
     var disposeBag = DisposeBag()
     
     // UI Components
+    private let containerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .systemBackground
+        view.layer.cornerRadius = 12
+        view.clipsToBounds = true
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
     private let profileImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
-        imageView.layer.cornerRadius = 25
-        imageView.backgroundColor = .lightGray
+        imageView.layer.cornerRadius = 24
+        imageView.backgroundColor = .systemGray5
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()
     
     private let nameLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.boldSystemFont(ofSize: 16)
+        label.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
+        label.textColor = .label
+        label.numberOfLines = 2
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -36,7 +48,8 @@ class FriendCell: UITableViewCell {
     private let emailLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .gray
+        label.textColor = .secondaryLabel
+        label.numberOfLines = 2
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -44,7 +57,7 @@ class FriendCell: UITableViewCell {
     private let introLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 14)
-        label.textColor = .darkGray
+        label.textColor = .secondaryLabel
         label.numberOfLines = 2
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -53,7 +66,11 @@ class FriendCell: UITableViewCell {
     let inviteButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("초대하기", for: .normal)
-        button.setTitleColor(.systemBlue, for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = .systemBlue
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        button.layer.cornerRadius = 10
+        button.contentEdgeInsets = UIEdgeInsets(top: 5, left: 12, bottom: 5, right: 12)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -73,55 +90,89 @@ class FriendCell: UITableViewCell {
         profileImageView.image = nil
     }
     
+    override func setHighlighted(_ highlighted: Bool, animated: Bool) {
+        super.setHighlighted(highlighted, animated: animated)
+        
+        UIView.animate(withDuration: 0.1) {
+            self.containerView.backgroundColor = highlighted ? .systemGray6 : .systemBackground
+        }
+    }
+    
     private func setupUI() {
-        // Add subviews
-        contentView.addSubview(profileImageView)
-        contentView.addSubview(nameLabel)
-        contentView.addSubview(emailLabel)
-        contentView.addSubview(introLabel)
-        contentView.addSubview(inviteButton)
+        backgroundColor = .clear
+        contentView.backgroundColor = .clear
+        selectionStyle = .none
+        
+        // Add containerView first
+        contentView.addSubview(containerView)
+        
+        // Add subviews to containerView
+        containerView.addSubview(profileImageView)
+        containerView.addSubview(nameLabel)
+        containerView.addSubview(emailLabel)
+        containerView.addSubview(introLabel)
+        containerView.addSubview(inviteButton)
         
         // Constraints
         NSLayoutConstraint.activate([
-            profileImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            profileImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            profileImageView.widthAnchor.constraint(equalToConstant: 50),
-            profileImageView.heightAnchor.constraint(equalToConstant: 50),
-            profileImageView.topAnchor.constraint(greaterThanOrEqualTo: contentView.topAnchor, constant: 10),
-            profileImageView.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -10),
+            // Container view
+            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
+            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6),
             
-            nameLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            // Profile image
+            profileImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
+            profileImageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            profileImageView.widthAnchor.constraint(equalToConstant: 48),
+            profileImageView.heightAnchor.constraint(equalToConstant: 48),
+            profileImageView.topAnchor.constraint(greaterThanOrEqualTo: containerView.topAnchor, constant: 10),
+            profileImageView.bottomAnchor.constraint(lessThanOrEqualTo: containerView.bottomAnchor, constant: -10),
+            
+            // Name label
+            nameLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 12),
             nameLabel.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 12),
-            nameLabel.trailingAnchor.constraint(equalTo: inviteButton.leadingAnchor, constant: -12),
+            nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: inviteButton.leadingAnchor, constant: -8),
             
-            emailLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
+            // Email label
+            emailLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 2),
             emailLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
-            emailLabel.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
+            emailLabel.trailingAnchor.constraint(lessThanOrEqualTo: inviteButton.leadingAnchor, constant: -8),
             
-            introLabel.topAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 4),
+            // Intro label
+            introLabel.topAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 2),
             introLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
-            introLabel.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
-            introLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
+            introLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
+            introLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12),
             
-            inviteButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            inviteButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            inviteButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 70),
-            inviteButton.heightAnchor.constraint(equalToConstant: 30)
+            // Invite button
+            inviteButton.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            inviteButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12)
         ])
     }
     
     func configure(with friend: Friend) {
         nameLabel.text = friend.name
         emailLabel.text = friend.email
-        introLabel.text = friend.intro ?? "자기소개가 없습니다."
         
-        // 프로필 이미지 로드 (실제 구현에서는 이미지 라이브러리 사용)
+        if let intro = friend.intro, !intro.isEmpty {
+            introLabel.text = intro
+            introLabel.isHidden = false
+        } else {
+            introLabel.isHidden = true
+            
+            // Adjust layout when there's no intro
+            NSLayoutConstraint.activate([
+                emailLabel.bottomAnchor.constraint(greaterThanOrEqualTo: containerView.bottomAnchor, constant: -12)
+            ])
+        }
+        
+        // 프로필 이미지 로드
         if let profileImageUrlString = friend.profileImage, let url = URL(string: profileImageUrlString) {
-            // 실제 구현에서는 Kingfisher, SDWebImage 등의 라이브러리를 사용해 이미지 로드
-            // 예: profileImageView.kf.setImage(with: url)
+            profileImageView.kf.setImage(with: url)
         } else {
             profileImageView.image = UIImage(systemName: "person.circle.fill")
-            profileImageView.tintColor = .gray
+            profileImageView.tintColor = .systemGray
         }
     }
 }

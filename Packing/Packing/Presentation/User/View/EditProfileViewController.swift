@@ -196,7 +196,7 @@ final class EditProfileViewController: UIViewController, View {
         // 프로필 이미지 설정
         if let imageURL = reactor.currentState.profileImageUrl, !imageURL.isEmpty {
             if let url = URL(string: imageURL) {
-                 profileImageView.kf.setImage(with: url, placeholder: UIImage(systemName: "person.circle.fill"))
+                profileImageView.kf.setImage(with: url)
             } else {
                 profileImageView.image = UIImage(systemName: "person.circle.fill")
             }
@@ -290,8 +290,8 @@ final class EditProfileViewController: UIViewController, View {
             .compactMap { $0 }
             .subscribe(onNext: { [weak self] imageUrl in
                 if let url = URL(string: imageUrl) {
-                     self?.profileImageView.kf.setImage(with: url, placeholder: UIImage(systemName: "person.circle.fill"))
-                    
+                    self?.profileImageView.kf.setImage(with: url)
+
                 } else {
                     self?.profileImageView.image = UIImage(systemName: "person.circle.fill")
                 }

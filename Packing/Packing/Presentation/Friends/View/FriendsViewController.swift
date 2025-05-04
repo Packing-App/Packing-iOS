@@ -25,15 +25,31 @@ class FriendsViewController: UIViewController, View {
     }()
     
     private lazy var tableView: UITableView = {
-        let tableView = UITableView()
+        let tableView = UITableView(frame: .zero, style: .insetGrouped)
         tableView.register(FriendCell.self, forCellReuseIdentifier: FriendCell.identifier)
         tableView.register(FriendRequestCell.self, forCellReuseIdentifier: FriendRequestCell.identifier)
-        tableView.separatorStyle = .singleLine
+        tableView.separatorStyle = .none
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 80
-        tableView.tableFooterView = UIView()
+        tableView.backgroundColor = .systemGroupedBackground
+        tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 20, right: 0)
         tableView.translatesAutoresizingMaskIntoConstraints = false
         return tableView
+    }()
+    
+    private lazy var addFriendButton: UIButton = {
+        let button = UIButton(type: .system)
+        let image = UIImage(systemName: "person.badge.plus")
+        button.setImage(image, for: .normal)
+        button.backgroundColor = .systemBlue
+        button.tintColor = .white
+        button.layer.cornerRadius = 28
+        button.layer.shadowColor = UIColor.black.cgColor
+        button.layer.shadowOpacity = 0.15
+        button.layer.shadowOffset = CGSize(width: 0, height: 2)
+        button.layer.shadowRadius = 4
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
     }()
     
     private lazy var activityIndicator: UIActivityIndicatorView = {
@@ -43,14 +59,53 @@ class FriendsViewController: UIViewController, View {
         return indicator
     }()
     
-    private lazy var emptyStateLabel: UILabel = {
+    private lazy var emptyStateView: UIView = {
+        let view = UIView()
+        view.isHidden = true
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private lazy var emptyStateImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(systemName: "person.2.slash")
+        imageView.contentMode = .scaleAspectFit
+        imageView.tintColor = .systemGray2
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
+    private lazy var emptyStateTitle: UILabel = {
         let label = UILabel()
-        label.text = "친구 목록이 비어있습니다."
+        label.text = "친구 목록이 비어있습니다"
+        label.font = .systemFont(ofSize: 17, weight: .semibold)
+        label.textColor = .label
         label.textAlignment = .center
-        label.textColor = .gray
-        label.isHidden = true
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
+    }()
+    
+    private lazy var emptyStateSubtitle: UILabel = {
+        let label = UILabel()
+        label.text = "친구를 추가하여 함께 여행 계획을 세워보세요"
+        label.font = .systemFont(ofSize: 14)
+        label.textColor = .secondaryLabel
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private lazy var emptyStateButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("친구 추가하기", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
+        button.backgroundColor = .systemBlue
+        button.tintColor = .white
+        button.layer.cornerRadius = 12
+        button.contentEdgeInsets = UIEdgeInsets(top: 8, left: 16, bottom: 8, right: 16)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
     }()
     
     // MARK: - INITIALIZE
@@ -72,13 +127,22 @@ class FriendsViewController: UIViewController, View {
         super.viewDidLoad()
         setupUI()
         setupNavigationBar()
+        setupEmptyState()
         tableView.delegate = self
-
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // Refresh friends list when returning to this screen
+        if let reactor = self.reactor {
+            reactor.action.onNext(.viewDidLoad)
+        }
     }
     
     // MARK: - UI Setup
     private func setupUI() {
-        view.backgroundColor = .white
+        view.backgroundColor = .systemGroupedBackground
         
         // 테이블 뷰 추가
         view.addSubview(tableView)
@@ -86,8 +150,11 @@ class FriendsViewController: UIViewController, View {
         // 액티비티 인디케이터 추가
         view.addSubview(activityIndicator)
         
-        // 빈 상태 레이블 추가
-        view.addSubview(emptyStateLabel)
+        // 친구 추가 플로팅 버튼 추가
+        view.addSubview(addFriendButton)
+        
+        // 빈 상태 뷰 추가
+        view.addSubview(emptyStateView)
         
         // 레이아웃 설정
         NSLayoutConstraint.activate([
@@ -99,37 +166,80 @@ class FriendsViewController: UIViewController, View {
             activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             
-            emptyStateLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            emptyStateLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            emptyStateLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            emptyStateLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+            addFriendButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
+            addFriendButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            addFriendButton.widthAnchor.constraint(equalToConstant: 56),
+            addFriendButton.heightAnchor.constraint(equalToConstant: 56),
+            
+            emptyStateView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            emptyStateView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            emptyStateView.widthAnchor.constraint(equalToConstant: 240),
         ])
+        
+        // Add tap gesture for FAB
+        addFriendButton.addTarget(self, action: #selector(addFriendButtonTapped), for: .touchUpInside)
+    }
+    
+    private func setupEmptyState() {
+        // 빈 상태 뷰 구성
+        emptyStateView.addSubview(emptyStateImageView)
+        emptyStateView.addSubview(emptyStateTitle)
+        emptyStateView.addSubview(emptyStateSubtitle)
+        emptyStateView.addSubview(emptyStateButton)
+        
+        NSLayoutConstraint.activate([
+            emptyStateImageView.topAnchor.constraint(equalTo: emptyStateView.topAnchor),
+            emptyStateImageView.centerXAnchor.constraint(equalTo: emptyStateView.centerXAnchor),
+            emptyStateImageView.widthAnchor.constraint(equalToConstant: 60),
+            emptyStateImageView.heightAnchor.constraint(equalToConstant: 60),
+            
+            emptyStateTitle.topAnchor.constraint(equalTo: emptyStateImageView.bottomAnchor, constant: 16),
+            emptyStateTitle.leadingAnchor.constraint(equalTo: emptyStateView.leadingAnchor),
+            emptyStateTitle.trailingAnchor.constraint(equalTo: emptyStateView.trailingAnchor),
+            
+            emptyStateSubtitle.topAnchor.constraint(equalTo: emptyStateTitle.bottomAnchor, constant: 8),
+            emptyStateSubtitle.leadingAnchor.constraint(equalTo: emptyStateView.leadingAnchor),
+            emptyStateSubtitle.trailingAnchor.constraint(equalTo: emptyStateView.trailingAnchor),
+            
+            emptyStateButton.topAnchor.constraint(equalTo: emptyStateSubtitle.bottomAnchor, constant: 20),
+            emptyStateButton.centerXAnchor.constraint(equalTo: emptyStateView.centerXAnchor),
+            emptyStateButton.bottomAnchor.constraint(equalTo: emptyStateView.bottomAnchor)
+        ])
+        
+        // 버튼 액션 설정
+        emptyStateButton.addTarget(self, action: #selector(addFriendButtonTapped), for: .touchUpInside)
     }
     
     private func setupNavigationBar() {
-        title = "내 친구"
+        navigationController?.navigationBar.prefersLargeTitles = true
+        title = "친구"
         
         // 검색 컨트롤러 설정
         navigationItem.searchController = searchController
-        navigationItem.hidesSearchBarWhenScrolling = false
+        navigationItem.hidesSearchBarWhenScrolling = true
         
         // 알림 버튼 추가
-        let bellButton = UIBarButtonItem(
-            image: UIImage(systemName: "bell"),
+        let friendRequestsButton = UIBarButtonItem(
+            image: UIImage(systemName: "person.crop.circle.badge.questionmark"),
             style: .plain,
             target: self,
-            action: #selector(bellButtonTapped)
+            action: #selector(friendRequestsButtonTapped)
         )
-        navigationItem.rightBarButtonItem = bellButton
+        navigationItem.rightBarButtonItem = friendRequestsButton
     }
     
-    @objc private func bellButtonTapped() {
-        // 벨 버튼 탭 시 친구 요청 화면으로 이동
+    @objc private func friendRequestsButtonTapped() {
+        // 친구 요청 화면으로 이동
         let requestsViewController = FriendRequestsViewController()
         let requestsReactor = FriendRequestsViewReactor()
         requestsViewController.reactor = requestsReactor
         
         navigationController?.pushViewController(requestsViewController, animated: true)
+    }
+    
+    @objc private func addFriendButtonTapped() {
+        // 검색 컨트롤러 활성화
+        searchController.searchBar.becomeFirstResponder()
     }
     
     // MARK: - ReactorKit Binding
@@ -154,18 +264,6 @@ class FriendsViewController: UIViewController, View {
         searchController.searchBar.rx.cancelButtonClicked
             .map { Reactor.Action.clearSearch }
             .bind(to: reactor.action)
-            .disposed(by: disposeBag)
-        
-        tableView.rx.itemDeleted
-            .withLatestFrom(reactor.state.map { $0.friends }) { indexPath, friends in
-                return (indexPath, friends)
-            }
-            .subscribe(onNext: { [weak self] indexPath, friends in
-                if indexPath.row < friends.count {
-                    let friend = friends[indexPath.row]
-                    reactor.action.onNext(.removeFriend(friend.friendshipId))
-                }
-            })
             .disposed(by: disposeBag)
         
         // State 바인딩
@@ -196,13 +294,19 @@ class FriendsViewController: UIViewController, View {
             })
             .disposed(by: disposeBag)
         
-        // 빈 상태 표시 처리 - 친구 목록
-        reactor.state.map { $0.friends }
-            .observe(on: MainScheduler.instance)
-            .distinctUntilChanged()
-            .map { !$0.isEmpty }
-            .bind(to: emptyStateLabel.rx.isHidden)
-            .disposed(by: disposeBag)
+        // 빈 상태 표시 처리
+        reactor.state.map { state -> Bool in
+            switch state.viewMode {
+            case .friendsList:
+                return state.friends.isEmpty && !state.isLoading
+            case .searchResults:
+                return state.searchResults.isEmpty && !state.isLoading
+            }
+        }
+        .observe(on: MainScheduler.instance)
+        .distinctUntilChanged()
+        .bind(to: emptyStateView.rx.isHidden.mapObserver { !$0 })
+        .disposed(by: disposeBag)
         
         // 빈 상태 텍스트 변경
         reactor.state.map { $0.viewMode }
@@ -211,24 +315,25 @@ class FriendsViewController: UIViewController, View {
             .subscribe(onNext: { [weak self] mode in
                 switch mode {
                 case .friendsList:
-                    self?.emptyStateLabel.text = "친구 목록이 비어있습니다."
+                    self?.emptyStateTitle.text = "친구 목록이 비어있습니다"
+                    self?.emptyStateSubtitle.text = "친구를 추가하여 함께 여행 계획을 세워보세요"
+                    self?.emptyStateButton.setTitle("친구 추가하기", for: .normal)
+                    self?.emptyStateImageView.image = UIImage(systemName: "person.2.slash")
                 case .searchResults:
-                    self?.emptyStateLabel.text = "검색 결과가 없습니다."
+                    self?.emptyStateTitle.text = "검색 결과가 없습니다"
+                    self?.emptyStateSubtitle.text = "다른 이메일로 검색해보세요"
+                    self?.emptyStateButton.setTitle("친구 추가하기", for: .normal)
+                    self?.emptyStateImageView.image = UIImage(systemName: "magnifyingglass")
                 }
             })
             .disposed(by: disposeBag)
         
-        // 검색 결과 상태에 따른 빈 상태 표시
-        reactor.state.map { state -> Bool in
-            if state.viewMode == .searchResults {
-                return !state.searchResults.isEmpty
-            }
-            return true  // 검색 결과 모드가 아닐 때는 숨김 상태 유지
-        }
-        .observe(on: MainScheduler.instance)
-        .distinctUntilChanged()
-        .bind(to: emptyStateLabel.rx.isHidden)
-        .disposed(by: disposeBag)
+        // 플로팅 버튼 표시 여부
+        reactor.state.map { $0.viewMode }
+            .observe(on: MainScheduler.instance)
+            .map { $0 == .friendsList }
+            .bind(to: addFriendButton.rx.isHidden.mapObserver { !$0 })
+            .disposed(by: disposeBag)
     }
 
     // MARK: - Private Methods
@@ -236,7 +341,7 @@ class FriendsViewController: UIViewController, View {
         // 기존 데이터소스 구독 해제를 위해 disposeBag 초기화
         disposeBag = DisposeBag()
         
-        // 다시 Action 바인딩 (disposeBag이 초기화되었으므로)
+        // 다시 액션 바인딩
         Observable.just(())
             .map { Reactor.Action.viewDidLoad }
             .bind(to: reactor.action)
@@ -270,8 +375,21 @@ class FriendsViewController: UIViewController, View {
             })
             .disposed(by: disposeBag)
         
+        // 빈 상태 표시 처리
+        reactor.state.map { state -> Bool in
+            switch state.viewMode {
+            case .friendsList:
+                return state.friends.isEmpty && !state.isLoading
+            case .searchResults:
+                return state.searchResults.isEmpty && !state.isLoading
+            }
+        }
+        .observe(on: MainScheduler.instance)
+        .distinctUntilChanged()
+        .bind(to: emptyStateView.rx.isHidden.mapObserver { !$0 })
+        .disposed(by: disposeBag)
+        
         // 모드에 따른 테이블뷰 데이터소스 설정
-        // 중요: tableView.dataSource = nil을 명시적으로 설정
         tableView.dataSource = nil
         
         switch mode {
@@ -282,7 +400,7 @@ class FriendsViewController: UIViewController, View {
                 .bind(to: tableView.rx.items(cellIdentifier: FriendCell.identifier, cellType: FriendCell.self)) { [weak self] index, friend, cell in
                     cell.configure(with: friend)
                     
-                    // Use invite button to navigate to journey selection
+                    // 초대 버튼 설정
                     cell.inviteButton.rx.tap
                         .subscribe(onNext: { [weak self] _ in
                             self?.showJourneySelectionForFriend(friend)
@@ -300,24 +418,22 @@ class FriendsViewController: UIViewController, View {
                     
                     // 친구 상태에 따라 버튼 설정
                     if let friendshipStatus = result.friendshipStatus, friendshipStatus == .accepted {
-                        // 이미 친구인 경우 - 삭제 버튼 표시
-                        cell.actionButton.setTitle("친구 삭제", for: .normal)
-                        cell.actionButton.setTitleColor(.red, for: .normal)
-                        
-                        if let friendshipId = result.friendshipId {
-                            cell.actionButton.rx.tap
-                                .map { Reactor.Action.removeFriend(friendshipId) }
-                                .bind(to: reactor.action)
-                                .disposed(by: cell.disposeBag)
-                        }
+                        // 이미 친구인 경우 - 이 검색결과는 표시하지 않음 (이미 친구 목록에 있으므로)
+                        cell.actionButton.setTitle("이미 친구", for: .normal)
+                        cell.actionButton.backgroundColor = .systemGray5
+                        cell.actionButton.setTitleColor(.systemGray, for: .normal)
+                        cell.actionButton.isEnabled = false
                     } else if let friendshipStatus = result.friendshipStatus, friendshipStatus == .pending {
                         // 요청 중인 경우 - 비활성화된 버튼 표시
                         cell.actionButton.setTitle("요청 중", for: .normal)
+                        cell.actionButton.backgroundColor = .systemGray5
+                        cell.actionButton.setTitleColor(.systemGray, for: .normal)
                         cell.actionButton.isEnabled = false
                     } else {
                         // 친구 아닌 경우 - 요청 버튼 표시
                         cell.actionButton.setTitle("친구 요청", for: .normal)
-                        cell.actionButton.setTitleColor(.systemBlue, for: .normal)
+                        cell.actionButton.backgroundColor = .systemBlue
+                        cell.actionButton.setTitleColor(.white, for: .normal)
                         cell.actionButton.isEnabled = true
                         
                         cell.actionButton.rx.tap
@@ -329,6 +445,7 @@ class FriendsViewController: UIViewController, View {
                 .disposed(by: disposeBag)
         }
     }
+    
     private func showJourneySelectionForFriend(_ friend: Friend) {
         let journeySelectionVC = JourneySelectionViewController()
         journeySelectionVC.selectedFriend = friend
@@ -336,6 +453,7 @@ class FriendsViewController: UIViewController, View {
 
         navigationController?.pushViewController(journeySelectionVC, animated: true)
     }
+    
     private func showErrorAlert(_ error: Error) {
         let alert = UIAlertController(
             title: "오류",
@@ -346,23 +464,42 @@ class FriendsViewController: UIViewController, View {
         present(alert, animated: true)
     }
 }
+
 extension FriendsViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        guard let reactor = self.reactor, reactor.currentState.viewMode == .friendsList else {
+            return nil
+        }
+        
         let deleteAction = UIContextualAction(style: .destructive, title: "삭제") { [weak self] (action, view, completion) in
-            guard let self = self, let reactor = self.reactor else {
+            guard let self = self else {
                 completion(false)
                 return
             }
             
             let friend = reactor.currentState.friends[indexPath.row]
-            reactor.action.onNext(.removeFriend(friend.friendshipId))
-            completion(true)
+            
+            // 확인 알림 표시
+            let alert = UIAlertController(
+                title: "친구 삭제",
+                message: "\(friend.name)님을 친구 목록에서 삭제하시겠습니까?",
+                preferredStyle: .alert
+            )
+            
+            alert.addAction(UIAlertAction(title: "취소", style: .cancel) { _ in
+                completion(false)
+            })
+            
+            alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { _ in
+                reactor.action.onNext(.removeFriend(friend.friendshipId))
+                completion(true)
+            })
+            
+            self.present(alert, animated: true)
         }
+        
+        deleteAction.image = UIImage(systemName: "person.crop.circle.badge.minus")
         
         return UISwipeActionsConfiguration(actions: [deleteAction])
     }
 }
-
-
-
-

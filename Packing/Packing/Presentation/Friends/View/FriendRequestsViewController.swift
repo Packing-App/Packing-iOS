@@ -374,8 +374,7 @@ class ReceivedRequestCell: UITableViewCell {
         
         // 프로필 이미지 로드 (실제 구현에서는 이미지 라이브러리 사용)
         if let profileImageUrlString = request.requesterId.profileImage, let url = URL(string: profileImageUrlString) {
-            // 실제 구현에서는 Kingfisher, SDWebImage 등의 라이브러리를 사용해 이미지 로드
-            // 예: profileImageView.kf.setImage(with: url)
+            profileImageView.kf.setImage(with: url)
         } else {
             profileImageView.image = UIImage(systemName: "person.circle.fill")
             profileImageView.tintColor = .gray
@@ -476,8 +475,7 @@ class SentRequestCell: UITableViewCell {
         
         // 프로필 이미지 로드 (실제 구현에서는 이미지 라이브러리 사용)
         if let profileImageUrlString = request.receiverId.profileImage, let url = URL(string: profileImageUrlString) {
-            // 실제 구현에서는 Kingfisher, SDWebImage 등의 라이브러리를 사용해 이미지 로드
-            // 예: profileImageView.kf.setImage(with: url)
+            profileImageView.kf.setImage(with: url)
         } else {
             profileImageView.image = UIImage(systemName: "person.circle.fill")
             profileImageView.tintColor = .gray

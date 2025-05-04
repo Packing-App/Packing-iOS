@@ -4,17 +4,18 @@
 //
 //  Created by 이융의 on 4/12/25.
 //
+
 import UIKit
 import SwiftUI
 import RxSwift
 
 class JourneyDetailViewController: UIViewController {
     
-    // MARK: - Properties
+    // Properties
     var journey: Journey?
     private var hostingController: UIHostingController<JourneyDetailView>?
     
-    // MARK: - Lifecycle
+    // Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -63,7 +64,7 @@ class JourneyDetailViewController: UIViewController {
         navigationController?.navigationBar.scrollEdgeAppearance = appearance
     }
     
-    // MARK: - Setup
+    // Setup
     private func setupUI() {
         // Ensure we have a journey
         guard let journey = journey else { return }
@@ -91,7 +92,7 @@ class JourneyDetailViewController: UIViewController {
         hostingController.didMove(toParent: self)
     }
     
-    // 삭제 액션 메서드 추가
+    // 삭제 액션 메서드
     @objc private func deleteJourneyTapped() {
         // 확인 알림 표시
         let alert = UIAlertController(
@@ -104,15 +105,12 @@ class JourneyDetailViewController: UIViewController {
         alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
             guard let self = self, let journey = self.journey else { return }
             
-            // SwiftUI 뷰의 함수를 직접 호출할 수는 없으므로
-            // NotificationCenter를 통해 알리거나 콜백을 통해 처리
             self.deleteJourney(id: journey.id)
         })
         
         present(alert, animated: true)
     }
     
-    // 여행 삭제 메서드 추가
     private func deleteJourney(id: String) {
         // 로딩 인디케이터 표시
         let loadingIndicator = UIActivityIndicatorView(style: .large)
@@ -150,10 +148,10 @@ class JourneyDetailViewController: UIViewController {
     
 }
 
-// MARK: - SwiftUI JourneyDetailView
+// MARK: - JourneyDetailView
 
 struct JourneyDetailView: View {
-    // MARK: - Properties
+    // Properties
     let journey: Journey
     @State private var packingItems: [PackingItem] = []
     @State private var selectedTab = 0
@@ -169,6 +167,7 @@ struct JourneyDetailView: View {
     // Service
     private let packingService = PackingItemService()
     private let journeyService = JourneyService()
+    
     // MARK: - Body
     var body: some View {
         Group {
@@ -208,31 +207,24 @@ struct JourneyDetailView: View {
     private var mainContentView: some View {
         ScrollView {
             VStack(spacing: 0) {
-                // Header Image
                 headerSection
                     .safeAreaPadding(.top)
                 
-                // Content
                 VStack(spacing: 20) {
-                    // Journey Info
                     journeyInfoSection
                     
                     Divider()
                     
-                    // Participants
                     participantsSection
                     
                     Divider()
                     
-                    // Weather Section
                     WeatherSection(journey: journey)
                     
                     Divider()
                     
-                    // Progress
                     progressSection
                     
-                    // Item Tabs (Personal & Shared)
                     itemsTabView
                 }
                 .padding(.top, 20)
@@ -256,25 +248,28 @@ struct JourneyDetailView: View {
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fill)
+                            .clipped()
                     case .failure(_):
-                        Image("journey_default")
+                        Image("defaultTravelImage")
                             .resizable()
                             .aspectRatio(contentMode: .fill)
+                            .clipped()
                     case .empty:
                         ProgressView()
                     @unknown default:
-                        Image("journey_default")
+                        Image("defaultTravelImage")
                             .resizable()
                             .aspectRatio(contentMode: .fill)
+                            .clipped()
                     }
                 }
-                .frame(height: 250)
+                .frame(height: 200)
                 .clipped()
             } else {
-                Image("journey_default")
+                Image("defaultTravelImage")
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-                    .frame(height: 250)
+                    .frame(height: 200)
                     .clipped()
             }
         }
@@ -335,7 +330,6 @@ struct JourneyDetailView: View {
                 Spacer()
                 Button(action: {
                     self.showingInvitationSheet = true
-                    // 친구 목록 뷰로 이동.
                 }, label: {
                     Text("초대하기")
                         .font(.subheadline)
@@ -346,18 +340,17 @@ struct JourneyDetailView: View {
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 0) {
-                    // ZStack으로 감싸서 모든 참가자 프로필을 겹치게 표시
                     ZStack(alignment: .leading) {
                         // 먼저 일반 참가자들을 뒤에서부터 렌더링
                         let regularParticipants = journey.participants.filter { $0.id != journey.creatorId }.map { $0.id }
                         ForEach(Array(regularParticipants.enumerated().reversed()), id: \.element) { index, participantId in
-                            ParticipantView(name: "참가자 \(index + 2)", isCreator: false)
+                            ParticipantView(name: "참가자 \(index + 2)")
                                 .offset(x: CGFloat(index + 1) * 15.0) // 방장 뒤에 배치
                         }
                         
                         // 방장을 맨 앞(맨 왼쪽)에 배치
-                        if journey.participants.map { $0.id }.contains(journey.creatorId) {
-                            ParticipantView(name: "방장", isCreator: true)
+                        if journey.participants.map({ $0.id }).contains(journey.creatorId) {
+                            ParticipantView(name: "방장")
                                 .offset(x: 0) // 맨 앞에 배치
                         }
                     }
@@ -403,18 +396,15 @@ struct JourneyDetailView: View {
             .padding(.horizontal, 20)
             
             TabView(selection: $selectedTab) {
-                // Personal Items Tab
                 packingItemsList(items: personalItems)
                     .tag(0)
                 
-                // Shared Items Tab
                 packingItemsList(items: sharedItems)
                     .tag(1)
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             .frame(height: calculateContentHeight())
             
-            // Add Item Button
             Button {
                 showingAddItemSheet = true
             } label: {
@@ -600,15 +590,6 @@ struct JourneyDetailView: View {
             do {
                 // 성공이면 아무것도 할 필요 없음 (이미 UI에서 제거됨)
                 _ = try await packingService.deletePackingItemAsync(id: item.id)
-//                if !success {
-//                    // 실패 시 아이템 되돌리기
-//                    await MainActor.run {
-//                        if let item = removedItem, let index = itemIndex {
-//                            packingItems.insert(item, at: min(index, packingItems.count))
-//                        }
-//                        errorMessage = "삭제에 실패했습니다."
-//                    }
-//                }
             } catch {
                 await MainActor.run {
                     // 실패 시 아이템 되돌리기
@@ -730,11 +711,9 @@ struct JourneyDetailView: View {
 // MARK: - Supporting Views
 struct ParticipantView: View {
     let name: String
-    let isCreator: Bool
     
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            // 프로필 이미지
+        VStack {
             Circle()
                 .fill(Color.blue)
                 .frame(width: 40, height: 40)
@@ -742,15 +721,6 @@ struct ParticipantView: View {
                     Circle()
                         .stroke(Color.white, lineWidth: 1.5)
                 )
-            
-            // 방장 표시 (왕관 아이콘)
-            if isCreator {
-                Image(systemName: "crown.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(.yellow)
-                    .offset(x: -12, y: -2)
-                    .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
-            }
         }
     }
 }
@@ -798,7 +768,7 @@ struct PackingItemRow: View {
                         .foregroundColor(.secondary)
                     
                     if isSharedTab, let assignedTo = item.assignedTo {
-                        Text("담당: 참가자")
+                        Text("담당: \(assignedTo.name)")
                             .font(.system(size: 12))
                             .foregroundColor(.blue)
                     }
@@ -807,7 +777,6 @@ struct PackingItemRow: View {
             
             Spacer()
             
-            // Delete button
             Button {
                 showDeleteConfirm = true
             } label: {
@@ -849,7 +818,6 @@ struct PackingItemRow: View {
 }
 
 
-// Error Wrapper for alerts
 struct ErrorWrapper: Identifiable {
     let id = UUID()
     let message: String

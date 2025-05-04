@@ -435,8 +435,8 @@ class SentRequestCell: UITableViewCell {
             emailLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -12),
             
             statusLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            statusLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            statusLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 60)
+            statusLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
+            statusLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 30)
         ])
     }
     

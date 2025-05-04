@@ -361,7 +361,7 @@ enum APIEndpoint: Endpoints {
         case .deleteNotification(let id):
             return "/notifications/\(id)"
         case .getUnreadCount:
-            return "/notifications/unread/count"
+            return "/notifications/unread-count"
             
         case .createJourneyReminder:
             return "/notifications/journey-reminder"

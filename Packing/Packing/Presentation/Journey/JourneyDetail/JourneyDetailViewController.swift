@@ -170,7 +170,6 @@ struct JourneyDetailView: View {
     @State private var expandedCategories: Set<ItemCategory> = Set()
     
     @State private var showingAddItemSheet = false
-    @State private var showingInvitationSheet = false
     
     // State for API calls
     @State private var isLoading = false
@@ -359,7 +358,14 @@ struct JourneyDetailView: View {
                     .foregroundColor(.primary)
                 Spacer()
                 Button(action: {
-                    self.showingInvitationSheet = true
+                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                       let window = windowScene.windows.first,
+                       let tabBarController = window.rootViewController as? UITabBarController {
+                        
+                        DispatchQueue.main.async {
+                            tabBarController.selectedIndex = 1
+                        }
+                    }
                 }, label: {
                     Text("초대하기")
                         .font(.subheadline)

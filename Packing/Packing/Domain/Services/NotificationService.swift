@@ -98,6 +98,7 @@ class NotificationService: NotificationServiceProtocol {
                 return response.data?.count ?? 0
             }
             .catch { error in
+                
                 print("읽지 않은 알림 수 조회 오류: \(error.localizedDescription)")
                 return .just(0)
             }

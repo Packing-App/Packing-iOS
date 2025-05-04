@@ -710,15 +710,15 @@ extension HomeViewController {
         let notificationService = NotificationService(apiClient: APIClient.shared)
         
         // 읽지 않은 알림 수 가져오기
-//        notificationService.getUnreadCount()
-//            .observe(on: MainScheduler.instance)
-//            .subscribe(onNext: { [weak self] count in
-//                // 읽지 않은 알림이 있을 경우 배지 표시
-//                self?.updateNotificationBadge(count: count)
-//            }, onError: { error in
-//                print("읽지 않은 알림 수 조회 오류: \(error.localizedDescription)")
-//            })
-//            .disposed(by: disposeBag)
+        notificationService.getUnreadCount()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] count in
+                // 읽지 않은 알림이 있을 경우 배지 표시
+                self?.updateNotificationBadge(count: count)
+            }, onError: { error in
+                print("읽지 않은 알림 수 조회 오류: \(error.localizedDescription)")
+            })
+            .disposed(by: disposeBag)
     }
     
     // 알림 버튼 배지 업데이트

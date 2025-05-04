@@ -15,11 +15,10 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
     var disposeBag = DisposeBag()
     
     // UI Components
-    private let segmentedControl = UISegmentedControl()
     private let tableView = UITableView()
     private let refreshControl = UIRefreshControl()
     private let activityIndicator = UIActivityIndicatorView(style: .large)
-    private let emptyStateLabel = UILabel()
+    private let emptyStateView = UIView()
     private var loadingAlert: UIAlertController?
     
     // MARK: - Initialization
@@ -37,19 +36,18 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
         super.viewDidLoad()
         setupUI()
         
-        // 초기 데이터 로드는 viewDidLoad에서 수행
+        // 초기 데이터 로드
         reactor?.action.onNext(.fetchNotifications)
     }
     
     // MARK: - UI Setup
     private func setupUI() {
         title = "알림"
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .systemGroupedBackground
         
         setupNavigationBar()
-        setupSegmentedControl()
         setupTableView()
-        setupEmptyStateLabel()
+        setupEmptyStateView()
         setupActivityIndicator()
     }
     
@@ -62,55 +60,87 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
         )
     }
     
-    private func setupSegmentedControl() {
-        segmentedControl.insertSegment(withTitle: "전체", at: 0, animated: false)
-        segmentedControl.insertSegment(withTitle: "초대장", at: 1, animated: false)
-        segmentedControl.insertSegment(withTitle: "날씨", at: 2, animated: false)
-        segmentedControl.insertSegment(withTitle: "리마인더", at: 3, animated: false)
-        segmentedControl.selectedSegmentIndex = 0
-        
-        view.addSubview(segmentedControl)
-        segmentedControl.translatesAutoresizingMaskIntoConstraints = false
-        
-        NSLayoutConstraint.activate([
-            segmentedControl.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
-            segmentedControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            segmentedControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
-        ])
-    }
-    
     private func setupTableView() {
         tableView.register(NotificationTableViewCell.self, forCellReuseIdentifier: NotificationTableViewCell.identifier)
         tableView.backgroundColor = .systemGroupedBackground
         tableView.separatorStyle = .none
         tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = 120
+        tableView.estimatedRowHeight = 140
         tableView.refreshControl = refreshControl
+        
+        // iOS 15 이상에서 테이블뷰 스타일 적용
+        if #available(iOS 15.0, *) {
+            tableView.sectionHeaderTopPadding = 0
+        }
         
         view.addSubview(tableView)
         tableView.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            tableView.topAnchor.constraint(equalTo: segmentedControl.bottomAnchor, constant: 8),
+            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
     
-    private func setupEmptyStateLabel() {
-        emptyStateLabel.text = "알림이 없습니다"
-        emptyStateLabel.textAlignment = .center
-        emptyStateLabel.textColor = .secondaryLabel
-        emptyStateLabel.font = UIFont.preferredFont(forTextStyle: .title3)
-        emptyStateLabel.isHidden = true
+    private func setupEmptyStateView() {
+        emptyStateView.isHidden = true
+        view.addSubview(emptyStateView)
         
-        view.addSubview(emptyStateLabel)
-        emptyStateLabel.translatesAutoresizingMaskIntoConstraints = false
-        
+        emptyStateView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            emptyStateLabel.centerXAnchor.constraint(equalTo: tableView.centerXAnchor),
-            emptyStateLabel.centerYAnchor.constraint(equalTo: tableView.centerYAnchor)
+            emptyStateView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            emptyStateView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            emptyStateView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.8),
+            emptyStateView.heightAnchor.constraint(equalToConstant: 200)
+        ])
+        
+        // 이미지 뷰 추가
+        let imageView = UIImageView(image: UIImage(systemName: "bell.slash"))
+        imageView.contentMode = .scaleAspectFit
+        imageView.tintColor = .secondaryLabel
+        
+        emptyStateView.addSubview(imageView)
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            imageView.centerXAnchor.constraint(equalTo: emptyStateView.centerXAnchor),
+            imageView.topAnchor.constraint(equalTo: emptyStateView.topAnchor),
+            imageView.widthAnchor.constraint(equalToConstant: 60),
+            imageView.heightAnchor.constraint(equalToConstant: 60)
+        ])
+        
+        // 라벨 추가
+        let label = UILabel()
+        label.text = "알림이 없습니다"
+        label.textAlignment = .center
+        label.textColor = .secondaryLabel
+        label.font = UIFont.preferredFont(forTextStyle: .title3)
+        
+        emptyStateView.addSubview(label)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: emptyStateView.centerXAnchor),
+            label.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 16),
+            label.leadingAnchor.constraint(equalTo: emptyStateView.leadingAnchor),
+            label.trailingAnchor.constraint(equalTo: emptyStateView.trailingAnchor)
+        ])
+        
+        // 설명 라벨 추가
+        let descriptionLabel = UILabel()
+        descriptionLabel.text = "여행 초대 및 정보 알림이 여기에 표시됩니다"
+        descriptionLabel.textAlignment = .center
+        descriptionLabel.textColor = .tertiaryLabel
+        descriptionLabel.font = UIFont.preferredFont(forTextStyle: .body)
+        descriptionLabel.numberOfLines = 0
+        
+        emptyStateView.addSubview(descriptionLabel)
+        descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            descriptionLabel.centerXAnchor.constraint(equalTo: emptyStateView.centerXAnchor),
+            descriptionLabel.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 8),
+            descriptionLabel.leadingAnchor.constraint(equalTo: emptyStateView.leadingAnchor),
+            descriptionLabel.trailingAnchor.constraint(equalTo: emptyStateView.trailingAnchor)
         ])
     }
     
@@ -135,7 +165,7 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
         print("✅ handleInvitationResponse called: ID=\(notificationId), accept=\(accept)")
         
         // 해당 셀의 버튼 비활성화 (UI 피드백)
-        if let index = reactor?.currentState.filteredNotifications.firstIndex(where: { $0.id == notificationId }),
+        if let index = reactor?.currentState.notifications.firstIndex(where: { $0.id == notificationId }),
            let cell = tableView.cellForRow(at: IndexPath(row: index, section: 0)) as? NotificationTableViewCell {
             // 버튼 비활성화
             cell.acceptButton.isEnabled = false
@@ -158,15 +188,27 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
             alert.dismiss(animated: false)
         }
         
-        loadingAlert = UIAlertController(
-            title: accept ? "초대 수락 중..." : "초대 거절 중...",
-            message: "잠시만 기다려주세요.",
+        let alert = UIAlertController(
+            title: nil,
+            message: accept ? "초대를 수락하는 중..." : "초대를 거절하는 중...",
             preferredStyle: .alert
         )
         
-        if let alert = loadingAlert {
-            present(alert, animated: true)
-        }
+        let loadingIndicator = UIActivityIndicatorView(frame: CGRect(x: 10, y: 5, width: 50, height: 50))
+        loadingIndicator.hidesWhenStopped = true
+        loadingIndicator.style = .medium
+        loadingIndicator.startAnimating()
+        
+        alert.view.addSubview(loadingIndicator)
+        
+        // 로딩 인디케이터 위치 조정
+        NSLayoutConstraint.activate([
+            loadingIndicator.centerXAnchor.constraint(equalTo: alert.view.centerXAnchor),
+            loadingIndicator.topAnchor.constraint(equalTo: alert.view.topAnchor, constant: 40)
+        ])
+        
+        loadingAlert = alert
+        present(alert, animated: true)
     }
     
     // 로딩 알림 닫기
@@ -212,12 +254,6 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
     func bind(reactor: NotificationsReactor) {
         // Action bindings
         
-        // Tab selection
-        segmentedControl.rx.selectedSegmentIndex
-            .map { Reactor.Action.selectTab($0) }
-            .bind(to: reactor.action)
-            .disposed(by: disposeBag)
-        
         // Pull to refresh
         refreshControl.rx.controlEvent(.valueChanged)
             .map { Reactor.Action.fetchNotifications }
@@ -227,11 +263,11 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
         // State bindings
         
         // Notifications list
-        reactor.state.map { $0.filteredNotifications }
+        reactor.state.map { $0.notifications }
             .distinctUntilChanged()
             .observe(on: MainScheduler.instance)
             .do(onNext: { notifications in
-                print("Filtered notifications count: \(notifications.count)")
+                print("Notifications count: \(notifications.count)")
             })
             .bind(to: tableView.rx.items) { [weak self] tableView, row, notification in
                 let cell = tableView.dequeueReusableCell(withIdentifier: NotificationTableViewCell.identifier, for: IndexPath(row: row, section: 0)) as! NotificationTableViewCell
@@ -239,7 +275,7 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
                 // 셀 구성
                 cell.configure(with: notification)
                 
-                // 중요: 델리게이트 설정
+                // 델리게이트 설정
                 cell.invitationCallbackDelegate = self
                 
                 // 디버그 로깅
@@ -252,9 +288,9 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
             .disposed(by: disposeBag)
         
         // Empty state
-        reactor.state.map { $0.filteredNotifications.isEmpty && !$0.isLoading }
+        reactor.state.map { $0.notifications.isEmpty && !$0.isLoading }
             .observe(on: MainScheduler.instance)
-            .bind(to: emptyStateLabel.rx.isHidden.mapObserver { !$0 })
+            .bind(to: emptyStateView.rx.isHidden.mapObserver { !$0 })
             .disposed(by: disposeBag)
         
         // Loading state
@@ -308,7 +344,7 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
         // 스와이프로 삭제
         tableView.rx.itemDeleted
             .withLatestFrom(reactor.state) { indexPath, state in
-                (indexPath, state.filteredNotifications[indexPath.row])
+                (indexPath, state.notifications[indexPath.row])
             }
             .bind(onNext: { _, notification in
                 if let id = notification.id {

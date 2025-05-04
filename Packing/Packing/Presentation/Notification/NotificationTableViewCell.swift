@@ -12,18 +12,25 @@ class NotificationTableViewCell: UITableViewCell {
     static let identifier = "NotificationTableViewCell"
     
     // UI Components
-    private let containerView = UIView()
-    private let titleLabel = UILabel()
+    private let cardView = UIView()
+    private let mainStackView = UIStackView()
+    private let headerStack = UIStackView()
+    private let typeContainer = UIView()
+    private let typeIconView = UIImageView()
+    private let typeLabel = UILabel()
     private let dateLabel = UILabel()
     private let contentLabel = UILabel()
-    private let unreadIndicator = UIView()
+    private let actionContainer = UIView()
     
-    // Add response buttons for invitation
-    let responseButtonsContainer = UIView()
+    // Response buttons for invitation
+    private let buttonStack = UIStackView()
     let acceptButton = UIButton(type: .system)
     let rejectButton = UIButton(type: .system)
     
-    // IMPORTANT: notificationId 저장을 위한 속성 추가
+    // Badge for unread indicator
+    private let unreadBadge = UIView()
+    
+    // notificationId 저장을 위한 속성
     var notificationId: String?
     var invitationCallbackDelegate: InvitationCallbackDelegate?
     
@@ -42,148 +49,228 @@ class NotificationTableViewCell: UITableViewCell {
         // ID 리셋
         notificationId = nil
         
-        // Reset button states
+        // Reset states
         acceptButton.isEnabled = true
         rejectButton.isEnabled = true
         acceptButton.alpha = 1.0
         rejectButton.alpha = 1.0
         
-        // Hide response buttons by default
-        responseButtonsContainer.isHidden = true
+        // Hide action container by default
+        actionContainer.isHidden = true
+        
+        // Reset visual states
+        cardView.alpha = 1.0
+        unreadBadge.isHidden = true
+        
+        // Reset shadow animation
+        cardView.layer.shadowOpacity = 0.1
     }
     
     // MARK: - UI Setup
     private func setupUI() {
         selectionStyle = .none
         backgroundColor = .clear
+        contentView.backgroundColor = .clear
         
-        // Container view setup
-        containerView.backgroundColor = .systemBackground
-        containerView.layer.cornerRadius = 12
-        containerView.layer.shadowColor = UIColor.black.cgColor
-        containerView.layer.shadowOpacity = 0.05
-        containerView.layer.shadowRadius = 4
-        containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
-        contentView.addSubview(containerView)
-        
-        containerView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
-            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6)
-        ])
-        
-        // Unread indicator setup
-        unreadIndicator.backgroundColor = .systemBlue
-        unreadIndicator.layer.cornerRadius = 4
-        containerView.addSubview(unreadIndicator)
-        
-        unreadIndicator.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            unreadIndicator.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
-            unreadIndicator.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            unreadIndicator.widthAnchor.constraint(equalToConstant: 8),
-            unreadIndicator.heightAnchor.constraint(equalToConstant: 8)
-        ])
-        
-        // Title Label setup
-        titleLabel.font = UIFont.preferredFont(forTextStyle: .headline)
-        titleLabel.textColor = .label
-        containerView.addSubview(titleLabel)
-        
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 12),
-            titleLabel.leadingAnchor.constraint(equalTo: unreadIndicator.trailingAnchor, constant: 12),
-            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12)
-        ])
-        
-        // Date Label setup
-        dateLabel.font = UIFont.preferredFont(forTextStyle: .caption1)
-        dateLabel.textColor = .secondaryLabel
-        containerView.addSubview(dateLabel)
-        
-        dateLabel.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            dateLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
-            dateLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            dateLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor)
-        ])
-        
-        // Content Label setup
-        contentLabel.font = UIFont.preferredFont(forTextStyle: .body)
-        contentLabel.textColor = .label
-        contentLabel.numberOfLines = 2
-        containerView.addSubview(contentLabel)
-        
-        contentLabel.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            contentLabel.topAnchor.constraint(equalTo: dateLabel.bottomAnchor, constant: 8),
-            contentLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
-            contentLabel.trailingAnchor.constraint(equalTo: titleLabel.trailingAnchor)
-        ])
-        
-        // Set up response buttons container
-        setupResponseButtons()
+        setupCardView()
+        setupMainStackView()
+        setupHeaderStackView()
+        setupTypeContainer()
+        setupContentLabel()
+        setupActionContainer()
+        setupUnreadBadge()
     }
     
-    private func setupResponseButtons() {
-        // Response buttons container
-        responseButtonsContainer.backgroundColor = .clear
-        containerView.addSubview(responseButtonsContainer)
+    private func setupCardView() {
+        // Modern card style with subtle shadow and rounded corners
+        cardView.backgroundColor = .systemBackground
+        cardView.layer.cornerRadius = 16
+        cardView.clipsToBounds = false
         
-        responseButtonsContainer.translatesAutoresizingMaskIntoConstraints = false
+        // Elegant shadow
+        cardView.layer.shadowColor = UIColor.black.cgColor
+        cardView.layer.shadowOpacity = 0.1
+        cardView.layer.shadowRadius = 10
+        cardView.layer.shadowOffset = CGSize(width: 0, height: 4)
+        
+        contentView.addSubview(cardView)
+        cardView.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
-            responseButtonsContainer.topAnchor.constraint(equalTo: contentLabel.bottomAnchor, constant: 12),
-            responseButtonsContainer.leadingAnchor.constraint(equalTo: contentLabel.leadingAnchor),
-            responseButtonsContainer.trailingAnchor.constraint(equalTo: contentLabel.trailingAnchor),
-            responseButtonsContainer.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12),
-            responseButtonsContainer.heightAnchor.constraint(equalToConstant: 40)
+            cardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            cardView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            cardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            cardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8)
+        ])
+    }
+    
+    private func setupMainStackView() {
+        mainStackView.axis = .vertical
+        mainStackView.spacing = 12
+        mainStackView.alignment = .fill
+        mainStackView.distribution = .fill
+        mainStackView.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+        mainStackView.isLayoutMarginsRelativeArrangement = true
+        
+        cardView.addSubview(mainStackView)
+        mainStackView.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            mainStackView.topAnchor.constraint(equalTo: cardView.topAnchor),
+            mainStackView.leadingAnchor.constraint(equalTo: cardView.leadingAnchor),
+            mainStackView.trailingAnchor.constraint(equalTo: cardView.trailingAnchor),
+            mainStackView.bottomAnchor.constraint(equalTo: cardView.bottomAnchor)
+        ])
+    }
+    
+    private func setupHeaderStackView() {
+        headerStack.axis = .horizontal
+        headerStack.spacing = 8
+        headerStack.alignment = .center
+        headerStack.distribution = .equalSpacing
+        
+        // Date label setup
+        dateLabel.font = UIFont.systemFont(ofSize: 12, weight: .regular)
+        dateLabel.textColor = .tertiaryLabel
+        dateLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        
+        headerStack.addArrangedSubview(typeContainer)
+        headerStack.addArrangedSubview(dateLabel)
+        
+        mainStackView.addArrangedSubview(headerStack)
+    }
+    
+    private func setupTypeContainer() {
+        typeContainer.backgroundColor = .secondarySystemFill
+        typeContainer.layer.cornerRadius = 10
+        
+        // Type icon setup
+        typeIconView.contentMode = .scaleAspectFit
+        typeIconView.tintColor = .secondaryLabel
+        
+        // Type label setup
+        typeLabel.font = UIFont.systemFont(ofSize: 12, weight: .medium)
+        typeLabel.textColor = .secondaryLabel
+        
+        // Add to type container
+        typeContainer.addSubview(typeIconView)
+        typeContainer.addSubview(typeLabel)
+        
+        typeIconView.translatesAutoresizingMaskIntoConstraints = false
+        typeLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            typeIconView.leadingAnchor.constraint(equalTo: typeContainer.leadingAnchor, constant: 8),
+            typeIconView.centerYAnchor.constraint(equalTo: typeContainer.centerYAnchor),
+            typeIconView.widthAnchor.constraint(equalToConstant: 12),
+            typeIconView.heightAnchor.constraint(equalToConstant: 12),
+            
+            typeLabel.leadingAnchor.constraint(equalTo: typeIconView.trailingAnchor, constant: 4),
+            typeLabel.trailingAnchor.constraint(equalTo: typeContainer.trailingAnchor, constant: -8),
+            typeLabel.centerYAnchor.constraint(equalTo: typeContainer.centerYAnchor),
+            
+            typeContainer.heightAnchor.constraint(equalToConstant: 22)
+        ])
+    }
+    
+    private func setupContentLabel() {
+        contentLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
+        contentLabel.textColor = .label
+        contentLabel.numberOfLines = 0
+        contentLabel.lineBreakMode = .byWordWrapping
+        mainStackView.addArrangedSubview(contentLabel)
+    }
+    
+    private func setupActionContainer() {
+        actionContainer.backgroundColor = .clear
+        mainStackView.addArrangedSubview(actionContainer)
+        
+        // Modern button stack
+        buttonStack.axis = .horizontal
+        buttonStack.spacing = 12
+        buttonStack.distribution = .fillEqually
+        buttonStack.alignment = .fill
+        
+        actionContainer.addSubview(buttonStack)
+        buttonStack.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            buttonStack.topAnchor.constraint(equalTo: actionContainer.topAnchor, constant: 8),
+            buttonStack.leadingAnchor.constraint(equalTo: actionContainer.leadingAnchor),
+            buttonStack.trailingAnchor.constraint(equalTo: actionContainer.trailingAnchor),
+            buttonStack.bottomAnchor.constraint(equalTo: actionContainer.bottomAnchor),
+            buttonStack.heightAnchor.constraint(equalToConstant: 40)
         ])
         
-        // Accept button - 눈에 더 잘 띄도록 스타일 변경
-        acceptButton.setTitle("수락", for: .normal)
-        acceptButton.tintColor = .white
-        acceptButton.setImage(UIImage(systemName: "checkmark.circle.fill"), for: .normal)
-        acceptButton.backgroundColor = .systemGreen
-        acceptButton.layer.cornerRadius = 8
-        acceptButton.contentEdgeInsets = UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
+        // Setup elegant buttons
+        setupAcceptButton()
+        setupRejectButton()
+        
+        // Add buttons to stack
+        buttonStack.addArrangedSubview(acceptButton)
+        buttonStack.addArrangedSubview(rejectButton)
+        
+        // Initially hide the action container
+        actionContainer.isHidden = true
+    }
+    
+    private func setupAcceptButton() {
+        configureButton(
+            acceptButton,
+            title: "수락",
+            icon: "checkmark",
+            backgroundColor: UIColor.systemGreen.withAlphaComponent(0.1),
+            textColor: .systemGreen
+        )
         acceptButton.addTarget(self, action: #selector(acceptButtonTapped), for: .touchUpInside)
-        responseButtonsContainer.addSubview(acceptButton)
-        
-        acceptButton.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            acceptButton.topAnchor.constraint(equalTo: responseButtonsContainer.topAnchor),
-            acceptButton.leadingAnchor.constraint(equalTo: responseButtonsContainer.leadingAnchor),
-            acceptButton.bottomAnchor.constraint(equalTo: responseButtonsContainer.bottomAnchor),
-            acceptButton.widthAnchor.constraint(equalTo: responseButtonsContainer.widthAnchor, multiplier: 0.48)
-        ])
-        
-        // Reject button - 눈에 더 잘 띄도록 스타일 변경
-        rejectButton.setTitle("거절", for: .normal)
-        rejectButton.tintColor = .white
-        rejectButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
-        rejectButton.backgroundColor = .systemRed
-        rejectButton.layer.cornerRadius = 8
-        rejectButton.contentEdgeInsets = UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
+    }
+    
+    private func setupRejectButton() {
+        configureButton(
+            rejectButton,
+            title: "거절",
+            icon: "xmark",
+            backgroundColor: UIColor.systemRed.withAlphaComponent(0.1),
+            textColor: .systemRed
+        )
         rejectButton.addTarget(self, action: #selector(rejectButtonTapped), for: .touchUpInside)
-        responseButtonsContainer.addSubview(rejectButton)
+    }
+    
+    private func configureButton(_ button: UIButton, title: String, icon: String, backgroundColor: UIColor, textColor: UIColor) {
+        button.setTitle(title, for: .normal)
+        button.setImage(UIImage(systemName: icon), for: .normal)
+        button.tintColor = textColor
+        button.setTitleColor(textColor, for: .normal)
+        button.backgroundColor = backgroundColor
+        button.layer.cornerRadius = 12
         
-        rejectButton.translatesAutoresizingMaskIntoConstraints = false
+        // Modern layout for button content
+        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 8)
+        button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 8, bottom: 0, right: 0)
+        button.contentEdgeInsets = UIEdgeInsets(top: 8, left: 16, bottom: 8, right: 16)
+        
+        // Set font
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+    }
+    
+    private func setupUnreadBadge() {
+        unreadBadge.backgroundColor = .systemBlue
+        unreadBadge.layer.cornerRadius = 3
+        unreadBadge.isHidden = true
+        
+        cardView.addSubview(unreadBadge)
+        unreadBadge.translatesAutoresizingMaskIntoConstraints = false
+        
         NSLayoutConstraint.activate([
-            rejectButton.topAnchor.constraint(equalTo: responseButtonsContainer.topAnchor),
-            rejectButton.trailingAnchor.constraint(equalTo: responseButtonsContainer.trailingAnchor),
-            rejectButton.bottomAnchor.constraint(equalTo: responseButtonsContainer.bottomAnchor),
-            rejectButton.widthAnchor.constraint(equalTo: responseButtonsContainer.widthAnchor, multiplier: 0.48)
+            unreadBadge.widthAnchor.constraint(equalToConstant: 6),
+            unreadBadge.heightAnchor.constraint(equalToConstant: 6),
+            unreadBadge.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 8),
+            unreadBadge.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 16)
         ])
-        
-        // Initially hide the response buttons
-        responseButtonsContainer.isHidden = true
     }
     
     @objc private func acceptButtonTapped() {
-        print("Accept button tapped - ID: \(notificationId ?? "nil")")
+        animateButtonTap(acceptButton)
         
         // 델리게이트를 통해 처리
         if let id = notificationId {
@@ -192,7 +279,7 @@ class NotificationTableViewCell: UITableViewCell {
     }
     
     @objc private func rejectButtonTapped() {
-        print("Reject button tapped - ID: \(notificationId ?? "nil")")
+        animateButtonTap(rejectButton)
         
         // 델리게이트를 통해 처리
         if let id = notificationId {
@@ -200,37 +287,102 @@ class NotificationTableViewCell: UITableViewCell {
         }
     }
     
+    private func animateButtonTap(_ button: UIButton) {
+        UIView.animate(withDuration: 0.1, animations: {
+            button.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        }, completion: { _ in
+            UIView.animate(withDuration: 0.1) {
+                button.transform = CGAffineTransform.identity
+            }
+        })
+    }
+    
     // MARK: - Configuration
     func configure(with notification: NotificationModel) {
         // 알림 ID 저장
         self.notificationId = notification.id
         
-        // Set notification type as title
-        switch notification.type {
-        case .invitation:
-            titleLabel.text = "초대장"
-            responseButtonsContainer.isHidden = false
-            print("Configuring invitation cell, ID: \(notification.id ?? "unknown"), showing buttons")
-        case .weather:
-            titleLabel.text = "날씨 알림"
-            responseButtonsContainer.isHidden = true
-        case .reminder:
-            titleLabel.text = "리마인더"
-            responseButtonsContainer.isHidden = true
-        }
-        
-        // Date formatting
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .medium
-        dateFormatter.timeStyle = .short
-        dateFormatter.doesRelativeDateFormatting = true
-        dateLabel.text = dateFormatter.string(from: notification.createdAt)
-        
-        // Content
+        // 콘텐츠 설정
         contentLabel.text = notification.content
         
-        // Unread indicator
-        unreadIndicator.isHidden = notification.isRead
+        // 타입에 따른 아이콘 및 레이블 설정
+        configureForType(notification.type)
+        
+        // 날짜 포맷팅
+        configureDateLabel(notification.createdAt)
+        
+        // 읽음 상태에 따른 시각적 처리
+        configureReadState(notification.isRead)
+        
+        // 초대 알림인 경우 응답 버튼 처리
+        configureResponseButtons(notification)
+    }
+    
+    private func configureForType(_ type: NotificationType) {
+        switch type {
+        case .invitation:
+            typeIconView.image = UIImage(systemName: "person.badge.plus")
+            typeLabel.text = "초대"
+        case .weather:
+            typeIconView.image = UIImage(systemName: "cloud.sun")
+            typeLabel.text = "날씨"
+        case .reminder:
+            typeIconView.image = UIImage(systemName: "bell")
+            typeLabel.text = "리마인더"
+        }
+    }
+    
+    private func configureDateLabel(_ date: Date) {
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "ko_KR")
+        dateFormatter.doesRelativeDateFormatting = true
+        
+        // 오늘이면 시간만, 아니면 날짜+시간
+        if Calendar.current.isDateInToday(date) {
+            dateFormatter.dateStyle = .none
+            dateFormatter.timeStyle = .short
+        } else {
+            dateFormatter.dateStyle = .short
+            dateFormatter.timeStyle = .short
+        }
+        
+        dateLabel.text = dateFormatter.string(from: date)
+    }
+    
+    private func configureReadState(_ isRead: Bool) {
+        if isRead {
+            // 읽은 알림은 약간 투명하게 처리
+            cardView.alpha = 0.7
+            cardView.backgroundColor = .secondarySystemBackground
+            unreadBadge.isHidden = true
+            cardView.layer.shadowOpacity = 0.05
+        } else {
+            // 안 읽은 알림은 강조
+            cardView.alpha = 1.0
+            cardView.backgroundColor = .systemBackground
+            unreadBadge.isHidden = false
+            cardView.layer.shadowOpacity = 0.1
+        }
+    }
+    
+    private func configureResponseButtons(_ notification: NotificationModel) {
+        // 초대 알림이고 읽지 않은 상태인 경우에만 응답 버튼 표시
+        let shouldShowButtons = notification.type == .invitation && !notification.isRead
+        actionContainer.isHidden = !shouldShowButtons
+        
+        if notification.isRead && notification.type == .invitation {
+            // 이미 응답한 알림의 경우 버튼 비활성화
+            acceptButton.isEnabled = false
+            rejectButton.isEnabled = false
+            acceptButton.alpha = 0.5
+            rejectButton.alpha = 0.5
+        } else {
+            // 응답하지 않은 알림의 경우 버튼 활성화
+            acceptButton.isEnabled = true
+            rejectButton.isEnabled = true
+            acceptButton.alpha = 1.0
+            rejectButton.alpha = 1.0
+        }
     }
 }
 

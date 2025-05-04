@@ -9,6 +9,16 @@ import UIKit
 import SwiftUI
 import RxSwift
 
+// MARK: - UI 상수 정의
+fileprivate struct UIConstants {
+    static let horizontalPadding: CGFloat = 20
+    static let verticalPadding: CGFloat = 10
+    static let cornerRadius: CGFloat = 20
+    static let minTapTargetSize: CGFloat = 44
+    static let imageHeight: CGFloat = 220
+}
+
+// MARK: - JourneyDetailViewController
 class JourneyDetailViewController: UIViewController {
     
     // Properties
@@ -39,7 +49,6 @@ class JourneyDetailViewController: UIViewController {
         navigationController?.navigationBar.tintColor = .systemBlue
         
         
-        // 삭제 버튼 추가
         let deleteButton = UIBarButtonItem(
             image: UIImage(systemName: "trash"),
             style: .plain,
@@ -81,9 +90,8 @@ class JourneyDetailViewController: UIViewController {
         view.addSubview(hostingController.view)
         hostingController.view.translatesAutoresizingMaskIntoConstraints = false
         
-        // Setup constraints
         NSLayoutConstraint.activate([
-            hostingController.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            hostingController.view.topAnchor.constraint(equalTo: view.topAnchor),
             hostingController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             hostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
@@ -112,11 +120,15 @@ class JourneyDetailViewController: UIViewController {
     }
     
     private func deleteJourney(id: String) {
-        // 로딩 인디케이터 표시
+        let loadingView = UIView(frame: view.bounds)
+        loadingView.backgroundColor = UIColor.black.withAlphaComponent(0.3)
+        view.addSubview(loadingView)
+        
         let loadingIndicator = UIActivityIndicatorView(style: .large)
-        loadingIndicator.center = view.center
+        loadingIndicator.center = loadingView.center
+        loadingIndicator.color = .white
         loadingIndicator.startAnimating()
-        view.addSubview(loadingIndicator)
+        loadingView.addSubview(loadingIndicator)
         
         // JourneyService 인스턴스 생성 및 삭제 요청
         let journeyService = JourneyService()
@@ -126,13 +138,13 @@ class JourneyDetailViewController: UIViewController {
                 _ = try await journeyService.deleteJourney(id: id)
                 
                 await MainActor.run {
-                    loadingIndicator.removeFromSuperview()
+                    loadingView.removeFromSuperview()
                     // 삭제 성공 시 이전 화면으로 돌아가기
                     self.navigationController?.popViewController(animated: true)
                 }
             } catch {
                 await MainActor.run {
-                    loadingIndicator.removeFromSuperview()
+                    loadingView.removeFromSuperview()
                     // 오류 알림 표시
                     let errorAlert = UIAlertController(
                         title: "오류",
@@ -164,17 +176,53 @@ struct JourneyDetailView: View {
     @State private var isLoading = false
     @State private var errorMessage: String? = nil
     
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    
     // Service
     private let packingService = PackingItemService()
     private let journeyService = JourneyService()
     
     // MARK: - Body
     var body: some View {
-        Group {
-            if isLoading && packingItems.isEmpty {
-                loadingView
-            } else {
-                mainContentView
+        GeometryReader { geometry in
+             ZStack {
+                ScrollView {
+                    VStack(spacing: 0) {
+                        headerSection(screenWidth: geometry.size.width)
+                        
+                        VStack(spacing: adaptiveSpacing) {
+                            journeyInfoSection
+                            
+                            Divider()
+                            
+                            participantsSection
+                            
+                            Divider()
+                            
+                            WeatherSection(journey: journey)
+                            
+                            Divider()
+                            
+                            progressSection
+                            
+                            itemsTabView(screenWidth: geometry.size.width)
+                        }
+                        .padding(.top, UIConstants.verticalPadding)
+                        .background(Color(.systemBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: UIConstants.cornerRadius))
+                        .offset(y: -20)
+                    }
+                    .padding(.bottom, geometry.safeAreaInsets.bottom)
+                }
+                .refreshable {
+                    await refreshPackingItems()
+                }
+                
+                if isLoading && packingItems.isEmpty {
+                    loadingOverlay
+                }
             }
         }
         .alert(item: Binding(
@@ -192,54 +240,39 @@ struct JourneyDetailView: View {
         }
     }
     
-    // MARK: - Loading View
-    private var loadingView: some View {
-        VStack(spacing: 20) {
-            ProgressView()
-                .scaleEffect(1.5)
-            Text("준비물 로딩 중...")
-                .font(.headline)
-                .foregroundColor(.secondary)
-        }
+    // 화면 크기에 따른 간격 조정
+    private var adaptiveSpacing: CGFloat {
+        horizontalSizeClass == .compact ? 16 : 20
     }
     
-    // MARK: - Main Content View
-    private var mainContentView: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                headerSection
-                    .safeAreaPadding(.top)
-                
-                VStack(spacing: 20) {
-                    journeyInfoSection
-                    
-                    Divider()
-                    
-                    participantsSection
-                    
-                    Divider()
-                    
-                    WeatherSection(journey: journey)
-                    
-                    Divider()
-                    
-                    progressSection
-                    
-                    itemsTabView
-                }
-                .padding(.top, 20)
-                .background(Color(.systemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-                .offset(y: -20)
+    // MARK: - Loading View
+    private var loadingOverlay: some View {
+        ZStack {
+            Color(.systemBackground)
+                .opacity(0.7)
+                .blur(radius: 3)
+            
+            VStack(spacing: 20) {
+                ProgressView()
+                    .scaleEffect(1.5)
+                Text("준비물 로딩 중...")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
             }
+            .padding(UIConstants.horizontalPadding)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemBackground))
+                    .shadow(radius: 5)
+            )
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("준비물을 로딩 중입니다. 잠시만 기다려주세요.")
         }
-        .refreshable {
-            await refreshPackingItems()
-        }
+        .edgesIgnoringSafeArea(.all)
     }
     
     // MARK: - Header Section
-    private var headerSection: some View {
+    private func headerSection(screenWidth: CGFloat) -> some View {
         ZStack(alignment: .top) {
             if let imageUrlString = journey.imageUrl, let url = URL(string: imageUrlString) {
                 AsyncImage(url: url) { phase in
@@ -248,32 +281,28 @@ struct JourneyDetailView: View {
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fill)
-                            .clipped()
                     case .failure(_):
                         Image("defaultTravelImage")
                             .resizable()
                             .aspectRatio(contentMode: .fill)
-                            .clipped()
                     case .empty:
                         ProgressView()
                     @unknown default:
                         Image("defaultTravelImage")
                             .resizable()
                             .aspectRatio(contentMode: .fill)
-                            .clipped()
                     }
                 }
-                .frame(height: 200)
+                .frame(height: min(screenWidth * 0.6, UIConstants.imageHeight))
                 .clipped()
             } else {
                 Image("defaultTravelImage")
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-                    .frame(height: 200)
+                    .frame(height: min(screenWidth * 0.6, UIConstants.imageHeight))
                     .clipped()
             }
         }
-        .frame(height: 200)
     }
     
     // MARK: - Journey Info Section
@@ -282,6 +311,7 @@ struct JourneyDetailView: View {
             Text(journey.title)
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.primary)
+                .fixedSize(horizontal: false, vertical: true)
             
             HStack {
                 Image(systemName: "calendar")
@@ -297,6 +327,7 @@ struct JourneyDetailView: View {
                 Text("\(journey.origin) → \(journey.destination)")
                     .font(.system(size: 14))
                     .foregroundColor(.secondary)
+                    .lineLimit(1)
             }
             
             HStack {
@@ -316,7 +347,7 @@ struct JourneyDetailView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 20)
+        .padding(.horizontal, UIConstants.horizontalPadding)
     }
     
     // MARK: - Participants Section
@@ -326,7 +357,6 @@ struct JourneyDetailView: View {
                 Text("여행 참가자")
                     .font(.headline)
                     .foregroundColor(.primary)
-                    .padding(.horizontal, 20)
                 Spacer()
                 Button(action: {
                     self.showingInvitationSheet = true
@@ -335,27 +365,27 @@ struct JourneyDetailView: View {
                         .font(.subheadline)
                         .foregroundColor(.blue)
                 })
-                .padding(.trailing)
             }
+            .padding(.horizontal, UIConstants.horizontalPadding)
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 0) {
                     ZStack(alignment: .leading) {
                         // 먼저 일반 참가자들을 뒤에서부터 렌더링
-                        let regularParticipants = journey.participants.filter { $0.id != journey.creatorId }.map { $0.id }
-                        ForEach(Array(regularParticipants.enumerated().reversed()), id: \.element) { index, participantId in
-                            ParticipantView(name: "참가자 \(index + 2)")
-                                .offset(x: CGFloat(index + 1) * 15.0) // 방장 뒤에 배치
+                        let regularParticipants = journey.participants.filter { $0.id != journey.creatorId }
+                        ForEach(Array(regularParticipants.enumerated().reversed()), id: \.element.id) { index, participant in
+                            ParticipantView(participant: participant, isCreator: false)
+                                .offset(x: CGFloat(index + 1) * 30.0) // 방장 뒤에 배치
                         }
                         
                         // 방장을 맨 앞(맨 왼쪽)에 배치
-                        if journey.participants.map({ $0.id }).contains(journey.creatorId) {
-                            ParticipantView(name: "방장")
+                        if let creator = journey.participants.first(where: { $0.id == journey.creatorId }) {
+                            ParticipantView(participant: creator, isCreator: true)
                                 .offset(x: 0) // 맨 앞에 배치
                         }
                     }
                     .padding(.leading, 20)
-                    .padding(.trailing, CGFloat(journey.participants.count - 1) * 15 + 20) // 겹침에 따른 여백 조정
+                    .padding(.trailing, CGFloat(journey.participants.count - 1) * 30 + 20) // 겹침에 따른 여백 조정
                 }
                 .padding(.top, 5)
             }
@@ -381,29 +411,38 @@ struct JourneyDetailView: View {
                 .progressViewStyle(LinearProgressViewStyle(tint: Color.blue))
                 .frame(height: 8)
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, UIConstants.horizontalPadding)
         .padding(.vertical, 10)
     }
     
     // MARK: - Items Tab View
-    private var itemsTabView: some View {
+    private func itemsTabView(screenWidth: CGFloat) -> some View {
         VStack(spacing: 10) {
             Picker("준비물 유형", selection: $selectedTab) {
                 Text("개인 준비물").tag(0)
                 Text("공용 준비물").tag(1)
             }
             .pickerStyle(SegmentedPickerStyle())
-            .padding(.horizontal, 20)
+            .padding(.horizontal, UIConstants.horizontalPadding)
             
+            // 스크롤 가능한 TabView로 고정
             TabView(selection: $selectedTab) {
-                packingItemsList(items: personalItems)
-                    .tag(0)
+                ScrollView {
+                    LazyVStack {
+                        packingItemsList(items: personalItems)
+                    }
+                }
+                .tag(0)
                 
-                packingItemsList(items: sharedItems)
-                    .tag(1)
+                ScrollView {
+                    LazyVStack {
+                        packingItemsList(items: sharedItems)
+                    }
+                }
+                .tag(1)
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-            .frame(height: calculateContentHeight())
+            .frame(height: calculateHeightForCurrentDevice(screenWidth: screenWidth))
             
             Button {
                 showingAddItemSheet = true
@@ -415,11 +454,11 @@ struct JourneyDetailView: View {
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.blue)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 15)
+                .frame(minHeight: UIConstants.minTapTargetSize)
                 .background(Color.blue.opacity(0.1))
                 .cornerRadius(10)
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, UIConstants.horizontalPadding)
             .padding(.bottom, 20)
         }
         .sheet(isPresented: $showingAddItemSheet) {
@@ -453,9 +492,11 @@ struct JourneyDetailView: View {
                         categorySection(category: category, items: categoryItems)
                     }
                 }
+                // 스크롤 개선을 위한 하단 패딩 추가
+                .padding(.bottom, UIConstants.verticalPadding)
             }
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, UIConstants.horizontalPadding)
     }
     
     // MARK: - Category Section with DisclosureGroup
@@ -511,6 +552,8 @@ struct JourneyDetailView: View {
                             .foregroundColor(.secondary)
                     }
                     .padding(.vertical, 12)
+                    .contentShape(Rectangle())
+                    .frame(minHeight: UIConstants.minTapTargetSize)
                 }
             )
             
@@ -614,6 +657,25 @@ struct JourneyDetailView: View {
         }
     }
     
+    private func calculateHeightForCurrentDevice(screenWidth: CGFloat) -> CGFloat {
+        // 기본 높이 계산
+        let baseHeight = calculateContentHeight()
+        
+        if horizontalSizeClass == .compact && verticalSizeClass == .regular {
+            // iPhone 세로 모드
+            return min(baseHeight, screenWidth * 1.3)
+        } else if horizontalSizeClass == .regular && verticalSizeClass == .compact {
+            // iPhone 가로 모드
+            return min(baseHeight, screenWidth * 0.5)
+        } else if horizontalSizeClass == .regular && verticalSizeClass == .regular {
+            // iPad
+            return min(baseHeight, screenWidth * 0.7)
+        } else {
+            // 기본값
+            return baseHeight
+        }
+    }
+    
     private var dateRangeText: String {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy.MM.dd"
@@ -677,8 +739,8 @@ struct JourneyDetailView: View {
     }
     
     private func calculateContentHeight() -> CGFloat {
-        let extraHeight: CGFloat = 100 // Extra padding
-        let baseHeight: CGFloat = 50 // Height for empty state
+        let extraHeight: CGFloat = 100 // 추가 패딩
+        let baseHeight: CGFloat = 50 // 비어 있는 상태의 높이
         
         let items = selectedTab == 0 ? personalItems : sharedItems
         if items.isEmpty {
@@ -688,16 +750,18 @@ struct JourneyDetailView: View {
         let groupedItems = PackingItem.groupedByCategory(items: items)
         var totalHeight: CGFloat = 0
         
-        // Add up heights for each category section
+        // 각 카테고리 섹션의 높이 합산
         for (category, categoryItems) in groupedItems {
-            // Height for category header
-            totalHeight += 44
+            // 카테고리 헤더의 높이
+            totalHeight += UIConstants.minTapTargetSize
             
-            // Add height for items if category is expanded
+            // 카테고리가 확장된 경우 항목 높이 추가
             if expandedCategories.contains(category) {
-                totalHeight += CGFloat(categoryItems.count) * 60
+                // 항목 높이를 동적 유형에 맞게 조정
+                let itemHeight: CGFloat = dynamicTypeSize >= .large ? 68 : 60
+                totalHeight += CGFloat(categoryItems.count) * itemHeight
                 
-                // Add height for dividers between items
+                // 항목 사이의 구분선에 대한 높이 추가
                 if categoryItems.count > 1 {
                     totalHeight += CGFloat(categoryItems.count - 1) * 1
                 }
@@ -710,18 +774,74 @@ struct JourneyDetailView: View {
 
 // MARK: - Supporting Views
 struct ParticipantView: View {
-    let name: String
+    let participant: User
+    let isCreator: Bool
+    
+    init(participant: User, isCreator: Bool) {
+        self.participant = participant
+        self.isCreator = isCreator
+    }
     
     var body: some View {
         VStack {
-            Circle()
-                .fill(Color.blue)
-                .frame(width: 40, height: 40)
-                .overlay(
+            ZStack {
+                // 프로필 이미지 또는 폴백 UI
+                if let profileImageUrl = participant.profileImage, let url = URL(string: profileImageUrl) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        case .failure(_):
+                            fallbackProfileView
+                        case .empty:
+                            ProgressView()
+                        @unknown default:
+                            fallbackProfileView
+                        }
+                    }
+                    .frame(width: 40, height: 40)
+                    .clipShape(Circle())
+                    .overlay(
+                        Circle()
+                            .stroke(isCreator ? Color.orange : Color.white, lineWidth: 2)
+                    )
+                } else {
+                    fallbackProfileView
+                }
+                
+                // 방장 표시 배지
+                if isCreator {
                     Circle()
-                        .stroke(Color.white, lineWidth: 1.5)
-                )
+                        .fill(Color.orange)
+                        .frame(width: 15, height: 15)
+                        .overlay(
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: 8))
+                                .foregroundColor(.white)
+                        )
+                        .offset(x: 15, y: -15)
+                }
+            }
+            
         }
+        .accessibilityLabel(isCreator ? "방장 \(participant.name)" : participant.name)
+    }
+    
+    private var fallbackProfileView: some View {
+        Circle()
+            .fill(isCreator ? Color.orange : Color.blue)
+            .frame(width: 40, height: 40)
+            .overlay(
+                Text(participant.name.prefix(1).uppercased())
+                    .foregroundColor(.white)
+                    .font(.system(size: 16, weight: .bold))
+            )
+            .overlay(
+                Circle()
+                    .stroke(Color.white, lineWidth: 1.5)
+            )
     }
 }
 
@@ -733,6 +853,7 @@ struct PackingItemRow: View {
     
     @State private var isChecked: Bool
     @State private var showDeleteConfirm = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     
     init(item: PackingItem,
          isSharedTab: Bool,
@@ -754,13 +875,17 @@ struct PackingItemRow: View {
                 Image(systemName: isChecked ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 22))
                     .foregroundColor(isChecked ? .blue : .gray)
+                    .frame(width: UIConstants.minTapTargetSize, height: UIConstants.minTapTargetSize)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(PlainButtonStyle())
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.name)
-                    .font(.system(size: 16))
+                    .font(.system(size: dynamicTypeSize >= .large ? 18 : 16))
                     .foregroundColor(.primary)
                     .strikethrough(isChecked)
+                    .fixedSize(horizontal: false, vertical: true)
                 
                 HStack(spacing: 10) {
                     Text("\(item.count)개")
@@ -771,6 +896,7 @@ struct PackingItemRow: View {
                         Text("담당: \(assignedTo.name)")
                             .font(.system(size: 12))
                             .foregroundColor(.blue)
+                            .lineLimit(1)
                     }
                 }
             }
@@ -783,8 +909,10 @@ struct PackingItemRow: View {
                 Image(systemName: "trash")
                     .font(.system(size: 16))
                     .foregroundColor(.red.opacity(0.8))
+                    .frame(width: UIConstants.minTapTargetSize, height: UIConstants.minTapTargetSize)
+                    .contentShape(Rectangle())
             }
-            .padding(.trailing, 5)
+            .buttonStyle(PlainButtonStyle())
         }
         .contentShape(Rectangle())
         .contextMenu {
@@ -814,11 +942,14 @@ struct PackingItemRow: View {
         } message: {
             Text("\(item.name) 준비물을 삭제하시겠습니까?")
         }
+        .frame(minHeight: UIConstants.minTapTargetSize)
     }
 }
-
 
 struct ErrorWrapper: Identifiable {
     let id = UUID()
     let message: String
+    var accessibilityMessage: String {
+        return "오류: \(message)"
+    }
 }

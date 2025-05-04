@@ -256,7 +256,8 @@ class LoginViewController: UIViewController {
                 switch result {
                 case .success:
                     // 임시 저장된 디바이스 토큰이 있다면 서버에 등록
-                    guard let token = UserDefaults.standard.string(forKey: "deviceToken"), let self = self else {
+                    guard let token = UserDefaults.standard.string(forKey: "tempDeviceToken"), let self = self else {
+                        print("디바이스 토큰 없음, 디바이스 토큰 미등록 처리됨")
                         self?.navigateToMainScreen()
                         return
                     }

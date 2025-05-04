@@ -55,10 +55,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                 }, onError: { error in
                     print("디바이스 토큰 등록 실패: \(error.localizedDescription)")
                 })
-                .disposed(by: DisposeBag())
+                .disposed(by: disposeBag)
         } else {
-            // 로그인 전이라면 토큰을 UserDefaults에 임시 저장해두고
-            // 로그인 성공 후에 등록하도록 함
+            print("로그인 전")
             UserDefaults.standard.set(tokenString, forKey: "tempDeviceToken")
         }
     }

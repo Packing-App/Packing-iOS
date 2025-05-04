@@ -31,6 +31,7 @@ class DeviceService: DeviceServiceProtocol {
     
     // 디바이스 토큰 등록/업데이트
     func updateDeviceToken(token: String) -> Observable<Bool> {
+        print(#fileID, #function, #line, "- ")
         return apiClient.request(APIEndpoint.updateDeviceToken(token: token))
             .map { (response: APIResponse<DeviceTokenResponse>) -> Bool in
                 print("디바이스 토큰 업데이트 응답: \(response.message)")

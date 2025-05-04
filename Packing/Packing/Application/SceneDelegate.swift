@@ -69,9 +69,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     // 사용자 데이터 정리
     private func clearUserData() {
-        // 로컬 캐시, UserDefaults 등 정리
         UserDefaults.standard.removeObject(forKey: "lastLoginDate")
-        // 추가적인 데이터 정리 작업...
+//        UserDefaults.standard.removeObject(forKey: "tempDeviceToken")
     }
     
     // 인증 실패 알림 표시

@@ -56,7 +56,7 @@ class UserManager {
         tokenStorage.clearTokens()
         // 유저 정보 클리어
         self.currentUser = nil
-        UserDefaults.standard.removeObject(forKey: "currentUser")
+        UserDefaults.standard.removeObject(forKey: userDefaultsKey)
         
         // 로그인 상태 변경 알림
         NotificationCenter.default.post(name: UserManager.loginStatusChangedNotification, object: nil)
@@ -74,22 +74,22 @@ class UserManager {
         
         // UserDefaults에 유저 정보 캐싱 업데이트
         if let userData = try? JSONEncoder().encode(user) {
-            UserDefaults.standard.set(userData, forKey: "currentUser")
+            UserDefaults.standard.set(userData, forKey: userDefaultsKey)
         }
     }
     
     private func loadUser() {
         // 토큰이 있으면 유저가 로그인된 상태로 간주
-        if tokenStorage.accessToken != nil {
+         if tokenStorage.accessToken != nil {
             // 실제 앱에서는 토큰과 함께 저장된 유저 정보를 로드하거나
             // 서버에서 프로필 정보를 가져올 수 있음
             if let userData = UserDefaults.standard.data(forKey: userDefaultsKey),
                let user = try? JSONDecoder().decode(User.self, from: userData) {
+                print("액세스 토큰 존재 -> user: \(user)")
                 self.currentUser = user
             }
         } else {
             self.currentUser = nil
-            
         }
     }
 }

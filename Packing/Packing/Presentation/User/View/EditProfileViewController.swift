@@ -9,6 +9,7 @@ import UIKit
 import ReactorKit
 import RxSwift
 import RxCocoa
+import Kingfisher
 
 final class EditProfileViewController: UIViewController, View {
     // MARK: - UI Components
@@ -99,6 +100,16 @@ final class EditProfileViewController: UIViewController, View {
         super.viewDidLoad()
         setupUI()
         setupImagePicker()
+        
+        // 중요: reactor가 설정된 후 UI에 초기값 설정
+        updateUIWithInitialValues()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // 화면이 나타날 때 다시 한번 UI 값을 업데이트 (레이아웃 후)
+        updateUIWithInitialValues()
     }
     
     // MARK: - UI Setup
@@ -168,6 +179,32 @@ final class EditProfileViewController: UIViewController, View {
         imagePicker.sourceType = .photoLibrary
     }
     
+    // 새로 추가된 메소드: reactor의 초기 상태로 UI 업데이트
+    private func updateUIWithInitialValues() {
+        guard let reactor = self.reactor else { return }
+        
+        // 이름과 소개 텍스트 설정 (디버깅을 위한 출력)
+        print("초기 이름: \(reactor.currentState.name)")
+        print("초기 소개: \(reactor.currentState.intro)")
+        
+        // 강제로 텍스트 필드에 값 할당
+        DispatchQueue.main.async { [weak self] in
+            self?.nameTextField.text = reactor.currentState.name
+            self?.introTextView.text = reactor.currentState.intro
+        }
+        
+        // 프로필 이미지 설정
+        if let imageURL = reactor.currentState.profileImageUrl, !imageURL.isEmpty {
+            if let url = URL(string: imageURL) {
+                 profileImageView.kf.setImage(with: url, placeholder: UIImage(systemName: "person.circle.fill"))
+            } else {
+                profileImageView.image = UIImage(systemName: "person.circle.fill")
+            }
+        } else {
+            profileImageView.image = UIImage(systemName: "person.circle.fill")
+        }
+    }
+    
     @objc private func cancelButtonTapped() {
         reactor?.action.onNext(.cancel)
         navigationController?.popViewController(animated: true)
@@ -175,26 +212,20 @@ final class EditProfileViewController: UIViewController, View {
     
     // MARK: - ReactorKit Binding
     func bind(reactor: EditProfileViewReactor) {
-        // 초기 이미지 설정
-        if let imageURL = reactor.currentState.profileImageUrl, !imageURL.isEmpty {
-            if let image = UIImage(named: imageURL) {
-                profileImageView.image = image
-            } else {
-                // URL에서 이미지 로드 (실제 앱에서는 캐싱 라이브러리 사용 권장)
-                profileImageView.image = UIImage(systemName: "person.circle.fill")
-            }
-        } else {
-            profileImageView.image = UIImage(systemName: "person.circle.fill")
-        }
+        // 먼저 현재 reactor의 상태로 UI 초기화 (바인딩 전에 실행)
+        nameTextField.text = reactor.currentState.name
+        introTextView.text = reactor.currentState.intro
         
         // Action 바인딩 ( View에서 Reactor로 Action을 보낸다 )
         nameTextField.rx.text.orEmpty
+            .skip(1) // 초기값은 건너뛰기
             .distinctUntilChanged()
             .map { Reactor.Action.updateName($0) }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
         
         introTextView.rx.text.orEmpty
+            .skip(1) // 초기값은 건너뛰기
             .distinctUntilChanged()
             .map { Reactor.Action.updateIntro($0) }
             .bind(to: reactor.action)
@@ -211,19 +242,7 @@ final class EditProfileViewController: UIViewController, View {
             })
             .disposed(by: disposeBag)
         
-        // State 바인딩
-        reactor.state.map { $0.name }
-            .observe(on: MainScheduler.instance)
-            .distinctUntilChanged()
-            .bind(to: nameTextField.rx.text)
-            .disposed(by: disposeBag)
-        
-        reactor.state.map { $0.intro }
-            .observe(on: MainScheduler.instance)
-            .distinctUntilChanged()
-            .bind(to: introTextView.rx.text)
-            .disposed(by: disposeBag)
-        
+        // State 바인딩 - 반응형으로 State 변경 시 UI 업데이트
         reactor.state.map { $0.isValid }
             .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
@@ -270,9 +289,12 @@ final class EditProfileViewController: UIViewController, View {
             .distinctUntilChanged()
             .compactMap { $0 }
             .subscribe(onNext: { [weak self] imageUrl in
-                // 실제 앱에서는 이미지 로딩 라이브러리 사용
-                // self?.profileImageView.kf.setImage(with: URL(string: imageUrl))
-                self?.profileImageView.image = UIImage(systemName: "person.circle.fill")
+                if let url = URL(string: imageUrl) {
+                     self?.profileImageView.kf.setImage(with: url, placeholder: UIImage(systemName: "person.circle.fill"))
+                    
+                } else {
+                    self?.profileImageView.image = UIImage(systemName: "person.circle.fill")
+                }
             })
             .disposed(by: disposeBag)
     }

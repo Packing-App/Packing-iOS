@@ -75,6 +75,10 @@ class FriendCell: UITableViewCell {
         return button
     }()
     
+    // Store constraints that need to be activated/deactivated
+    private var introConstraints: [NSLayoutConstraint] = []
+    private var noIntroConstraints: [NSLayoutConstraint] = []
+    
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
@@ -113,7 +117,7 @@ class FriendCell: UITableViewCell {
         containerView.addSubview(introLabel)
         containerView.addSubview(inviteButton)
         
-        // Constraints
+        // Basic constraints that are always active
         NSLayoutConstraint.activate([
             // Container view
             containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
@@ -139,32 +143,46 @@ class FriendCell: UITableViewCell {
             emailLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
             emailLabel.trailingAnchor.constraint(lessThanOrEqualTo: inviteButton.leadingAnchor, constant: -8),
             
-            // Intro label
-            introLabel.topAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 2),
-            introLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
-            introLabel.trailingAnchor.constraint(equalTo: inviteButton.leadingAnchor, constant: -8),
-            introLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12),
-            
             // Invite button
             inviteButton.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
             inviteButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12)
         ])
+        
+        // Constraints for when intro is visible
+        introConstraints = [
+            introLabel.topAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 2),
+            introLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
+            introLabel.trailingAnchor.constraint(equalTo: inviteButton.leadingAnchor, constant: -8),
+            introLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12)
+        ]
+        
+        // Constraints for when intro is hidden
+        noIntroConstraints = [
+            emailLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12)
+        ]
+        
+        // By default, assume intro is hidden
+        NSLayoutConstraint.activate(noIntroConstraints)
     }
     
     func configure(with friend: Friend) {
         nameLabel.text = friend.name
         emailLabel.text = friend.email
         
+        // Handle constraints based on whether intro is available
         if let intro = friend.intro, !intro.isEmpty {
             introLabel.text = intro
             introLabel.isHidden = false
+            
+            // Update constraints
+            NSLayoutConstraint.deactivate(noIntroConstraints)
+            NSLayoutConstraint.activate(introConstraints)
         } else {
             introLabel.isHidden = true
             
-            // Adjust layout when there's no intro
-            NSLayoutConstraint.activate([
-                emailLabel.bottomAnchor.constraint(greaterThanOrEqualTo: containerView.bottomAnchor, constant: -12)
-            ])
+            // Update constraints
+            NSLayoutConstraint.deactivate(introConstraints)
+            NSLayoutConstraint.activate(noIntroConstraints)
         }
         
         // 프로필 이미지 로드

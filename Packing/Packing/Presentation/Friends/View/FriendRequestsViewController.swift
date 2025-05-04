@@ -83,7 +83,6 @@ class FriendRequestsViewController: UIViewController, View {
     // MARK: - UI Setup
     private func setupUI() {
         view.backgroundColor = .white
-        
         // 세그먼트 컨트롤 추가
         view.addSubview(segmentedControl)
         

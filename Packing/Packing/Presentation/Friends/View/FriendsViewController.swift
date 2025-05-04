@@ -212,8 +212,7 @@ class FriendsViewController: UIViewController, View {
     
     private func setupNavigationBar() {
         navigationController?.navigationBar.prefersLargeTitles = true
-        title = "친구"
-        
+        title = "내 친구"
         // 검색 컨트롤러 설정
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = true
@@ -254,8 +253,9 @@ class FriendsViewController: UIViewController, View {
         
         // 검색바 입력 관찰
         searchController.searchBar.rx.text.orEmpty
-            .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
+            .debounce(.milliseconds(500), scheduler: MainScheduler.instance)
             .distinctUntilChanged()
+            .observe(on: MainScheduler.asyncInstance)  // 이 부분 추가
             .map { Reactor.Action.searchFriend($0) }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
@@ -337,89 +337,42 @@ class FriendsViewController: UIViewController, View {
             .disposed(by: disposeBag)
     }
 
+    private var tableViewDisposeBag = DisposeBag()
+
     // MARK: - Private Methods
     private func setupDataSource(mode: FriendsViewReactor.ViewMode, reactor: FriendsViewReactor) {
-        // 기존 데이터소스 구독 해제를 위해 disposeBag 초기화
-        disposeBag = DisposeBag()
-        
-        // 다시 액션 바인딩
-        Observable.just(())
-            .map { Reactor.Action.viewDidLoad }
-            .bind(to: reactor.action)
-            .disposed(by: disposeBag)
-        
-        searchController.searchBar.rx.text.orEmpty
-            .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
-            .distinctUntilChanged()
-            .map { Reactor.Action.searchFriend($0) }
-            .bind(to: reactor.action)
-            .disposed(by: disposeBag)
-        
-        searchController.searchBar.rx.cancelButtonClicked
-            .map { Reactor.Action.clearSearch }
-            .bind(to: reactor.action)
-            .disposed(by: disposeBag)
-        
-        // 기존 상태 바인딩 복원
-        reactor.state.map { $0.isLoading }
-            .observe(on: MainScheduler.instance)
-            .distinctUntilChanged()
-            .bind(to: activityIndicator.rx.isAnimating)
-            .disposed(by: disposeBag)
-        
-        // 에러 처리 복원
-        reactor.state.map { $0.error }
-            .observe(on: MainScheduler.instance)
-            .distinctUntilChanged { $0?.localizedDescription == $1?.localizedDescription }
-            .compactMap { $0 }
-            .subscribe(onNext: { [weak self] error in
-                self?.showErrorAlert(error)
-            })
-            .disposed(by: disposeBag)
-        
-        // 빈 상태 표시 처리
-        reactor.state.map { state -> Bool in
-            switch state.viewMode {
-            case .friendsList:
-                return state.friends.isEmpty && !state.isLoading
-            case .searchResults:
-                return state.searchResults.isEmpty && !state.isLoading
-            }
-        }
-        .observe(on: MainScheduler.instance)
-        .distinctUntilChanged()
-        .bind(to: emptyStateView.rx.isHidden.mapObserver { !$0 })
-        .disposed(by: disposeBag)
-        
-        // 모드에 따른 테이블뷰 데이터소스 설정
         tableView.dataSource = nil
         
+        // 테이블뷰 바인딩을 위한 DisposeBag 초기화
+        tableViewDisposeBag = DisposeBag()
+
         switch mode {
         case .friendsList:
             // 친구 목록 모드
             reactor.state.map { $0.friends }
-                .observe(on: MainScheduler.instance)
+                .observe(on: MainScheduler.asyncInstance)
                 .distinctUntilChanged()
                 .bind(to: tableView.rx.items(cellIdentifier: FriendCell.identifier, cellType: FriendCell.self)) { [weak self] index, friend, cell in
                     cell.configure(with: friend)
                     
                     // 초대 버튼 설정
                     cell.inviteButton.rx.tap
+                        .observe(on: MainScheduler.asyncInstance)
                         .subscribe(onNext: { [weak self] _ in
                             self?.showJourneySelectionForFriend(friend)
                         })
                         .disposed(by: cell.disposeBag)
                 }
-                .disposed(by: disposeBag)
-            
+                .disposed(by: tableViewDisposeBag)
+                
         case .searchResults:
             // 검색 결과 모드
             reactor.state.map { $0.searchResults }
                 .observe(on: MainScheduler.asyncInstance)
                 .distinctUntilChanged()
-                .bind(to: tableView.rx.items(cellIdentifier: FriendRequestCell.identifier, cellType: FriendRequestCell.self)) { [weak self] index, result, cell in
+                .bind(to: tableView.rx.items(cellIdentifier: FriendRequestCell.identifier, cellType: FriendRequestCell.self)) { index, result, cell in
                     cell.configure(with: result)
-                    
+
                     // 친구 상태에 따라 버튼 설정
                     if let friendshipStatus = result.friendshipStatus, friendshipStatus == .accepted {
                         // 이미 친구인 경우 - 이 검색결과는 표시하지 않음 (이미 친구 목록에 있으므로)
@@ -441,12 +394,13 @@ class FriendsViewController: UIViewController, View {
                         cell.actionButton.isEnabled = true
                         
                         cell.actionButton.rx.tap
+                            .observe(on: MainScheduler.asyncInstance)
                             .map { Reactor.Action.sendFriendRequest(result.email) }
                             .bind(to: reactor.action)
                             .disposed(by: cell.disposeBag)
                     }
                 }
-                .disposed(by: disposeBag)
+                .disposed(by: tableViewDisposeBag)
         }
     }
     

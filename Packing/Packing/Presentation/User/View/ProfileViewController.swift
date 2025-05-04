@@ -404,10 +404,25 @@ final class ProfileViewController: UIViewController, View {
     }
     
     private func navigateToInfoScreen(for menuItem: ProfileMenuItem) {
-        let viewController = UIViewController()
-        viewController.view.backgroundColor = .systemBackground
-        viewController.title = menuItem.rawValue
-        navigationController?.pushViewController(viewController, animated: true)
+        switch menuItem {
+        case .privacy:
+            let privacyURL = "https://silicon-distance-ef3.notion.site/1e9f678b2fe280dab47aeea7232736ec?pvs=4"
+            let webViewController = WebViewViewController(urlString: privacyURL, title: "개인정보 처리방침")
+            navigationController?.pushViewController(webViewController, animated: true)
+            
+        case .legal:
+            let termsURL = "https://silicon-distance-ef3.notion.site/1e9f678b2fe28076a4fddb8ef4c4e5e0?pvs=4"
+            let webViewController = WebViewViewController(urlString: termsURL, title: "서비스 이용약관")
+            navigationController?.pushViewController(webViewController, animated: true)
+            
+        case .developerInfo:
+            let developerURL = "https://github.com/iyungui"
+            let webViewController = WebViewViewController(urlString: developerURL, title: "개발자 정보")
+            navigationController?.pushViewController(webViewController, animated: true)
+            
+        default:
+            break
+        }
     }
     
     private func showLogoutConfirmation() {

@@ -27,7 +27,7 @@ class FriendsViewController: UIViewController, View {
     private lazy var tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .insetGrouped)
         tableView.register(FriendCell.self, forCellReuseIdentifier: FriendCell.identifier)
-        tableView.register(FriendRequestCell.self, forCellReuseIdentifier: FriendRequestCell.identifier)
+        tableView.register(FriendSearchResultCell.self, forCellReuseIdentifier: FriendSearchResultCell.identifier)
         tableView.separatorStyle = .none
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 80
@@ -370,7 +370,7 @@ class FriendsViewController: UIViewController, View {
             reactor.state.map { $0.searchResults }
                 .observe(on: MainScheduler.asyncInstance)
                 .distinctUntilChanged()
-                .bind(to: tableView.rx.items(cellIdentifier: FriendRequestCell.identifier, cellType: FriendRequestCell.self)) { index, result, cell in
+                .bind(to: tableView.rx.items(cellIdentifier: FriendSearchResultCell.identifier, cellType: FriendSearchResultCell.self)) { index, result, cell in
                     cell.configure(with: result)
 
                     // 친구 상태에 따라 버튼 설정

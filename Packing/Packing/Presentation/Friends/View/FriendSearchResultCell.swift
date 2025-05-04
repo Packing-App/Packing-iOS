@@ -1,5 +1,5 @@
 //
-//  FriendRequestCell.swift
+//  FriendSearchResultCell.swift
 //  Packing
 //
 //  Created by 이융의 on 4/30/25.
@@ -9,9 +9,9 @@ import UIKit
 import RxSwift
 import Kingfisher
 
-// MARK: - FriendRequestCell
-class FriendRequestCell: UITableViewCell {
-    static let identifier = "FriendRequestCell"
+// MARK: - FriendSearchResultCell
+class FriendSearchResultCell: UITableViewCell {
+    static let identifier = "FriendSearchResultCell"
     
     var disposeBag = DisposeBag()
     

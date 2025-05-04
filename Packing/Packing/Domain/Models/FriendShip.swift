@@ -70,7 +70,7 @@ struct UserInfo: Codable, Identifiable, Equatable {
 // MARK: - 받은 친구 요청 항목
 struct ReceivedFriendRequest: Codable, Identifiable, Equatable {
     let id: String
-    let requesterId: UserInfo  // 요청한 사용자의 정보 (객체)
+    let requesterId: UserInfo?  // 요청한 사용자의 정보 (객체)
     let receiverId: String     // 현재 사용자 ID (문자열)
     let status: FriendshipStatus
     let createdAt: Date
@@ -90,7 +90,7 @@ struct ReceivedFriendRequest: Codable, Identifiable, Equatable {
 struct SentFriendRequest: Codable, Identifiable, Equatable {
     let id: String
     let requesterId: String    // 현재 사용자 ID (문자열)
-    let receiverId: UserInfo   // 요청 받은 사용자의 정보 (객체)
+    let receiverId: UserInfo?   // 요청 받은 사용자의 정보 (객체)
     let status: FriendshipStatus
     let createdAt: Date
     let updatedAt: Date

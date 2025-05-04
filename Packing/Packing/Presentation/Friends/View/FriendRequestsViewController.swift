@@ -55,11 +55,6 @@ class FriendRequestsViewController: UIViewController, View {
         return label
     }()
     
-    private lazy var refreshControl: UIRefreshControl = {
-        let refreshControl = UIRefreshControl()
-        return refreshControl
-    }()
-    
     // MARK: - Initialize
     init() {
         super.init(nibName: nil, bundle: nil)
@@ -88,7 +83,6 @@ class FriendRequestsViewController: UIViewController, View {
         
         // 테이블 뷰 추가
         view.addSubview(tableView)
-        tableView.refreshControl = refreshControl
         
         // 액티비티 인디케이터 추가
         view.addSubview(activityIndicator)
@@ -131,16 +125,11 @@ class FriendRequestsViewController: UIViewController, View {
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
         
-        // 새로고침 액션
-        refreshControl.rx.controlEvent(.valueChanged)
-            .map { Reactor.Action.refresh }
-            .bind(to: reactor.action)
-            .disposed(by: disposeBag)
-        
         // 세그먼트 컨트롤 변경 시 테이블 뷰 업데이트
         segmentedControl.rx.selectedSegmentIndex
             .distinctUntilChanged()
             .subscribe(onNext: { [weak self] index in
+                self?.activityIndicator.stopAnimating()
                 self?.setupTableViewDataSource(selectedIndex: index, reactor: reactor)
             })
             .disposed(by: disposeBag)
@@ -152,13 +141,6 @@ class FriendRequestsViewController: UIViewController, View {
             .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .bind(to: activityIndicator.rx.isAnimating)
-            .disposed(by: disposeBag)
-        
-        // 리프레시 컨트롤 종료
-        reactor.state.map { !$0.isLoading }
-            .observe(on: MainScheduler.instance)
-            .distinctUntilChanged()
-            .bind(to: refreshControl.rx.isRefreshing)
             .disposed(by: disposeBag)
         
         // 초기 테이블 뷰 데이터 소스 설정
@@ -186,22 +168,6 @@ class FriendRequestsViewController: UIViewController, View {
                 }
             })
             .disposed(by: disposeBag)
-        
-        // 빈 상태 표시 업데이트 - 데이터 변경 시
-        Observable.combineLatest(
-            segmentedControl.rx.selectedSegmentIndex,
-            reactor.state.map { $0.receivedRequests.isEmpty },
-            reactor.state.map { $0.sentRequests.isEmpty }
-        )
-        .observe(on: MainScheduler.instance)
-        .subscribe(onNext: { [weak self] index, receivedEmpty, sentEmpty in
-            if index == 0 {
-                self?.emptyStateLabel.isHidden = !receivedEmpty
-            } else {
-                self?.emptyStateLabel.isHidden = !sentEmpty
-            }
-        })
-        .disposed(by: disposeBag)
     }
     
     // MARK: - Private Methods
@@ -217,7 +183,7 @@ class FriendRequestsViewController: UIViewController, View {
             reactor.state.map { $0.receivedRequests }
                 .observe(on: MainScheduler.instance)
                 .distinctUntilChanged()
-                .bind(to: tableView.rx.items(cellIdentifier: ReceivedRequestCell.identifier, cellType: ReceivedRequestCell.self)) { [weak self] index, request, cell in
+                .bind(to: tableView.rx.items(cellIdentifier: ReceivedRequestCell.identifier, cellType: ReceivedRequestCell.self)) { index, request, cell in
                     cell.configure(with: request)
                     
                     // 수락 버튼 클릭
@@ -238,7 +204,7 @@ class FriendRequestsViewController: UIViewController, View {
             reactor.state.map { $0.sentRequests }
                 .observe(on: MainScheduler.instance)
                 .distinctUntilChanged()
-                .bind(to: tableView.rx.items(cellIdentifier: SentRequestCell.identifier, cellType: SentRequestCell.self)) { [weak self] index, request, cell in
+                .bind(to: tableView.rx.items(cellIdentifier: SentRequestCell.identifier, cellType: SentRequestCell.self)) { index, request, cell in
                     cell.configure(with: request)
                 }
                 .disposed(by: tableViewDisposeBag)
@@ -368,11 +334,17 @@ class ReceivedRequestCell: UITableViewCell {
     }
     
     func configure(with request: ReceivedFriendRequest) {
-        nameLabel.text = request.requesterId.name
-        emailLabel.text = request.requesterId.email
+        guard let requesterId = request.requesterId else {
+            nameLabel.text = "Unknown User"
+            emailLabel.text = "Unknown Email"
+            profileImageView.image = UIImage(systemName: "person.circle.fill")
+            profileImageView.tintColor = .gray
+            return
+        }
+        nameLabel.text = requesterId.name
+        emailLabel.text = requesterId.email
         
-        // 프로필 이미지 로드 (실제 구현에서는 이미지 라이브러리 사용)
-        if let profileImageUrlString = request.requesterId.profileImage, let url = URL(string: profileImageUrlString) {
+        if let profileImageUrlString = requesterId.profileImage, let url = URL(string: profileImageUrlString) {
             profileImageView.kf.setImage(with: url)
         } else {
             profileImageView.image = UIImage(systemName: "person.circle.fill")
@@ -469,11 +441,17 @@ class SentRequestCell: UITableViewCell {
     }
     
     func configure(with request: SentFriendRequest) {
-        nameLabel.text = request.receiverId.name
-        emailLabel.text = request.receiverId.email
+        guard let receiverId = request.receiverId else {
+            nameLabel.text = "Unknown User"
+            emailLabel.text = "Unknown User"
+            profileImageView.image = UIImage(systemName: "person.circle.fill")
+            profileImageView.tintColor = .gray
+            return
+        }
+        nameLabel.text = receiverId.name
+        emailLabel.text = receiverId.email
         
-        // 프로필 이미지 로드 (실제 구현에서는 이미지 라이브러리 사용)
-        if let profileImageUrlString = request.receiverId.profileImage, let url = URL(string: profileImageUrlString) {
+        if let profileImageUrlString = receiverId.profileImage, let url = URL(string: profileImageUrlString) {
             profileImageView.kf.setImage(with: url)
         } else {
             profileImageView.image = UIImage(systemName: "person.circle.fill")

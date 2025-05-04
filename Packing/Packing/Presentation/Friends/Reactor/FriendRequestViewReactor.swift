@@ -16,7 +16,6 @@ final class FriendRequestsViewReactor: Reactor {
     enum Action {
         case viewDidLoad
         case respondToRequest(id: String, accept: Bool)
-        case refresh
     }
     
     // Mutation: 상태 변화를 위한 중간 단계
@@ -49,7 +48,7 @@ final class FriendRequestsViewReactor: Reactor {
     // Action → Mutation
     func mutate(action: Action) -> Observable<Mutation> {
         switch action {
-        case .viewDidLoad, .refresh:
+        case .viewDidLoad:
             return loadFriendRequests()
             
         case let .respondToRequest(id, accept):

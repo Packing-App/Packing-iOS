@@ -313,6 +313,7 @@ class FriendsViewController: UIViewController, View {
             .distinctUntilChanged()
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] mode in
+                print("mode: \(mode)")
                 switch mode {
                 case .friendsList:
                     self?.emptyStateTitle.text = "친구 목록이 비어있습니다"
@@ -361,6 +362,7 @@ class FriendsViewController: UIViewController, View {
         
         // 기존 상태 바인딩 복원
         reactor.state.map { $0.isLoading }
+            .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .bind(to: activityIndicator.rx.isAnimating)
             .disposed(by: disposeBag)
@@ -396,6 +398,7 @@ class FriendsViewController: UIViewController, View {
         case .friendsList:
             // 친구 목록 모드
             reactor.state.map { $0.friends }
+                .observe(on: MainScheduler.instance)
                 .distinctUntilChanged()
                 .bind(to: tableView.rx.items(cellIdentifier: FriendCell.identifier, cellType: FriendCell.self)) { [weak self] index, friend, cell in
                     cell.configure(with: friend)
@@ -412,6 +415,7 @@ class FriendsViewController: UIViewController, View {
         case .searchResults:
             // 검색 결과 모드
             reactor.state.map { $0.searchResults }
+                .observe(on: MainScheduler.asyncInstance)
                 .distinctUntilChanged()
                 .bind(to: tableView.rx.items(cellIdentifier: FriendRequestCell.identifier, cellType: FriendRequestCell.self)) { [weak self] index, result, cell in
                     cell.configure(with: result)

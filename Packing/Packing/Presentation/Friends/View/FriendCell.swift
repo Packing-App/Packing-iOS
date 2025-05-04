@@ -40,7 +40,7 @@ class FriendCell: UITableViewCell {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 17, weight: .semibold)
         label.textColor = .label
-        label.numberOfLines = 2
+        label.numberOfLines = 1
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -49,7 +49,7 @@ class FriendCell: UITableViewCell {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 14)
         label.textColor = .secondaryLabel
-        label.numberOfLines = 2
+        label.numberOfLines = 1
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -58,7 +58,7 @@ class FriendCell: UITableViewCell {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 14)
         label.textColor = .secondaryLabel
-        label.numberOfLines = 2
+        label.numberOfLines = 1
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -142,7 +142,7 @@ class FriendCell: UITableViewCell {
             // Intro label
             introLabel.topAnchor.constraint(equalTo: emailLabel.bottomAnchor, constant: 2),
             introLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
-            introLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
+            introLabel.trailingAnchor.constraint(equalTo: inviteButton.leadingAnchor, constant: -8),
             introLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12),
             
             // Invite button

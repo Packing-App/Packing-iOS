@@ -52,6 +52,15 @@ class FriendSearchResultCell: UITableViewCell {
     }()
     
     let actionButton: UIButton = {
+//        var config = UIButton.Configuration.filled()
+//        config.baseBackgroundColor = .systemBlue
+//        config.baseForegroundColor = .white
+//        config.title = "친구 요청"
+//        config.cornerStyle = .medium
+//        config.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12)
+//        let button = UIButton(configuration: config)
+//        button.translatesAutoresizingMaskIntoConstraints = false
+        
         let button = UIButton(type: .system)
         button.setTitle("친구 요청", for: .normal)
         button.setTitleColor(.white, for: .normal)
@@ -119,12 +128,12 @@ class FriendSearchResultCell: UITableViewCell {
             // Name label
             nameLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 14),
             nameLabel.leadingAnchor.constraint(equalTo: profileImageView.trailingAnchor, constant: 12),
-            nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: actionButton.leadingAnchor, constant: -8),
+            nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: actionButton.leadingAnchor, constant: -12),
             
             // Email label
             emailLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 2),
             emailLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
-            emailLabel.trailingAnchor.constraint(lessThanOrEqualTo: actionButton.leadingAnchor, constant: -8),
+            emailLabel.trailingAnchor.constraint(lessThanOrEqualTo: actionButton.leadingAnchor, constant: -12),
             emailLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -14),
             
             // Action button

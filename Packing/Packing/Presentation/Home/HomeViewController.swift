@@ -182,7 +182,17 @@ class HomeViewController: UIViewController, View {
     private lazy var templatesCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
-        let itemWidth = (UIScreen.main.bounds.width - 60) / 3
+        
+        // 화면 크기에 따라 다른 방식 적용
+        let screenWidth = UIScreen.main.bounds.width
+        
+        let itemWidth: CGFloat
+        if screenWidth > 428 {
+            itemWidth = 110 // Pro Max에서는 고정 너비 사용
+        } else {
+            itemWidth = (screenWidth - 60) / 3 // 기존 계산법 유지
+        }
+        
         layout.itemSize = CGSize(width: itemWidth, height: itemWidth + 30)
         layout.minimumLineSpacing = 15
         layout.minimumInteritemSpacing = 10
@@ -192,8 +202,6 @@ class HomeViewController: UIViewController, View {
         collectionView.isScrollEnabled = false
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.register(TemplateCell.self, forCellWithReuseIdentifier: "TemplateCell")
-//        collectionView.dataSource = self
-//        collectionView.delegate = self
         
         return collectionView
     }()
@@ -379,6 +387,7 @@ class HomeViewController: UIViewController, View {
         
         templatesSectionView.addSubview(templatesSectionLabel)
         templatesSectionView.addSubview(templatesCollectionView)
+        
         
         templatesSectionView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
         templatesSectionView.layer.cornerRadius = 20

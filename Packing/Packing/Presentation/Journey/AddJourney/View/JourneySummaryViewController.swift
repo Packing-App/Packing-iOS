@@ -247,11 +247,20 @@ class JourneySummaryViewController: UIViewController, View {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
+        
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         reactor?.action.onNext(.viewDidAppear)
+    }
+    
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
     }
     
     func bind(reactor: Reactor) {

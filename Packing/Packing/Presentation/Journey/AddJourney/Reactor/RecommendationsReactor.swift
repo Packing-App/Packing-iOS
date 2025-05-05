@@ -62,12 +62,10 @@ class RecommendationsReactor: Reactor {
             loadingMessage: "잠시만 기다려주세요.\n\(journey.destination)을 가는 여행자님에게\n꼭 필요한 준비물을 추천해드릴게요."
         )
         
-        print("RecommendationsReactor initialized for journey: \(journey.id)")
     }
     
     // MARK: - Data Loading
     func fetchRecommendations() -> Observable<Mutation> {
-        print("Fetching recommendations for journey: \(journey.id)")
         
         return Observable.concat([
             // Initial loading state
@@ -80,7 +78,6 @@ class RecommendationsReactor: Reactor {
             // Fetch recommendations from API
             journeyService.getRecommendations(journeyId: journey.id)
                 .do(onNext: { response in
-                    print("Successfully fetched \(response.categories.count) categories with recommendations")
                 })
                 .map { Mutation.setRecommendations($0) }
                 .catch { error in
@@ -97,19 +94,15 @@ class RecommendationsReactor: Reactor {
     func mutate(action: Action) -> Observable<Mutation> {
         switch action {
         case .toggleItem(let itemName):
-            print("Action: Toggle item: \(itemName)")
             return Observable.just(Mutation.toggleItem(itemName: itemName))
             
         case .updateItemCount(let itemName, let count):
-            print("Action: Update item count: \(itemName) to \(count)")
             return Observable.just(Mutation.updateItemCount(itemName: itemName, count: count))
             
         case .addSelectedItems:
-            print("Action: Add selected items")
             return handleAddSelectedItemsAction()
             
         case .selectAllInCategory(let category, let select):
-            print("Action: Select all in category: \(category), select: \(select)")
             return Observable.just(Mutation.selectAllInCategory(category: category, select: select))
             
         case .selectAll(let select):
@@ -128,7 +121,6 @@ class RecommendationsReactor: Reactor {
             return .empty()
         }
         
-        print("Adding \(selectedItems.count) selected items")
         
         return Observable.concat([
             // Start processing

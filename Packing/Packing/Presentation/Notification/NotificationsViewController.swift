@@ -35,9 +35,13 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        
         // 초기 데이터 로드
         reactor?.action.onNext(.fetchNotifications)
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        setupNavigationBarAppearance()
     }
     
     // MARK: - UI Setup
@@ -46,6 +50,7 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
         view.backgroundColor = .systemGroupedBackground
         
         setupNavigationBar()
+        
         setupTableView()
         setupEmptyStateView()
         setupActivityIndicator()
@@ -144,6 +149,19 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
         ])
     }
     
+    private func setupNavigationBarAppearance() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .white
+        
+        // 네비게이션 바에 적용
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.compactAppearance = appearance
+        navigationController?.navigationBar.tintColor = .black
+
+    }
+    
     private func setupActivityIndicator() {
         activityIndicator.hidesWhenStopped = true
         
@@ -162,7 +180,6 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
     
     // MARK: - InvitationCallbackDelegate 구현
     func handleInvitationResponse(notificationId: String, accept: Bool) {
-        print("✅ handleInvitationResponse called: ID=\(notificationId), accept=\(accept)")
         
         // 해당 셀의 버튼 비활성화 (UI 피드백)
         if let index = reactor?.currentState.notifications.firstIndex(where: { $0.id == notificationId }),

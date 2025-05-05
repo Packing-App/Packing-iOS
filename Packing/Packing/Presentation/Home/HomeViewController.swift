@@ -124,7 +124,6 @@ class HomeViewController: UIViewController, View {
     private lazy var myTravelPlansSectionView: UIView = {
         let view = UIView()
         view.backgroundColor = .white
-        view.layer.cornerRadius = 20
         view.layer.shadowColor = UIColor.black.withAlphaComponent(0.05).cgColor
         view.layer.shadowOffset = CGSize(width: 0, height: 2)
         view.layer.shadowRadius = 5
@@ -163,7 +162,6 @@ class HomeViewController: UIViewController, View {
     private lazy var templatesSectionView: UIView = {
         let view = UIView()
         view.backgroundColor = .white
-        view.layer.cornerRadius = 20
         view.layer.shadowColor = UIColor.black.withAlphaComponent(0.05).cgColor
         view.layer.shadowOffset = CGSize(width: 0, height: 2)
         view.layer.shadowRadius = 5
@@ -228,14 +226,14 @@ class HomeViewController: UIViewController, View {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        configureNavigationBar()
         setupGradientBackground()
         setupAllAnimations()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
+        configureNavigationBar()
+
         // 화면이 나타날 때마다 최신 데이터 로드
         reactor?.action.onNext(.refreshJourneys)
         
@@ -382,6 +380,12 @@ class HomeViewController: UIViewController, View {
         templatesSectionView.addSubview(templatesSectionLabel)
         templatesSectionView.addSubview(templatesCollectionView)
         
+        templatesSectionView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+        templatesSectionView.layer.cornerRadius = 20
+
+        myTravelPlansSectionView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        myTravelPlansSectionView.layer.cornerRadius = 20
+        
         NSLayoutConstraint.activate([
             // ScrollView
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -445,7 +449,7 @@ class HomeViewController: UIViewController, View {
             travelPlansCollectionView.bottomAnchor.constraint(equalTo: myTravelPlansSectionView.bottomAnchor, constant: -10),
             
             // TemplatesSection
-            templatesSectionView.topAnchor.constraint(equalTo: myTravelPlansSectionView.bottomAnchor, constant: 10),
+            templatesSectionView.topAnchor.constraint(equalTo: myTravelPlansSectionView.bottomAnchor, constant: 0),
             templatesSectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 0),
             templatesSectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: 0),
             
@@ -487,16 +491,15 @@ class HomeViewController: UIViewController, View {
     }
     
     private func configureNavigationBar() {
-        // Configure navigation bar appearance
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = .main
         
         appearance.shadowColor = .clear
         
-        // Apply the appearance to all navigation bar states
         navigationController?.navigationBar.standardAppearance = appearance
         navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.tintColor = .white
     }
     
     private func showErrorAlert(message: String) {

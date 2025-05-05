@@ -129,6 +129,8 @@ final class ProfileViewController: UIViewController, View {
         super.viewWillAppear(animated)
         print(#fileID, #function, #line, "- ")
         reactor?.action.onNext(.refreshProfile)
+        
+        setupNavigationBarAppearance()
     }
     
     override func viewDidLayoutSubviews() {
@@ -237,6 +239,17 @@ final class ProfileViewController: UIViewController, View {
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
+    }
+    
+    private func setupNavigationBarAppearance() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .white
+        
+        // 네비게이션 바에 적용
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.compactAppearance = appearance
     }
     
     private func setupTableView() {

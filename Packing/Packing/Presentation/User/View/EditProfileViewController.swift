@@ -12,6 +12,10 @@ import RxCocoa
 import Kingfisher
 
 final class EditProfileViewController: UIViewController, View {
+    // MARK: - Properties
+    var disposeBag = DisposeBag()
+    private let imagePicker = UIImagePickerController()
+    
     // MARK: - UI Components
     private let profileImageView: UIImageView = {
         let imageView = UIImageView()
@@ -81,10 +85,6 @@ final class EditProfileViewController: UIViewController, View {
         return indicator
     }()
     
-    // MARK: - Properties
-    var disposeBag = DisposeBag()
-    private let imagePicker = UIImagePickerController()
-    
     // MARK: - Initializers
     init(reactor: EditProfileViewReactor) {
         super.init(nibName: nil, bundle: nil)
@@ -100,16 +100,20 @@ final class EditProfileViewController: UIViewController, View {
         super.viewDidLoad()
         setupUI()
         setupImagePicker()
-        
-        // 중요: reactor가 설정된 후 UI에 초기값 설정
+        setupKeyboardHandling()
         updateUIWithInitialValues()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        // 화면이 나타날 때 다시 한번 UI 값을 업데이트 (레이아웃 후)
         updateUIWithInitialValues()
+        
+//        setupNavigationBarAppearance()
+    }
+    
+    // 화면 해제 시 노티피케이션 제거
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     // MARK: - UI Setup
@@ -124,6 +128,14 @@ final class EditProfileViewController: UIViewController, View {
             target: self,
             action: #selector(cancelButtonTapped)
         )
+
+        // 오른쪽에 완료 버튼 추가
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            title: "완료",
+            style: .done,
+            target: self,
+            action: #selector(saveButtonTapped)
+        )
         
         // UI 컴포넌트 추가
         view.addSubview(profileImageView)
@@ -135,7 +147,10 @@ final class EditProfileViewController: UIViewController, View {
         view.addSubview(saveButton)
         view.addSubview(loadingIndicator)
         
-        // 제약 조건 설정
+        setupConstraints()
+    }
+    
+    private func setupConstraints() {
         NSLayoutConstraint.activate([
             profileImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             profileImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -173,13 +188,48 @@ final class EditProfileViewController: UIViewController, View {
         ])
     }
     
+    private func setupNavigationBarAppearance() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .white
+        
+        // 네비게이션 바에 적용
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.compactAppearance = appearance
+    }
+    
     private func setupImagePicker() {
         imagePicker.delegate = self
         imagePicker.allowsEditing = true
         imagePicker.sourceType = .photoLibrary
     }
     
-    // 새로 추가된 메소드: reactor의 초기 상태로 UI 업데이트
+    private func setupKeyboardHandling() {
+        // 탭 제스처로 키보드 내리기
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
+        
+        // 텍스트필드 delegate 설정
+        nameTextField.delegate = self
+        
+        // 키보드 노티피케이션 등록
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillShow),
+            name: UIResponder.keyboardWillShowNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillHide),
+            name: UIResponder.keyboardWillHideNotification,
+            object: nil
+        )
+    }
+    
     private func updateUIWithInitialValues() {
         guard let reactor = self.reactor else { return }
         
@@ -201,27 +251,65 @@ final class EditProfileViewController: UIViewController, View {
         }
     }
     
+    private func presentImagePicker() {
+        present(imagePicker, animated: true)
+    }
+    
+    private func showAlert(message: String) {
+        let alert = UIAlertController(title: "알림", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
+    
+    // MARK: - Actions
     @objc private func cancelButtonTapped() {
         reactor?.action.onNext(.cancel)
         navigationController?.popViewController(animated: true)
     }
     
+    @objc private func saveButtonTapped() {
+        reactor?.action.onNext(.save)
+    }
+    
+    @objc private func dismissKeyboard() {
+        view.endEditing(true)
+    }
+    
+    @objc private func keyboardWillShow(notification: NSNotification) {
+        if let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
+            if introTextView.isFirstResponder {
+                let contentInsets = UIEdgeInsets(top: 0, left: 0, bottom: keyboardSize.height, right: 0)
+                
+                let activeRect = introTextView.convert(introTextView.bounds, to: view)
+                let keyboardOverlap = activeRect.maxY - (view.bounds.height - keyboardSize.height)
+                
+                if keyboardOverlap > 0 {
+                    view.frame.origin.y = -keyboardOverlap
+                }
+            }
+        }
+    }
+    
+    @objc private func keyboardWillHide(notification: NSNotification) {
+        view.frame.origin.y = 0
+    }
+    
     // MARK: - ReactorKit Binding
     func bind(reactor: EditProfileViewReactor) {
-        // 먼저 현재 reactor의 상태로 UI 초기화 (바인딩 전에 실행)
+        // 초기 UI 설정
         nameTextField.text = reactor.currentState.name
         introTextView.text = reactor.currentState.intro
         
-        // Action 바인딩 ( View에서 Reactor로 Action을 보낸다 )
+        // Action 바인딩
         nameTextField.rx.text.orEmpty
-            .skip(1) // 초기값은 건너뛰기
+            .skip(1)
             .distinctUntilChanged()
             .map { Reactor.Action.updateName($0) }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
         
         introTextView.rx.text.orEmpty
-            .skip(1) // 초기값은 건너뛰기
+            .skip(1)
             .distinctUntilChanged()
             .map { Reactor.Action.updateIntro($0) }
             .bind(to: reactor.action)
@@ -238,7 +326,7 @@ final class EditProfileViewController: UIViewController, View {
             })
             .disposed(by: disposeBag)
         
-        // State 바인딩 - 반응형으로 State 변경 시 UI 업데이트
+        // State 바인딩
         reactor.state.map { $0.isValid }
             .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
@@ -279,7 +367,6 @@ final class EditProfileViewController: UIViewController, View {
             })
             .disposed(by: disposeBag)
         
-        // 프로필 이미지 업데이트
         reactor.state.map { $0.profileImageUrl }
             .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
@@ -287,22 +374,11 @@ final class EditProfileViewController: UIViewController, View {
             .subscribe(onNext: { [weak self] imageUrl in
                 if let url = URL(string: imageUrl) {
                     self?.profileImageView.kf.setImage(with: url)
-
                 } else {
                     self?.profileImageView.image = UIImage(systemName: "person.circle.fill")
                 }
             })
             .disposed(by: disposeBag)
-    }
-    
-    private func presentImagePicker() {
-        present(imagePicker, animated: true)
-    }
-    
-    private func showAlert(message: String) {
-        let alert = UIAlertController(title: "알림", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
-        present(alert, animated: true)
     }
 }
 
@@ -319,5 +395,18 @@ extension EditProfileViewController: UIImagePickerControllerDelegate, UINavigati
     
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         dismiss(animated: true)
+    }
+}
+
+// MARK: - UITextFieldDelegate
+extension EditProfileViewController: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        
+        if textField == nameTextField {
+            introTextView.becomeFirstResponder()
+        }
+        
+        return true
     }
 }

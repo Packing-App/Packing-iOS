@@ -30,13 +30,14 @@ struct NotificationModel: Identifiable, Codable, Equatable {
     }
 }
 
-
 enum NotificationType: String, Codable {
-    case invitation = "invitation"
-    case weather = "weather"
-    case reminder = "reminder"
+    case invitation = "invitation"                        // 여행 초대
+    case journeyInvitationResponse = "journeyInvitationResponse"  // 여행 초대 응답
+    case weather = "weather"                              // 날씨 알림
+    case reminder = "reminder"                            // 일정 알림
+    case friendRequest = "friendRequest"                  // 친구 요청
+    case friendRequestResponse = "friendRequestResponse"  // 친구 요청 응답
 }
-
 
 // 디바이스 토큰 응답
 struct DeviceTokenResponse: Codable {

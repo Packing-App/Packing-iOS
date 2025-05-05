@@ -320,15 +320,25 @@ class NotificationTableViewCell: UITableViewCell {
     
     private func configureForType(_ type: NotificationType) {
         switch type {
-        case .invitation:
+        case .friendRequest:
             typeIconView.image = UIImage(systemName: "person.badge.plus")
-            typeLabel.text = "초대"
+            typeLabel.text = "친구 요청"
+        case .friendRequestResponse:
+            typeIconView.image = UIImage(systemName: "person.badge.shield.checkmark")
+            typeLabel.text = "친구 요청 수락"
+
         case .weather:
             typeIconView.image = UIImage(systemName: "cloud.sun")
             typeLabel.text = "날씨"
         case .reminder:
             typeIconView.image = UIImage(systemName: "bell")
             typeLabel.text = "리마인더"
+            
+        case .invitation:
+            typeIconView.image = UIImage(systemName: "envelope")
+            typeLabel.text = "초대"
+        case .journeyInvitationResponse:
+            typeIconView.image = UIImage(systemName: "envelope.badge.person.crop")
         }
     }
     

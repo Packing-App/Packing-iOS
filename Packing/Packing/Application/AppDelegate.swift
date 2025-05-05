@@ -141,3 +141,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         // 필요한 정리 작업
     }
 }
+
+extension AppDelegate {
+    func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+        // JourneyCreationCoordinator가 설정한 방향 제한 적용
+        return JourneyCreationCoordinator.shared.getOrientationLock()
+    }
+}

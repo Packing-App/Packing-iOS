@@ -26,7 +26,8 @@ class JourneyCreationCoordinator: NSObject {
     private(set) var currentStep: JourneyCreationStep = .transportType
     private weak var navigationController: UINavigationController?
     private var createdJourney: Journey?
-    
+    private var orientationLock = UIInterfaceOrientationMask.portrait
+
     private override init() {
         self.journeyService = JourneyService()
         self.createJourneyReactor = CreateJourneyReactor(journeyService: journeyService)
@@ -49,12 +50,28 @@ class JourneyCreationCoordinator: NSObject {
         self.navigationController = navigation
         self.navigationController?.tabBarController?.tabBar.isHidden = true
         self.navigationController?.delegate = self
-        
+        lockOrientation(.portrait)
+
         navigateToStep(.transportType, animated: true)
     }
-    
+    private func lockOrientation(_ orientation: UIInterfaceOrientationMask) {
+        orientationLock = orientation
+        
+        // AppDelegate에서 사용할 수 있도록 알림 발송
+        NotificationCenter.default.post(
+            name: NSNotification.Name("OrientationLockChanged"),
+            object: nil,
+            userInfo: ["orientationLock": orientationLock]
+        )
+    }
+    // 현재 설정된 방향 제한 반환
+    func getOrientationLock() -> UIInterfaceOrientationMask {
+        return orientationLock
+    }
     func navigateToRecommendations() {
         guard let journey = createdJourney, let navigation = navigationController else { return }
+        lockOrientation(.all)
+
         let packingItemService = PackingItemService()
         let reactor = RecommendationsReactor(journeyService: journeyService, packingItemService: packingItemService, journey: journey)
         let recommendationsVC = RecommendationsViewController()

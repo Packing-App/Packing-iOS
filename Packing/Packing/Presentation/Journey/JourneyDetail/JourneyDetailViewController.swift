@@ -422,7 +422,6 @@ struct JourneyDetailView: View {
         .padding(.vertical, 10)
     }
     
-    // MARK: - Items Tab View
     private func itemsTabView(screenWidth: CGFloat) -> some View {
         VStack(spacing: 10) {
             Picker("준비물 유형", selection: $selectedTab) {
@@ -432,24 +431,19 @@ struct JourneyDetailView: View {
             .pickerStyle(SegmentedPickerStyle())
             .padding(.horizontal, UIConstants.horizontalPadding)
             
-            // 스크롤 가능한 TabView로 고정
             TabView(selection: $selectedTab) {
-                ScrollView {
-                    LazyVStack {
-                        packingItemsList(items: personalItems)
-                    }
+                VStack {
+                    packingItemsList(items: personalItems)
                 }
                 .tag(0)
                 
-                ScrollView {
-                    LazyVStack {
-                        packingItemsList(items: sharedItems)
-                    }
+                VStack {
+                    packingItemsList(items: sharedItems)
                 }
                 .tag(1)
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-            .frame(height: calculateHeightForCurrentDevice(screenWidth: screenWidth))
+            .frame(height: calculateContentHeight() + UIConstants.verticalPadding * 2) // 여백 추가
             
             Button {
                 showingAddItemSheet = true

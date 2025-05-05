@@ -136,6 +136,9 @@ class JourneySelectionViewController: UIViewController {
         loadingIndicator.startAnimating()
         
         journeyService.getJourneys()
+            .map({ journeys in
+                return journeys.filter { !$0.isPrivate }
+            })
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] journeys in
                 self?.journeys = journeys

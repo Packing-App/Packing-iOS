@@ -193,10 +193,11 @@ struct JourneyDetailView: View {
                         
                         VStack(spacing: adaptiveSpacing) {
                             journeyInfoSection
-                            
-                            Divider()
-                            
-                            participantsSection
+                                                        
+                            if !journey.isPrivate {
+                                Divider()
+                                participantsSection
+                            }
                             
                             Divider()
                             

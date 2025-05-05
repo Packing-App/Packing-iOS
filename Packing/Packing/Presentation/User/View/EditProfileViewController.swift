@@ -10,6 +10,7 @@ import ReactorKit
 import RxSwift
 import RxCocoa
 import Kingfisher
+import Photos
 
 final class EditProfileViewController: UIViewController, View {
     // MARK: - Properties
@@ -251,6 +252,46 @@ final class EditProfileViewController: UIViewController, View {
         }
     }
     
+    // MARK: - Photo Library Permission
+    private func checkPhotoLibraryPermission() {
+        let status = PHPhotoLibrary.authorizationStatus()
+        switch status {
+        case .authorized, .limited:
+            presentImagePicker()
+        case .denied, .restricted:
+            showPhotoLibraryPermissionDeniedAlert()
+        case .notDetermined:
+            PHPhotoLibrary.requestAuthorization { [weak self] status in
+                DispatchQueue.main.async {
+                    if status == .authorized || status == .limited {
+                        self?.presentImagePicker()
+                    } else {
+                        self?.showPhotoLibraryPermissionDeniedAlert()
+                    }
+                }
+            }
+        @unknown default:
+            break
+        }
+    }
+    
+    private func showPhotoLibraryPermissionDeniedAlert() {
+        let alert = UIAlertController(
+            title: "사진 접근 권한 필요",
+            message: "프로필 사진을 변경하려면 사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
+            if let url = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(url)
+            }
+        })
+        
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        present(alert, animated: true)
+    }
+    
     private func presentImagePicker() {
         present(imagePicker, animated: true)
     }
@@ -322,7 +363,7 @@ final class EditProfileViewController: UIViewController, View {
         
         changeImageButton.rx.tap
             .subscribe(onNext: { [weak self] _ in
-                self?.presentImagePicker()
+                self?.checkPhotoLibraryPermission()
             })
             .disposed(by: disposeBag)
         

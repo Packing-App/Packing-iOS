@@ -237,8 +237,15 @@ class FriendsViewController: UIViewController, View {
     }
     
     @objc private func addFriendButtonTapped() {
-        // 검색 컨트롤러 활성화
-        searchController.searchBar.becomeFirstResponder()
+        if !searchController.isActive {
+            searchController.isActive = true
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.searchController.searchBar.becomeFirstResponder()
+            }
+        } else {
+            searchController.searchBar.becomeFirstResponder()
+        }
     }
     
     // MARK: - ReactorKit Binding
@@ -313,7 +320,6 @@ class FriendsViewController: UIViewController, View {
             .distinctUntilChanged()
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] mode in
-                print("mode: \(mode)")
                 switch mode {
                 case .friendsList:
                     self?.emptyStateTitle.text = "친구 목록이 비어있습니다"

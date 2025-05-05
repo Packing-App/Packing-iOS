@@ -85,7 +85,6 @@ class UserManager {
             // 서버에서 프로필 정보를 가져올 수 있음
             if let userData = UserDefaults.standard.data(forKey: userDefaultsKey),
                let user = try? JSONDecoder().decode(User.self, from: userData) {
-                print("액세스 토큰 존재 -> user: \(user)")
                 self.currentUser = user
             }
         } else {

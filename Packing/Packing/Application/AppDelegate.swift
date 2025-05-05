@@ -45,7 +45,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     // 디바이스 토큰 수신
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
-        print("디바이스 토큰: \(tokenString)")
         
         // 서버에 토큰 등록 (사용자가 로그인 상태인 경우만)
         if UserManager.shared.currentUser != nil {

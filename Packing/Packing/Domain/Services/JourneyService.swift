@@ -57,13 +57,11 @@ class JourneyService: JourneyServiceProtocol {
     
     // MARK: - 여행 목록 조회
     func getJourneys() -> Observable<[Journey]> {
-//        print(#fileID, #function, #line, "- 여행 목록 조회 시작")
         return apiClient.requestWithDateDecoding(APIEndpoint.getJourneys)
             .map { (response: APIResponse<[Journey]>) -> [Journey] in
                 guard let journeys = response.data else {
                     throw NetworkError.invalidResponse
                 }
-                print("여행 목록 디코딩 성공: \(journeys.count)개")
                 return journeys
             }
             .catch { error in

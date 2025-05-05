@@ -49,6 +49,7 @@ class JourneyCreationCoordinator: NSObject {
         self.navigationController = navigation
         self.navigationController?.tabBarController?.tabBar.isHidden = true
         self.navigationController?.delegate = self
+        
         navigateToStep(.transportType, animated: true)
     }
     

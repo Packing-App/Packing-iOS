@@ -70,13 +70,24 @@ class JourneyThemeSelectionViewController: UIViewController, View {
     private lazy var themeCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
-        layout.minimumLineSpacing = 10
-        layout.minimumInteritemSpacing = 10
-        layout.sectionInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        
+        // iPad 여부에 따라 간격 조정
+        let isIPad = UIDevice.current.userInterfaceIdiom == .pad
+        layout.minimumLineSpacing = isIPad ? 20 : 10
+        layout.minimumInteritemSpacing = isIPad ? 20 : 10
+        
+        // iPad에서 여백 추가
+        if isIPad {
+            layout.sectionInset = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        } else {
+            layout.sectionInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        }
         
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .clear
-        collectionView.isScrollEnabled = false
+        
+        // iPad에서는 스크롤 가능하도록 설정
+        collectionView.isScrollEnabled = isIPad
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.register(ThemeCell.self, forCellWithReuseIdentifier: "ThemeCell")
         
@@ -175,6 +186,27 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(customView: navigationTitleLabel)
         view.backgroundColor = .systemGray6
         
+        // 디바이스 타입 확인
+        let isIPad = UIDevice.current.userInterfaceIdiom == .pad
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        
+        // iPad에서는 더 큰 컨테이너 높이 사용
+        let containerHeight: CGFloat
+        if isIPad {
+            // iPad 화면 높이에 따라 조정
+            let screenHeight = UIScreen.main.bounds.height
+            
+            if screenHeight < 900 { // iPad mini (8.3")
+                containerHeight = 560
+            } else if screenHeight < 1000 { // iPad Air/Pro 11"
+                containerHeight = 620
+            } else { // iPad Pro 12.9"
+                containerHeight = 680
+            }
+        } else {
+            containerHeight = isSmallDevice ? 430 : 530
+        }
+        
         // Add progress bar
         view.addSubview(planProgressBar)
         
@@ -193,9 +225,6 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         // Add next button
         view.addSubview(nextButton)
         
-        let isSmallDevice = UIScreen.main.bounds.height < 700
-        let containerHeight: CGFloat = isSmallDevice ? 430 : 530
-
         NSLayoutConstraint.activate([
             // Progress bar constraints
             planProgressBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
@@ -232,29 +261,58 @@ class JourneyThemeSelectionViewController: UIViewController, View {
             nextButton.heightAnchor.constraint(equalToConstant: isSmallDevice ? 45 : 50),
             nextButton.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -10)
         ])
-    }
-}
+    }}
 
 // MARK: - UICollectionViewDelegateFlowLayout
 extension JourneyThemeSelectionViewController: UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-//        let isSmallDevice = UIScreen.main.bounds.height < 700
-        let width = (collectionView.bounds.width - 20) / 3
-        return CGSize(width: width, height: width + 20)
-//        let height = isSmallDevice ? (width + 20) : (width + 25)
-//        return CGSize(width: width, height: height)
+        // 디바이스 타입 확인
+        let isIPad = UIDevice.current.userInterfaceIdiom == .pad
+        let isSmallDevice = UIScreen.main.bounds.height < 700
+        
+        // iPad에서는 화면 크기에 따라 동적으로 셀 크기 조정
+        if isIPad {
+            let screenWidth = UIScreen.main.bounds.width
+            
+            // iPad 크기별로 다르게 적용
+            let itemsPerRow: CGFloat = 3 // 기본적으로 한 줄에 3개의 아이템
+            let spacing: CGFloat = 10 // 아이템 간격
+            
+            // 가로 너비에 따라 셀 크기 조정
+            let width: CGFloat
+            
+            if screenWidth > 1000 { // 큰 iPad Pro (12.9")
+                width = (collectionView.bounds.width - (spacing * (itemsPerRow - 1))) / itemsPerRow * 0.75
+            } else if screenWidth > 800 { // iPad Air/Pro 11"
+                width = (collectionView.bounds.width - (spacing * (itemsPerRow - 1))) / itemsPerRow * 0.85
+            } else { // iPad mini
+                width = (collectionView.bounds.width - (spacing * (itemsPerRow - 1))) / itemsPerRow * 0.95
+            }
+            
+            // 아이템 높이는, 이미지(정사각형) + 타이틀 라벨 + 여백
+            let height = width + 20 // 이미지 + 텍스트 영역
+            
+            return CGSize(width: width, height: height)
+        } else {
+            // 기존 iPhone 로직 유지
+            let width = (collectionView.bounds.width - 20) / 3
+            return CGSize(width: width, height: width + 20)
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        return 10
+        // iPad에서는 더 큰 간격 사용
+        return UIDevice.current.userInterfaceIdiom == .pad ? 20 : 10
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
-        return 10
+        // iPad에서는 더 큰 간격 사용
+        return UIDevice.current.userInterfaceIdiom == .pad ? 20 : 10
     }
 }
 
 // MARK: - Theme Cell
+
 class ThemeCell: UICollectionViewCell {
     
     private let imageView: UIImageView = {

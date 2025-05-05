@@ -447,10 +447,26 @@ class JourneyDateSelectionViewController: UIViewController, View {
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(customView: navigationTitleLabel)
 
         view.backgroundColor = .systemGray6
-        
-        // 디바이스 크기에 따른 조정
+
+        // 디바이스 타입 확인
+        let isIPad = UIDevice.current.userInterfaceIdiom == .pad
         let isSmallDevice = UIScreen.main.bounds.height < 700
-        let containerHeight: CGFloat = isSmallDevice ? 450 : 560
+        
+        let containerHeight: CGFloat
+        if isIPad {
+            // iPad 화면 높이에 따라 조정
+            let screenHeight = UIScreen.main.bounds.height
+            print("screenHeight: \(screenHeight)")
+            if screenHeight < 1200 { // iPad mini
+                containerHeight = 760
+            } else if screenHeight > 1200 { // iPad Air/Pro 11"
+                containerHeight = 840
+            } else { // iPad Pro 12.9"
+                containerHeight = 920
+            }
+        } else {
+            containerHeight = isSmallDevice ? 450 : 560 // iPhone은 원래 값 유지
+        }
         
         // Add progress bar
         view.addSubview(planProgressBar)

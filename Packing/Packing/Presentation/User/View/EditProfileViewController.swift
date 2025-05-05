@@ -183,10 +183,6 @@ final class EditProfileViewController: UIViewController, View {
     private func updateUIWithInitialValues() {
         guard let reactor = self.reactor else { return }
         
-        // 이름과 소개 텍스트 설정 (디버깅을 위한 출력)
-        print("초기 이름: \(reactor.currentState.name)")
-        print("초기 소개: \(reactor.currentState.intro)")
-        
         // 강제로 텍스트 필드에 값 할당
         DispatchQueue.main.async { [weak self] in
             self?.nameTextField.text = reactor.currentState.name

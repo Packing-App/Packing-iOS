@@ -308,7 +308,6 @@ class APIClient: APIClientProtocol {
                         }
                         .subscribe(
                             onNext: { result in
-                                print("Decodable data result: \(result)")
                                 observer.onNext(result)
                                 observer.onCompleted()
                             },

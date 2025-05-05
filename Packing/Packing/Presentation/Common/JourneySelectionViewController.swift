@@ -137,7 +137,10 @@ class JourneySelectionViewController: UIViewController {
         
         journeyService.getJourneys()
             .map({ journeys in
-                return journeys.filter { !$0.isPrivate }
+                if self.selectionMode == .inviteFriend {
+                    return journeys.filter { !$0.isPrivate }
+                }
+                return journeys
             })
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] journeys in

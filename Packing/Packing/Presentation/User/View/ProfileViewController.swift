@@ -104,7 +104,8 @@ final class ProfileViewController: UIViewController, View {
     var disposeBag = DisposeBag()
     
     private let menuItems = ProfileMenuItem.allCases
-    
+    private var tableViewHeightConstraint: NSLayoutConstraint?
+
     // MARK: - Initializers
     init(reactor: ProfileViewReactor) {
         super.init(nibName: nil, bundle: nil)
@@ -120,6 +121,8 @@ final class ProfileViewController: UIViewController, View {
         super.viewDidLoad()
         setupUI()
         setupTableView()
+        
+        tableViewHeightConstraint = tableView.heightAnchor.constraint(equalToConstant: 0)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -131,11 +134,15 @@ final class ProfileViewController: UIViewController, View {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         
+        tableViewHeightConstraint?.isActive = false
+
         // 테이블뷰 높이를 내용에 맞게 조정
         tableView.layoutIfNeeded()
         let tableViewHeight = tableView.contentSize.height
-        tableView.heightAnchor.constraint(equalToConstant: tableViewHeight).isActive = true
         
+        tableViewHeightConstraint?.constant = tableViewHeight
+        tableViewHeightConstraint?.isActive = true
+
         // 스크롤뷰 컨텐츠 크기 업데이트
         updateScrollViewContentSize()
     }

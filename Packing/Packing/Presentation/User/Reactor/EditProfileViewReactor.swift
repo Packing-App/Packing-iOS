@@ -56,7 +56,6 @@ final class EditProfileViewReactor: Reactor {
             intro: user.intro ?? "",
             profileImageUrl: user.profileImage
         )
-        print("InitialState: \(initialState)")
     }
     
     func mutate(action: Action) -> Observable<Mutation> {

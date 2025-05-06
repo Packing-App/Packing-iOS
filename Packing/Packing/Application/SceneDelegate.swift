@@ -56,7 +56,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
     
     // 인증 실패 처리
-    @objc private func handleAuthenticationFailure() {
+    private func handleAuthenticationFailure() {
         // 로그인 화면으로 이동 (이미 AuthCoordinator에서 처리되었을 수 있음)
         authCoordinator?.navigateToLogin()
         

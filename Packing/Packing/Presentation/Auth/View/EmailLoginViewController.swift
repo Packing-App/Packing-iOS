@@ -183,21 +183,18 @@ class EmailLoginViewController: UIViewController {
                 switch result {
                 case .success:
                     // 임시 저장된 디바이스 토큰이 있다면 서버에 등록
-                    guard let token = UserDefaults.standard.string(forKey: "tempDeviceToken"), let self = self else {
-                        self?.navigateToMainScreen()
-                        return
+                    if let token = UserDefaults.standard.string(forKey: "tempDeviceToken") {
+                        self?.registerDeviceToken(token)
                     }
                     
-                    self.deviceService.updateDeviceToken(token: token)
-                        .subscribe(onNext: { success in
-                            print("로그인 후 디바이스 토큰 등록 성공: \(success)")
-                            // 등록 성공하면 임시 토큰 삭제
-                            if success {
-                                UserDefaults.standard.removeObject(forKey: "tempDeviceToken")
-                            }
-                        })
-                        .disposed(by: self.disposeBag)
-                    self.navigateToMainScreen()
+                    // 로그인 컨텍스트 확인 - 여행 생성에서 왔는지 체크
+                    if UserDefaults.standard.bool(forKey: "isLoginFromJourneyCreation") {
+                        // 여행 생성 플로우로 돌아가기
+                        self?.continueJourneyCreation()
+                    } else {
+                        // 일반 로그인 - 메인 화면으로 이동
+                        self?.navigateToMainScreen()
+                    }
                 case .failure:
                     // 에러는 errorMessage에서 처리
                     break
@@ -220,8 +217,8 @@ class EmailLoginViewController: UIViewController {
             .disposed(by: disposeBag)
     }
     
-    // MARK: - Navigation
-    
+    // MARK: - Helper Methods
+
     private func navigateToMainScreen() {
         AuthCoordinator.shared.showMainScreen()
     }
@@ -232,12 +229,33 @@ class EmailLoginViewController: UIViewController {
         navigationController?.pushViewController(signUpViewController, animated: true)
     }
     
-    // MARK: - Helper Methods
-    
     private func showAlert(message: String) {
         let alert = UIAlertController(title: "알림", message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "확인", style: .default))
         present(alert, animated: true)
+    }
+    
+    private func registerDeviceToken(_ token: String) {
+        deviceService.updateDeviceToken(token: token)
+            .subscribe(onNext: { success in
+                print("로그인 후 디바이스 토큰 등록 성공: \(success)")
+                // 등록 성공하면 임시 토큰 삭제
+                if success {
+                    UserDefaults.standard.removeObject(forKey: "tempDeviceToken")
+                }
+            })
+            .disposed(by: disposeBag)
+    }
+
+    // 게스트 모드 시작 메서드 추가
+    private func startGuestMode() {
+        // AuthCoordinator를 통해 게스트 모드 여행 생성 시작
+        AuthCoordinator.shared.startGuestJourneyCreation(from: self.navigationController)
+    }
+    // 여행 생성으로 돌아가는 메서드 추가
+    private func continueJourneyCreation() {
+        // AuthCoordinator를 통해 여행 생성 플로우로 돌아가기
+        AuthCoordinator.shared.continueJourneyCreationAfterLogin()
     }
     
     // MARK: - ACTIONS

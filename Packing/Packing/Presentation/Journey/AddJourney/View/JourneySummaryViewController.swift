@@ -248,6 +248,14 @@ class JourneySummaryViewController: UIViewController, View {
         super.viewDidLoad()
         setupUI()
         
+        // 로그인 상태 변경 알림 등록
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleLoginStatusChanged),
+            name: NSNotification.Name("UserLoginStatusChanged"),
+            object: nil
+        )
+        
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
@@ -257,6 +265,25 @@ class JourneySummaryViewController: UIViewController, View {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         reactor?.action.onNext(.viewDidAppear)
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    // 로그인 상태 변경 처리 메서드 추가
+    @objc private func handleLoginStatusChanged() {
+        // 로그인 상태가 변경되면 reactor에 로그인 상태 체크 액션 전송
+        reactor?.action.onNext(.checkLoginStatus)
+        
+        // 로그인 후 여행 정보가 유지되는지 확인 (디버깅용)
+        if let journeyModel = (reactor?.coordinator as? JourneyCreationCoordinator)?.getJourneyModel() {
+            print("로그인 후 여행 정보 확인:")
+            print("- 출발지: \(journeyModel.origin)")
+            print("- 도착지: \(journeyModel.destination)")
+            print("- 테마: \(String(describing: journeyModel.theme?.displayName))")
+            print("- 출발일: \(String(describing: journeyModel.startDate))")
+        }
     }
     
     @objc private func dismissKeyboard() {
@@ -286,6 +313,16 @@ class JourneySummaryViewController: UIViewController, View {
             .disposed(by: disposeBag)
         
         // State
+        
+        reactor.state.map { $0.requireLogin }
+            .distinctUntilChanged()
+            .filter { $0 }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] _ in
+                self?.showLoginRequiredAlert()
+            })
+            .disposed(by: disposeBag)
+        
         // 여행 모델 정보 표시
         reactor.state.map { $0.transportTypeText }
             .observe(on: MainScheduler.instance)
@@ -423,6 +460,27 @@ class JourneySummaryViewController: UIViewController, View {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "확인", style: .default, handler: completion))
         present(alert, animated: true)
+    }
+    
+    private func showLoginRequiredAlert() {
+        let alert = UIAlertController(
+            title: "로그인 필요",
+            message: "여행 정보를 저장하고 추천 아이템을 확인하려면 로그인이 필요합니다. 로그인하면 지금까지 입력한 여행 정보가 유지됩니다.",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "로그인", style: .default) { [weak self] _ in
+            self?.navigateToLogin()
+        })
+        
+        present(alert, animated: true)
+    }
+    
+    
+    private func navigateToLogin() {
+        guard let navigationController = self.navigationController else { return }
+        AuthCoordinator.shared.navigateToLogin(isFromJourneyCreation: true, journeyNavigation: navigationController)
     }
     
     // MARK: - Setup UI

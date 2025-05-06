@@ -17,6 +17,8 @@ class JourneySummaryReactor: Reactor {
         case createJourney
         case invite
         case viewDidAppear
+        case checkLoginStatus
+        case loginRequired
     }
     
     enum Mutation {
@@ -27,6 +29,7 @@ class JourneySummaryReactor: Reactor {
         case setCreatedJourney(Journey?)
         case complete
         case resetProceedState
+        case requireLogin(Bool)
     }
     
     struct State {
@@ -36,6 +39,7 @@ class JourneySummaryReactor: Reactor {
         var createdJourney: Journey?
         var error: Error?
         var shouldComplete: Bool
+        var requireLogin: Bool = false
         
         var transportTypeText: String
         var themeText: String
@@ -71,12 +75,27 @@ class JourneySummaryReactor: Reactor {
             createdJourney: nil,
             error: nil,
             shouldComplete: false,
+            requireLogin: false,
             transportTypeText: model.transportType?.displayName ?? "",
             themeText: model.theme?.displayName ?? "",
             originText: model.origin,
             destinationText: model.destination,
             dateRangeText: dateRangeText
         )
+        
+        // 초기화할 때, 로그인 필요 알림 구독!
+        NotificationCenter.default.addObserver(self,
+                                             selector: #selector(handleLoginRequired),
+                                             name: NSNotification.Name("LoginRequiredForJourney"),
+                                             object: nil)
+    }
+    
+    @objc func handleLoginRequired() {
+        action.onNext(.loginRequired)
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     func mutate(action: Action) -> Observable<Mutation> {
@@ -90,6 +109,11 @@ class JourneySummaryReactor: Reactor {
             return .just(.setIsPrivate(isPrivate))
             
         case .createJourney:
+            
+            if UserManager.shared.currentUser == nil {
+                return .just(.requireLogin(true))
+            }
+            
             // 생성 상태 모니터링
             let creatingObservable = coordinator.isCreatingJourney()
                 .map { Mutation.setIsCreating($0) }
@@ -115,6 +139,16 @@ class JourneySummaryReactor: Reactor {
                 errorObservable,
                 journeyObservable
             )
+            
+        case .loginRequired:
+            return .just(.requireLogin(true))
+            
+        case .checkLoginStatus: // 로그인 후에 호출됨
+            // 로그인 유무 확인 후, 로그인 상태라면 로그인 필요하지 않은 상태로 리셋.
+            if UserManager.shared.currentUser != nil {
+                return .just(.requireLogin(false))
+            }
+            return .empty()
             
         case .invite:
             // 초대 기능은 별도 구현 필요
@@ -151,6 +185,9 @@ class JourneySummaryReactor: Reactor {
             
         case .resetProceedState:
             newState.shouldComplete = false
+            
+        case .requireLogin(let required):
+            newState.requireLogin = required
         }
         
         return newState

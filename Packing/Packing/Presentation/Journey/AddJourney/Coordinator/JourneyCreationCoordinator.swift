@@ -28,6 +28,10 @@ class JourneyCreationCoordinator: NSObject {
     private var createdJourney: Journey?
     private var orientationLock = UIInterfaceOrientationMask.portrait
 
+    private var isGuestMode: Bool {
+        return UserManager.shared.currentUser == nil
+    }
+    
     private override init() {
         self.journeyService = JourneyService()
         self.createJourneyReactor = CreateJourneyReactor(journeyService: journeyService)
@@ -41,6 +45,19 @@ class JourneyCreationCoordinator: NSObject {
                 self?.createdJourney = journey
             })
             .disposed(by: disposeBag)
+    }
+    
+    // 로그인 후 여행 생성 계속하기 메서드
+    func continueAfterLogin(from navigation: UINavigationController) {
+        self.navigationController = navigation
+        
+        // 현재 단계가 summary가 아니라면 summary 로 이동 (예외 처리)
+        if currentStep != .summary {
+            navigateToStep(.summary, animated: false)
+        }
+        
+        // JourneySummaryViewController 가 재로딩 되어야 함을 알림
+        NotificationCenter.default.post(name: NSNotification.Name("UserLoginStatusChanged"), object: nil)
     }
     
     func startJourneyCreation(from navigation: UINavigationController) {
@@ -68,9 +85,17 @@ class JourneyCreationCoordinator: NSObject {
     func getOrientationLock() -> UIInterfaceOrientationMask {
         return orientationLock
     }
+    
     func navigateToRecommendations() {
         guard let journey = createdJourney, let navigation = navigationController else { return }
         lockOrientation(.all)
+        
+        // 게스트 모드에서는 추천 화면으로 진행하지 않음.
+        if self.isGuestMode {
+            // JourneySummaryReactor 에 로그인 필요 상태 알림
+            NotificationCenter.default.post(name: NSNotification.Name("LoginRequiredForJourney"), object: nil)
+            return
+        }
 
         let packingItemService = PackingItemService()
         let reactor = RecommendationsReactor(journeyService: journeyService, packingItemService: packingItemService, journey: journey)

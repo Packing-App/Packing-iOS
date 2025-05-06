@@ -126,6 +126,20 @@ class LoginViewController: UIViewController {
         createSocialLoginButton("apple")
     }()
     
+    private lazy var guestModeButton: UIButton = {
+        let button = UIButton()
+        button.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 스타일 및 텍스트 설정
+        var config = UIButton.Configuration.plain()
+        config.title = "로그인 없이 시작하기"
+        config.baseForegroundColor = .systemBlue
+        button.configuration = config
+        
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        return button
+    }()
+    
     private lazy var loadingIndicator: UIActivityIndicatorView = {
         let indicator = UIActivityIndicatorView(style: .large)
         indicator.translatesAutoresizingMaskIntoConstraints = false
@@ -161,6 +175,7 @@ class LoginViewController: UIViewController {
         view.addSubview(socialLoginButtons)
         view.addSubview(loadingIndicator)
         view.addSubview(emailLoginButton)
+        view.addSubview(guestModeButton)
         
         socialLoginButtons.addArrangedSubview(googleLoginButton)
         socialLoginButtons.addArrangedSubview(kakaoLoginButton)
@@ -191,8 +206,11 @@ class LoginViewController: UIViewController {
             emailLoginButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 70),
             emailLoginButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -70),
             emailLoginButton.heightAnchor.constraint(equalToConstant: 50),
-            emailLoginButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -40),
+            emailLoginButton.bottomAnchor.constraint(equalTo: guestModeButton.topAnchor, constant: -16),
             
+            guestModeButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            guestModeButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
@@ -244,6 +262,12 @@ class LoginViewController: UIViewController {
             })
             .disposed(by: disposeBag)
         
+        guestModeButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.startGuestMode()
+            })
+            .disposed(by: disposeBag)
+        
         // 로딩 상태 바인딩
         viewModel.isLoading
             .distinctUntilChanged()
@@ -256,24 +280,19 @@ class LoginViewController: UIViewController {
                 switch result {
                 case .success:
                     // 임시 저장된 디바이스 토큰이 있다면 서버에 등록
-                    guard let token = UserDefaults.standard.string(forKey: "tempDeviceToken"), let self = self else {
-                        print("디바이스 토큰 없음, 디바이스 토큰 미등록 처리됨")
-                        self?.navigateToMainScreen()
-                        return
+                    if let token = UserDefaults.standard.string(forKey: "tempDeviceToken") {
+                        self?.registerDeviceToken(token)
                     }
                     
-                    self.deviceService.updateDeviceToken(token: token)
-                        .subscribe(onNext: { success in
-                            print("로그인 후 디바이스 토큰 등록 성공: \(success)")
-                            // 등록 성공하면 임시 토큰 삭제
-                            if success {
-                                UserDefaults.standard.removeObject(forKey: "tempDeviceToken")
-                            }
-                        })
-                        .disposed(by: self.disposeBag)
-                    
-                    // 로그인 성공 - 메인 화면으로 이동
-                    self.navigateToMainScreen()
+                    // 로그인 컨텍스트 확인 - 여행 생성에서 왔는지 체크
+                    if UserDefaults.standard.bool(forKey: "isLoginFromJourneyCreation") {
+                        // 여행 생성 플로우로 돌아가기
+                        self?.continueJourneyCreation()
+                    } else {
+                        // 일반 로그인 - 메인 화면으로 이동
+                        self?.navigateToMainScreen()
+                    }
+
                 case .failure(let error):
                     // 로그인 실패 - 에러 메시지 표시
                     self?.showAlert(message: error.localizedDescription)
@@ -290,6 +309,30 @@ class LoginViewController: UIViewController {
     }
     
     // MARK: - Navigation & Helpers
+    
+    private func registerDeviceToken(_ token: String) {
+        deviceService.updateDeviceToken(token: token)
+            .subscribe(onNext: { success in
+                print("로그인 후 디바이스 토큰 등록 성공: \(success)")
+                // 등록 성공하면 임시 토큰 삭제
+                if success {
+                    UserDefaults.standard.removeObject(forKey: "tempDeviceToken")
+                }
+            })
+            .disposed(by: disposeBag)
+    }
+
+    // 게스트 모드 시작 메서드 추가
+    private func startGuestMode() {
+        // AuthCoordinator를 통해 게스트 모드 여행 생성 시작
+        AuthCoordinator.shared.startGuestJourneyCreation(from: self.navigationController)
+    }
+
+    // 여행 생성으로 돌아가는 메서드 추가
+    private func continueJourneyCreation() {
+        // AuthCoordinator를 통해 여행 생성 플로우로 돌아가기
+        AuthCoordinator.shared.continueJourneyCreationAfterLogin()
+    }
     
     private func navigateToEmailLogin() {
         let emailLoginVC = EmailLoginViewController()

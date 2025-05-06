@@ -347,7 +347,7 @@ class APIClient: APIClientProtocol {
         switch endpoint {
         case .register, .login, .verifyEmail, .resendVerificationCode,
              .forgotPassword, .verifyResetCode, .resetPassword, .refreshToken,
-             .googleLogin, .kakaoLogin, .naverLogin, .appleVerify:
+             .googleLogin, .kakaoLogin, .naverLogin, .appleVerify, .translateCity, .searchLocations:
             return false
         default:
             return true

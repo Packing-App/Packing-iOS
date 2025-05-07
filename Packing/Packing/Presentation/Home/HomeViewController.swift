@@ -99,22 +99,27 @@ class HomeViewController: UIViewController, View {
     }()
     
     private lazy var addNewJourneyButton: UIButton = {
-        let button = UIButton()
-        
         var configuration = UIButton.Configuration.filled()
         configuration.cornerStyle = .capsule
-        configuration.baseForegroundColor = .black.withAlphaComponent(0.85)
-        configuration.baseBackgroundColor = .white.withAlphaComponent(0.75)
+        configuration.baseForegroundColor = UIColor(hexCode: "333A56")
+        configuration.baseBackgroundColor = .white
         configuration.buttonSize = .large
         configuration.title = "새로운 여행 준비하기"
-        
+        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = UIFont.systemFont(ofSize: 17, weight: .heavy)
+            return outgoing
+        }
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 15, leading: 20, bottom: 15, trailing: 20)
+        configuration.background.strokeColor = UIColor(hexCode: "B0DCF0")
+        configuration.background.strokeWidth = 2.5
         
-        button.configuration = configuration
-        button.layer.shadowColor = UIColor.black.withAlphaComponent(0.1).cgColor
-        button.layer.shadowOffset = CGSize(width: 0, height: 2)
-        button.layer.shadowRadius = 4
-        button.layer.shadowOpacity = 0.5
+        let button = UIButton(configuration: configuration)
+        button.layer.shadowColor = UIColor.black.withAlphaComponent(0.2).cgColor
+        button.layer.shadowOffset = CGSize(width: 0, height: 5)
+        button.layer.shadowRadius = 8
+        button.layer.shadowOpacity = 0.3
+        button.clipsToBounds = false
         
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
@@ -491,8 +496,8 @@ class HomeViewController: UIViewController, View {
         gradientLayer = CAGradientLayer()
         gradientLayer.colors = [UIColor.main.cgColor, UIColor.white.cgColor]
         gradientLayer.locations = [0, 1]
-        gradientLayer.startPoint = CGPoint(x: 0.0, y: 0.2)
-        gradientLayer.endPoint = CGPoint(x: 0.0, y: 0.5)
+        gradientLayer.startPoint = CGPoint(x: 0.0, y: 0.4)
+        gradientLayer.endPoint = CGPoint(x: 0.0, y: 0.85)
         gradientLayer.frame = view.bounds
         
         // Add gradient as the bottom-most layer

@@ -95,3 +95,38 @@ extension UIColor {
     static let textPrimary = UIColor(red: 51/255, green: 51/255, blue: 51/255, alpha: 1.0)
     static let textSecondary = UIColor(red: 102/255, green: 102/255, blue: 102/255, alpha: 1.0)
 }
+
+
+extension UIColor {
+    
+    //hex 코드로 UIColor 만들기
+    convenience init(hexCode: String, alpha: CGFloat = 1.0) {
+        var hexFormatted: String = hexCode.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).uppercased()
+        
+        if hexFormatted.hasPrefix("#") {
+            hexFormatted = String(hexFormatted.dropFirst())
+        }
+        
+        assert(hexFormatted.count == 6, "Invalid hex code used.")
+        
+        var rgbValue: UInt64 = 0
+        Scanner(string: hexFormatted).scanHexInt64(&rgbValue)
+        
+        self.init(red: CGFloat((rgbValue & 0xFF0000) >> 16) / 255.0,
+                  green: CGFloat((rgbValue & 0x00FF00) >> 8) / 255.0,
+                  blue: CGFloat(rgbValue & 0x0000FF) / 255.0,
+                  alpha: alpha)
+    }
+}
+
+
+extension UILabel {
+    //자간 수정 기능
+    func addCharacterSpacing(_ value: Double = -0.03) {
+        let kernValue = self.font.pointSize * CGFloat(value)
+        guard let text = text, !text.isEmpty else { return }
+        let string = NSMutableAttributedString(string: text)
+        string.addAttribute(NSAttributedString.Key.kern, value: kernValue, range: NSRange(location: 0, length: string.length - 1))
+        attributedText = string
+    }
+}

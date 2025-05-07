@@ -29,6 +29,10 @@ class JourneyDetailViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         setupNavigationBar()
     }
     
@@ -57,20 +61,6 @@ class JourneyDetailViewController: UIViewController {
         )
         deleteButton.tintColor = .systemRed
         navigationItem.rightBarButtonItem = deleteButton
-    }
-    
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        // Configure navigation bar appearance
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .main
-        
-        appearance.shadowColor = .clear
-        
-        // Apply the appearance to all navigation bar states
-        navigationController?.navigationBar.standardAppearance = appearance
-        navigationController?.navigationBar.scrollEdgeAppearance = appearance
     }
     
     // Setup
@@ -209,7 +199,7 @@ struct JourneyDetailView: View {
                             
                             itemsTabView(screenWidth: geometry.size.width)
                         }
-                        .padding(.top, UIConstants.verticalPadding)
+                        .padding(.top, UIConstants.verticalPadding + 14)
                         .background(Color(.systemBackground))
                         .clipShape(RoundedRectangle(cornerRadius: UIConstants.cornerRadius))
                         .offset(y: -20)
@@ -370,7 +360,7 @@ struct JourneyDetailView: View {
                 }, label: {
                     Text("초대하기")
                         .font(.subheadline)
-                        .foregroundColor(.blue)
+                        .foregroundColor(.main)
                 })
             }
             .padding(.horizontal, UIConstants.horizontalPadding)
@@ -415,7 +405,7 @@ struct JourneyDetailView: View {
             }
             
             ProgressView(value: progressValue)
-                .progressViewStyle(LinearProgressViewStyle(tint: Color.blue))
+                .progressViewStyle(LinearProgressViewStyle(tint: .main))
                 .frame(height: 8)
         }
         .padding(.horizontal, UIConstants.horizontalPadding)
@@ -443,7 +433,7 @@ struct JourneyDetailView: View {
                 .tag(1)
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-            .frame(height: calculateContentHeight() + UIConstants.verticalPadding * 2) // 여백 추가
+            .frame(height: calculateContentHeight() + UIConstants.verticalPadding * 2)
             
             Button {
                 showingAddItemSheet = true
@@ -453,10 +443,10 @@ struct JourneyDetailView: View {
                     Text("준비물 추가하기")
                 }
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.blue)
+                .foregroundColor(.main)
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: UIConstants.minTapTargetSize)
-                .background(Color.blue.opacity(0.1))
+                .background(Color.main.opacity(0.1))
                 .cornerRadius(10)
             }
             .padding(.horizontal, UIConstants.horizontalPadding)
@@ -493,8 +483,6 @@ struct JourneyDetailView: View {
                         categorySection(category: category, items: categoryItems)
                     }
                 }
-                // 스크롤 개선을 위한 하단 패딩 추가
-                .padding(.bottom, UIConstants.verticalPadding)
             }
         }
         .padding(.horizontal, UIConstants.horizontalPadding)
@@ -540,7 +528,7 @@ struct JourneyDetailView: View {
                 label: {
                     HStack {
                         Image(systemName: categoryIcon(for: category))
-                            .foregroundColor(.blue)
+                            .foregroundColor(.main)
                             .frame(width: 24, height: 24)
                         
                         Text(category.displayName)
@@ -832,7 +820,7 @@ struct ParticipantView: View {
     
     private var fallbackProfileView: some View {
         Circle()
-            .fill(isCreator ? Color.orange : Color.blue)
+            .fill(isCreator ? Color.orange : Color.main)
             .frame(width: 40, height: 40)
             .overlay(
                 Text(participant.name.prefix(1).uppercased())
@@ -875,7 +863,7 @@ struct PackingItemRow: View {
             } label: {
                 Image(systemName: isChecked ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 22))
-                    .foregroundColor(isChecked ? .blue : .gray)
+                    .foregroundColor(isChecked ? .main : .gray)
                     .frame(width: UIConstants.minTapTargetSize, height: UIConstants.minTapTargetSize)
                     .contentShape(Rectangle())
             }
@@ -896,7 +884,7 @@ struct PackingItemRow: View {
                     if isSharedTab, let assignedTo = item.assignedTo {
                         Text("담당: \(assignedTo.name)")
                             .font(.system(size: 12))
-                            .foregroundColor(.blue)
+                            .foregroundColor(.main)
                             .lineLimit(1)
                     }
                 }

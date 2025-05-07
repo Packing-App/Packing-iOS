@@ -28,7 +28,7 @@ class WebViewViewController: UIViewController {
         let indicator = UIActivityIndicatorView(style: .large)
         indicator.translatesAutoresizingMaskIntoConstraints = false
         indicator.hidesWhenStopped = true
-        indicator.color = .systemBlue
+        indicator.color = .main
         return indicator
     }()
     

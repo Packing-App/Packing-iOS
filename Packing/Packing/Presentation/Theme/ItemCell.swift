@@ -158,8 +158,8 @@ class ItemCell: UITableViewCell {
         
         if selected {
             containerView.layer.borderWidth = 1.5
-            containerView.layer.borderColor = UIColor.systemBlue.cgColor
-            containerView.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.05)
+            containerView.layer.borderColor = UIColor.main.cgColor
+            containerView.backgroundColor = UIColor.main.withAlphaComponent(0.05)
         } else {
             containerView.layer.borderWidth = 0
             containerView.backgroundColor = .systemBackground

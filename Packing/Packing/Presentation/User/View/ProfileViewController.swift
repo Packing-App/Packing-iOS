@@ -45,7 +45,7 @@ final class ProfileViewController: UIViewController, View {
         imageView.clipsToBounds = true
         imageView.layer.borderWidth = 2
         imageView.layer.borderColor = UIColor.systemGray5.cgColor
-        imageView.backgroundColor = .systemBlue
+        imageView.backgroundColor = .main
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()

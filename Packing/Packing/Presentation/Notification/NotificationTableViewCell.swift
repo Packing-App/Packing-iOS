@@ -254,7 +254,7 @@ class NotificationTableViewCell: UITableViewCell {
     }
     
     private func setupUnreadBadge() {
-        unreadBadge.backgroundColor = .systemBlue
+        unreadBadge.backgroundColor = .main
         unreadBadge.layer.cornerRadius = 3
         unreadBadge.isHidden = true
         

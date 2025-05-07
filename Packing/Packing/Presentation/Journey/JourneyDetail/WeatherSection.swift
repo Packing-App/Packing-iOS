@@ -42,7 +42,7 @@ struct WeatherSection: View {
                     }) {
                         Text(showFullForecast ? "간략히 보기" : "상세 보기")
                             .font(.system(size: 14))
-                            .foregroundColor(.blue)
+                            .foregroundStyle(Color.main)
                     }
                 }
             }
@@ -96,14 +96,14 @@ struct WeatherSection: View {
                             default:
                                 Image(systemName: weatherIcon(for: weather.weatherMain))
                                     .font(.system(size: 30))
-                                    .foregroundColor(.blue)
+                                    .foregroundStyle(Color.main)
                             }
                         }
                         .frame(width: 60, height: 60)
                     } else {
                         Image(systemName: weatherIcon(for: weather.weatherMain))
                             .font(.system(size: 30))
-                            .foregroundColor(.blue)
+                            .foregroundStyle(Color.main)
                             .frame(width: 60, height: 60)
                     }
                 }
@@ -153,7 +153,7 @@ struct WeatherSection: View {
         VStack(spacing: 5) {
             Image(systemName: icon)
                 .font(.system(size: 16))
-                .foregroundColor(.blue)
+                .foregroundStyle(Color.main)
             
             Text(value)
                 .font(.system(size: 14, weight: .semibold))
@@ -199,14 +199,14 @@ struct WeatherSection: View {
                     default:
                         Image(systemName: weatherIcon(for: weather.weatherMain))
                             .font(.system(size: 22))
-                            .foregroundColor(.blue)
+                            .foregroundStyle(Color.main)
                     }
                 }
                 .frame(width: 45, height: 45)
             } else {
                 Image(systemName: weatherIcon(for: weather.weatherMain))
                     .font(.system(size: 22))
-                    .foregroundColor(.blue)
+                    .foregroundStyle(Color.main)
                     .frame(width: 45, height: 45)
             }
             

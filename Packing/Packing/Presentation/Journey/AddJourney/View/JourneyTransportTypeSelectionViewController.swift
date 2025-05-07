@@ -80,7 +80,7 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
     private let skipButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("건너뛰기", for: .normal)
-        button.setTitleColor(.systemBlue, for: .normal)
+        button.setTitleColor(.main, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
@@ -293,7 +293,7 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
         
         let iconImageView = UIImageView()
         iconImageView.image = UIImage(systemName: icon)
-        iconImageView.tintColor = UIColor.systemBlue
+        iconImageView.tintColor = UIColor.main
         iconImageView.contentMode = .scaleAspectFit
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         
@@ -335,7 +335,7 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
             optionView.layer.borderColor = UIColor.systemGray5.cgColor
             
             if let iconView = optionView.viewWithTag(1001) as? UIImageView {
-                iconView.tintColor = UIColor.systemBlue
+                iconView.tintColor = UIColor.main
             }
             
             if let titleLabel = optionView.viewWithTag(1002) as? UILabel {

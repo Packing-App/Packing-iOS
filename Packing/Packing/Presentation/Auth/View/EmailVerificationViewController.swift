@@ -64,7 +64,7 @@ class EmailVerificationViewController: UIViewController {
     
     private lazy var verificationStatusLabel: UILabel = {
         let label = UILabel()
-        label.textColor = .systemBlue
+        label.textColor = .main
         label.font = .systemFont(ofSize: 12, weight: .medium)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label

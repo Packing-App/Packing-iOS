@@ -133,7 +133,7 @@ class LoginViewController: UIViewController {
         // 스타일 및 텍스트 설정
         var config = UIButton.Configuration.plain()
         config.title = "로그인 없이 시작하기"
-        config.baseForegroundColor = .systemBlue
+        config.baseForegroundColor = .main
         button.configuration = config
         
         button.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)

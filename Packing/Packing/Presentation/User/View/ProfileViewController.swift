@@ -74,7 +74,7 @@ final class ProfileViewController: UIViewController, View {
     private lazy var editProfileButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("수정", for: .normal)
-        button.setTitleColor(.systemBlue, for: .normal)
+        button.setTitleColor(.main, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 16)
         button.backgroundColor = UIColor.systemGray6
         button.layer.cornerRadius = 8

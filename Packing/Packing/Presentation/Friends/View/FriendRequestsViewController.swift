@@ -389,7 +389,7 @@ class SentRequestCell: UITableViewCell {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 14)
         label.text = "대기 중"
-        label.textColor = .systemBlue
+        label.textColor = .main
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()

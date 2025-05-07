@@ -41,7 +41,7 @@ class FriendsViewController: UIViewController, View {
         let button = UIButton(type: .system)
         let image = UIImage(systemName: "person.badge.plus")
         button.setImage(image, for: .normal)
-        button.backgroundColor = .systemBlue
+        button.backgroundColor = .main
         button.tintColor = .white
         button.layer.cornerRadius = 28
         button.layer.shadowColor = UIColor.black.cgColor
@@ -100,7 +100,7 @@ class FriendsViewController: UIViewController, View {
         let button = UIButton(type: .system)
         button.setTitle("친구 추가하기", for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
-        button.backgroundColor = .systemBlue
+        button.backgroundColor = .main
         button.tintColor = .white
         button.layer.cornerRadius = 12
         button.contentEdgeInsets = UIEdgeInsets(top: 8, left: 16, bottom: 8, right: 16)
@@ -219,7 +219,7 @@ class FriendsViewController: UIViewController, View {
         
         // 알림 버튼 추가
         let friendRequestsButton = UIBarButtonItem(
-            image: UIImage(systemName: "person.crop.circle.badge.questionmark"),
+            image: UIImage(systemName: "person.crop.circle.badge.questionmark")?.withTintColor(.main, renderingMode: .alwaysOriginal),
             style: .plain,
             target: self,
             action: #selector(friendRequestsButtonTapped)
@@ -395,7 +395,7 @@ class FriendsViewController: UIViewController, View {
                     } else {
                         // 친구 아닌 경우 - 요청 버튼 표시
                         cell.actionButton.setTitle("친구 요청", for: .normal)
-                        cell.actionButton.backgroundColor = .systemBlue
+                        cell.actionButton.backgroundColor = .main
                         cell.actionButton.setTitleColor(.white, for: .normal)
                         cell.actionButton.isEnabled = true
                         

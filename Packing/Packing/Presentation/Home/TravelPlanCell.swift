@@ -48,7 +48,7 @@ class TravelPlanCell: UICollectionViewCell {
     
     private let plusImageView: UIImageView = {
         let iv = UIImageView(image: UIImage(systemName: "plus.circle.fill"))
-        iv.tintColor = .systemBlue
+        iv.tintColor = .main
         iv.contentMode = .scaleAspectFit
         iv.translatesAutoresizingMaskIntoConstraints = false
         return iv

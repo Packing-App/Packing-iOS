@@ -9,8 +9,7 @@
     <a href="#🔧-기술-스택">기술 스택</a> •
     <a href="#📐-아키텍처">아키텍처</a> •
     <a href="#🚀-설치-방법">설치 방법</a> •
-    <a href="#💡-구현-내용">구현 내용</a> •
-    <a href="#📱-스크린샷">스크린샷</a>
+    <a href="#💡-구현-내용">구현 내용</a>
   </p>
 </div>
 
@@ -34,7 +33,7 @@
   </tr>
   <tr>
     <td align="center">
-      <a href="https://github.com/iyungui">🔗 GitHub 프로필</a>
+      <a href="https://github.com/iyungui">🔗 GitHub Profile</a>
     </td>
   </tr>
 </table>
@@ -50,9 +49,9 @@
 
 ## 📋 프로젝트 개요
 
-**패킹(Packing)**은 여행자를 위한 맞춤형 여행 준비물 추천 및 관리 서비스입니다. 여행 목적지, 기간, 테마 등 사용자 맞춤 정보를 바탕으로 최적화된 준비물 목록을 제공하여 여행 준비의 효율성을 높이고, 동행자와 실시간으로 준비 상황을 공유할 수 있는 iOS 애플리케이션입니다.
+**패킹(Packing)**은 여행자를 위한 맞춤형 여행 준비물 추천 및 관리 서비스입니다. 여행 목적지, 기간, 테마 등 사용자 맞춤 정보를 바탕으로 최적화된 준비물 목록을 제공하여 여행 준비의 효율성을 높이고, 여행을 같이 가는 친구와 함께 실시간으로 준비 상황을 공유할 수 있는 iOS 애플리케이션입니다.
 
-> 여행을 떠나기 전, 항상 무엇을 챙겨야 할지 고민하고 막상 여행 중에 필요한 물건을 깜빡하는 상황을 해결하기 위해 개발했습니다.
+> 여행을 떠나기 전, 무엇을 챙겨야 할지 고민해도 막상 여행 중에 필요한 물건을 깜빡하는 상황이 있습니다. 패킹은 이를 해결하기 위해 개발 되었습니다.
 
 ## ✨ 주요 기능
 
@@ -62,9 +61,8 @@
 - 카테고리별 체계적인 체크리스트 제공
 
 ### 2. 실시간 준비물 공유 기능
-- 여행 동반자 초대 시스템을 통한 체크리스트 실시간 공유
+- 여행 파티원 초대 시스템을 통한 체크리스트 실시간 공유
 - 공용 준비물과 개인 준비물 구분 관리
-- 준비 상황 실시간 확인으로 중복 준비 방지
 
 ### 3. 스마트 리마인더 기능
 - 여행지 위치 기반 날씨 정보 자동 연동
@@ -74,12 +72,12 @@
 ## 🔧 기술 스택
 
 ### 프론트엔드 (iOS)
-- Swift 5.5+
-- UIKit & SwiftUI 하이브리드 구현
+- Swift 6.1+
+- UIKit + SwiftUI 구현
 - ReactorKit (단방향 데이터 흐름 아키텍처)
 - RxSwift & RxCocoa
 - Kingfisher (이미지 캐싱)
-- KeychainSwift (보안 데이터 관리)
+- KeychainSwift (토큰 데이터 관리)
 
 ### 백엔드
 - Node.js & Express
@@ -90,18 +88,16 @@
 
 ## 📐 아키텍처
 
-프로젝트는 Clean Architecture와 MVVM 패턴의 장점을 결합하여 구현했으며, ReactorKit을 통해 단방향 데이터 흐름을 관리합니다.
+로그인 화면의 경우에는 MVVM in-out으로, 나머지 UIKit 화면은 ReactorKit을 통해 단방향 데이터 흐름을 관리하도록 하였습니다.
+
+### 주요 레이어 구성
 
 <div align="center">
   <img src="https://github.com/사용자명/Packing/raw/main/Resources/architecture_diagram.png" alt="아키텍처 다이어그램" width="700">
 </div>
 
-### 주요 레이어 구성
-
 #### 🔷 애플리케이션 레이어
 - AppDelegate, SceneDelegate
-- Push Notification
-- DI Container (의존성 주입)
 
 #### 🔷 데이터 레이어
 - **네트워크**: API Client, Endpoints, Error 처리
@@ -117,13 +113,14 @@
 
 #### 🔷 확장 기능
 - JourneyCreatorCoordinator: 여행 생성 프로세스
+- AuthCoordinator: 인증 사용자 유무 네비게이션 프로세스
 
 ## 🚀 설치 방법
 
 ### 요구사항
-- iOS 17.0+
-- Xcode 13.0+
-- CocoaPods
+- iOS 17.6+
+- Xcode 16.0+
+- SPM
 
 ### 설치 단계
 ```bash
@@ -133,49 +130,61 @@ git clone https://github.com/Packing-App/Packing-iOS.git
 # 디렉토리 이동
 cd Packing
 
-# 의존성 설치
-pod install
-
-# Xcode에서 .xcworkspace 파일 열기
-open Packing.xcworkspace
+# Xcode에서 .xcodeproj 파일 열기
+open Packing.xcodeproj
 ```
 
 ## 💡 구현 내용
 
+대표적인 트러블 슈팅 내용은 [노션](https://silicon-distance-ef3.notion.site/Troubleshooting-1b2f678b2fe28011932eda3dc8020a00?pvs=4)에서도 확인 가능합니다.
+
 ### 1. ReactorKit을 활용한 단방향 데이터 흐름
-ReactorKit을 도입하여 View와 비즈니스 로직을 명확히 분리했습니다. Action -> Mutation -> State 흐름으로 데이터 변화를 예측 가능하게 관리합니다.
+ReactorKit을 도입하여 View와 비즈니스 로직을 명확히 분리했습니다. Action -> Mutation -> State -> View 흐름으로 데이터 변화를 한눈에 보기 쉽게 관리하도록 했습니다.
 
 ```swift
-// Reactor 예시
-final class TravelChecklistReactor: Reactor {
-    enum Action {
-        case fetchItems
-        case toggleItem(id: String)
-        case addItem(TravelItem)
-    }
+final class ProfileViewReactor: Reactor {
+    // 사용자 액션 정의
+    enum Action {...}
     
-    enum Mutation {
-        case setItems([TravelItem])
-        case updateItem(TravelItem)
-        case appendItem(TravelItem)
-        case setLoading(Bool)
-    }
+    // 상태 변경 중간 단계 이벤트
+    enum Mutation {...}
     
-    struct State {
-        var items: [TravelItem] = []
-        var isLoading: Bool = false
+    // 화면의 상태 정의
+    struct State {...}
+    
+    let initialState: State
+
+
+    // 뷰로부터 Action을 받아 Mutation으로 변환
+    func mutate(action: Action) -> Observable<Mutation> {...}
+
+    // Mutation를 받아 State를 변경
+    func reduce(state: State, mutation: Mutation) -> State {...}
+}
+```
+
+```swift
+final class ProfileViewController: UIViewController, View {
+
+    func bind(reactor: ProfileViewReactor) {
+        // Action 바인딩
+        button.rx.tap
+            .subscribe(onNext: { [weak self] _ in })
+            .disposed(by: disposeBag)
+        
+        // State 바인딩
+        reactor.state.map { $0.isLoading }
+            .subscribe(onNext: { [weak self] _ in })
+            .disposed(by: disposeBag)
     }
 }
 ```
 
 ### 2. RxSwift Reentrancy 문제 해결
-Observable 스트림에서 발생할 수 있는 재진입(Reentrancy) 문제를 해결하기 위해 `share()`, `publishRelay`, 적절한 스케줄러 활용으로 안정적인 비동기 처리를 구현했습니다.
+Observable 스트림에서 발생할 수 있는 Reentrancy 문제를 해결하기 위해 `publishRelay`, MainScheduler 스케줄러 활용으로 안정적인 비동기 처리를 구현했습니다. -- (UI 변경로직은 메인스레드에서, 네트워크 통신은 백그라운드 스레드에서 처리)
 
 ### 3. JWT 기반 인증 시스템
-AccessToken과 RefreshToken을 활용한 보안 인증 시스템을 구현했습니다. 만료된 토큰 자동 갱신 처리 및 KeychainManager를 통한 안전한 토큰 관리가 특징입니다.
+AccessToken과 RefreshToken을 활용한 보안 인증 시스템을 구현했습니다. 만료된 토큰의 경우에는 자동 갱신 처리를 하여, 자동 로그인을 구현하였으며, 토큰 데이터는 KeychainManager를 통해 안전하게 관리했습니다.
 
-### 4. 실시간 데이터 공유
-Socket.io를 활용한 실시간 준비물 체크리스트 공유 시스템을 구현했습니다. 여행 동반자와 준비 상황을 즉각적으로 동기화합니다.
-
-### 5. iPad 화면 대응
-Split View와 적응형 레이아웃을 통해 다양한 iOS 디바이스에서 최적화된 사용자 경험을 제공합니다.
+### 4. iPad 화면 대응
+UIDevice.current.userInterfaceIdiom == .pad 을 사용하여, 적응형 레이아웃을 구현했습니다. 이를 통해 iPhone SE부터 iPhone pro max, 그리고 iPad 디바이스에서도 최적화된 사용자 경험을 제공하도록 했습니다.

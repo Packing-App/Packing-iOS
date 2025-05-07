@@ -4,6 +4,9 @@
   <img src="https://github.com/Packing-App/Packing-iOS/blob/main/Packing/Packing/Resources/Assets.xcassets/AppIcon.appiconset/1024.png?raw=true" alt="Packing 로고" width="200">
   <br>
   <p><strong>여행 준비물의 스마트한 관리와 공유를 위한 iOS 애플리케이션</strong></p>
+  <a href="https://apps.apple.com/us/app/%ED%8C%A8%ED%82%B9/id6745450311">
+    <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" height="50">
+  </a>
   <p>
     <a href="#✨-주요-기능">주요 기능</a> •
     <a href="#🔧-기술-스택">기술 스택</a> •
@@ -33,7 +36,7 @@
   </tr>
   <tr>
     <td align="center">
-      <a href="https://github.com/iyungui">🔗 GitHub Profile</a>
+      <a href="https://github.com/iyungui">GitHub Profile</a>
     </td>
   </tr>
 </table>

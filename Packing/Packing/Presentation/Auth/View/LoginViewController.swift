@@ -244,7 +244,7 @@ class LoginViewController: UIViewController {
             emailLoginButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emailLoginButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 40), // 70 -> 40
             emailLoginButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -40), // 70 -> 40
-            emailLoginButton.heightAnchor.constraint(equalToConstant: 55), // 50 -> 55로 높이 증가
+            emailLoginButton.heightAnchor.constraint(equalToConstant: 50), // 50 -> 55로 높이 증가
             emailLoginButton.bottomAnchor.constraint(equalTo: guestModeButton.topAnchor, constant: -20), // 16 -> 20
             
             // 게스트 모드 버튼

@@ -67,6 +67,15 @@ class HomeViewController: UIViewController, View {
         return button
     }()
     
+    // MARK: - 상단 디자인 UI Components
+    
+    private lazy var backgroundImageView: UIImageView = {
+        let imageView = UIImageView(image: UIImage(named: "background"))
+        imageView.contentMode = .scaleToFill
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
     private lazy var planeImageView: UIImageView = {
         let imageView = UIImageView(image: UIImage(named: "plane"))
         imageView.contentMode = .scaleAspectFit
@@ -90,7 +99,7 @@ class HomeViewController: UIViewController, View {
     
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 28, weight: .bold)
+        label.font = .systemFont(ofSize: 26, weight: .bold)
         label.textColor = .white
         label.numberOfLines = 0
         label.textAlignment = .center
@@ -125,14 +134,11 @@ class HomeViewController: UIViewController, View {
         return button
     }()
     
+    
     // My Travel Plan Section
     private lazy var myTravelPlansSectionView: UIView = {
         let view = UIView()
         view.backgroundColor = .white
-        view.layer.shadowColor = UIColor.black.withAlphaComponent(0.05).cgColor
-        view.layer.shadowOffset = CGSize(width: 0, height: 2)
-        view.layer.shadowRadius = 5
-        view.layer.shadowOpacity = 1
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -157,8 +163,6 @@ class HomeViewController: UIViewController, View {
         collectionView.contentInset = UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20)
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.register(TravelPlanCell.self, forCellWithReuseIdentifier: "TravelPlanCell")
-//        collectionView.dataSource = self
-//        collectionView.delegate = self
 
         return collectionView
     }()
@@ -167,10 +171,6 @@ class HomeViewController: UIViewController, View {
     private lazy var templatesSectionView: UIView = {
         let view = UIView()
         view.backgroundColor = .white
-        view.layer.shadowColor = UIColor.black.withAlphaComponent(0.05).cgColor
-        view.layer.shadowOffset = CGSize(width: 0, height: 2)
-        view.layer.shadowRadius = 5
-        view.layer.shadowOpacity = 1
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
@@ -218,8 +218,6 @@ class HomeViewController: UIViewController, View {
         return indicator
     }()
     
-    private var gradientLayer: CAGradientLayer!
-    
     // MARK: - INITIALIZE
     
     init() {
@@ -239,7 +237,6 @@ class HomeViewController: UIViewController, View {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setupGradientBackground()
         setupAllAnimations()
     }
     
@@ -252,12 +249,6 @@ class HomeViewController: UIViewController, View {
         
         // 사용자 이름 업데이트
         updateUserNameLabels()
-    }
-    
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        // Update gradient frame when view layout changes
-        gradientLayer.frame = view.bounds
     }
     
     func bind(reactor: HomeViewReactor) {
@@ -288,14 +279,6 @@ class HomeViewController: UIViewController, View {
                 self?.navigationController?.pushViewController(themeTemplateVC, animated: true)
             })
             .disposed(by: disposeBag)
-
-//        travelPlansCollectionView.rx.modelSelected(Journey.self)
-//            .subscribe(onNext: { [weak self] journey in
-//                let detailVC = JourneyDetailViewController()
-//                detailVC.journey = journey
-//                self?.navigationController?.pushViewController(detailVC, animated: true)
-//            })
-//            .disposed(by: disposeBag)
         
         // 데이터 바인딩 (마지막에 nil 추가)
         reactor.state
@@ -334,7 +317,6 @@ class HomeViewController: UIViewController, View {
         reactor.state
             .observe(on: MainScheduler.instance)
             .map { $0.themeTemplates }
-//            .distinctUntilChanged()
             .bind(to: templatesCollectionView.rx.items(cellIdentifier: "TemplateCell", cellType: TemplateCell.self)) { indexPath, template, cell in
                 cell.configure(with: template)
             }
@@ -371,18 +353,25 @@ class HomeViewController: UIViewController, View {
     // MARK: - SETUP
     
     private func setupUI() {
+        view.backgroundColor = .white
         self.navigationItem.leftBarButtonItem = UIBarButtonItem.init(customView: navigationTitleLabel)
         self.navigationItem.rightBarButtonItem = UIBarButtonItem.init(customView: notificationButton)
         self.navigationController?.navigationBar.tintColor = .white
 
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
+        // 스크롤뷰의 bounces 속성을 false로 설정하여 바운스 효과를 제거
+        scrollView.bounces = false
+        // 배경 이미지 먼저 추가
+        contentView.addSubview(backgroundImageView)
         
+        // 그 위에 UI 요소들 추가
+        contentView.addSubview(planeCloudTwoImageView)
         contentView.addSubview(planeImageView)
         contentView.addSubview(planeCloudImageView)
         contentView.addSubview(titleLabel)
-        contentView.addSubview(planeCloudTwoImageView)
         contentView.addSubview(addNewJourneyButton)
+        
         contentView.addSubview(myTravelPlansSectionView)
         contentView.addSubview(templatesSectionView)
         contentView.addSubview(loadingIndicator)
@@ -393,12 +382,6 @@ class HomeViewController: UIViewController, View {
         templatesSectionView.addSubview(templatesSectionLabel)
         templatesSectionView.addSubview(templatesCollectionView)
         
-        
-        templatesSectionView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
-        templatesSectionView.layer.cornerRadius = 20
-
-        myTravelPlansSectionView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
-        myTravelPlansSectionView.layer.cornerRadius = 20
         
         NSLayoutConstraint.activate([
             // ScrollView
@@ -411,16 +394,19 @@ class HomeViewController: UIViewController, View {
             contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
-            
-//            // Important: Make sure content view's bottom constraint connects to the last element
             contentView.bottomAnchor.constraint(equalTo: templatesSectionView.bottomAnchor, constant: 0),
-            
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
             
             // 로딩 인디케이터
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            
+            // 배경 이미지 제약조건
+            backgroundImageView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            backgroundImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: -10),
+            backgroundImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: 10),
+            backgroundImageView.heightAnchor.constraint(equalToConstant: 280), // 적절한 높이로 조정
             
             planeImageView.topAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.topAnchor, constant: 40),
             planeImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -30),
@@ -443,12 +429,13 @@ class HomeViewController: UIViewController, View {
             planeCloudTwoImageView.heightAnchor.constraint(equalToConstant: 20),
             
             addNewJourneyButton.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            addNewJourneyButton.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
+            addNewJourneyButton.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 50),
+            addNewJourneyButton.heightAnchor.constraint(equalToConstant: 54),
             addNewJourneyButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 40),
             addNewJourneyButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -40),
             
             // myTravelPlansSection
-            myTravelPlansSectionView.topAnchor.constraint(equalTo: addNewJourneyButton.bottomAnchor, constant: 40),
+            myTravelPlansSectionView.topAnchor.constraint(equalTo: backgroundImageView.bottomAnchor, constant: 20),
             myTravelPlansSectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 0),
             myTravelPlansSectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: 0),
             
@@ -470,7 +457,7 @@ class HomeViewController: UIViewController, View {
             templatesSectionLabel.topAnchor.constraint(equalTo: templatesSectionView.topAnchor, constant: 20),
             templatesSectionLabel.leadingAnchor.constraint(equalTo: templatesSectionView.leadingAnchor, constant: 20),
             
-            templatesCollectionView.topAnchor.constraint(equalTo: templatesSectionLabel.bottomAnchor, constant: 15),
+            templatesCollectionView.topAnchor.constraint(equalTo: templatesSectionLabel.bottomAnchor, constant: 20),
             templatesCollectionView.leadingAnchor.constraint(equalTo: templatesSectionView.leadingAnchor, constant: 20),
             templatesCollectionView.trailingAnchor.constraint(equalTo: templatesSectionView.trailingAnchor, constant: -20),
             templatesCollectionView.heightAnchor.constraint(greaterThanOrEqualToConstant: 450),
@@ -489,19 +476,6 @@ class HomeViewController: UIViewController, View {
             titleLabel.text = "회원님!\n여행 준비를 같이 해볼까요?"
             myTravelPlansSectionLabel.text = "회원님의 여행 계획"
         }
-    }
-    
-    private func setupGradientBackground() {
-        // Create gradient layer
-        gradientLayer = CAGradientLayer()
-        gradientLayer.colors = [UIColor.main.cgColor, UIColor.white.cgColor]
-        gradientLayer.locations = [0, 1]
-        gradientLayer.startPoint = CGPoint(x: 0.0, y: 0.4)
-        gradientLayer.endPoint = CGPoint(x: 0.0, y: 0.6)
-        gradientLayer.frame = view.bounds
-        
-        // Add gradient as the bottom-most layer
-        view.layer.insertSublayer(gradientLayer, at: 0)
     }
     
     private func configureNavigationBar() {
@@ -523,54 +497,15 @@ class HomeViewController: UIViewController, View {
     }
 }
 
-// MARK: - UICollectionViewDataSource
-//extension HomeViewController: UICollectionViewDataSource {
-//    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-//        if collectionView == travelPlansCollectionView {
-//            return travelPlans.count
-//        } else {
-//            return themeTemplates.count
-//        }
-//    }
-//    
-//    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-//        if collectionView == travelPlansCollectionView {
-//            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "TravelPlanCell", for: indexPath) as! TravelPlanCell
-//            cell.configure(with: travelPlans[indexPath.item])
-//            return cell
-//        } else {
-//            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "TemplateCell", for: indexPath) as! TemplateCell
-//            cell.configure(with: themeTemplates[indexPath.item])
-//            return cell
-//        }
-//    }
-//}
-
-// MARK: - UICollectionViewDelegate
-//extension HomeViewController: UICollectionViewDelegate {
-//    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-//        if collectionView == travelPlansCollectionView {
-//            let selectedJourney = travelPlans[indexPath.row]
-//            
-//            let detailVC = JourneyDetailViewController()
-//            detailVC.journey = selectedJourney
-//            
-//            navigationController?.pushViewController(detailVC, animated: true)
-//        }
-//    }
-//}
-
 // Add these animations to enhance the user experience
 extension HomeViewController {
     
-    // Call this in viewDidAppear
     func animateHeaderElements() {
-        // Initially set alpha to 0 for elements to animate
+        // Initially set alpha to 0 for elements to animate (버튼 제외)
         planeImageView.alpha = 0
         planeCloudImageView.alpha = 0
         planeCloudTwoImageView.alpha = 0
         titleLabel.alpha = 0
-        addNewJourneyButton.alpha = 0
         
         // Animate plane flying in
         UIView.animate(withDuration: 1.0, delay: 0.2, options: [.curveEaseOut], animations: {
@@ -593,9 +528,8 @@ extension HomeViewController {
             self.titleLabel.transform = CGAffineTransform(translationX: 0, y: -10)
         })
         
-        // Animate button appearing
+        // 버튼은 확대-축소 애니메이션만 적용
         UIView.animate(withDuration: 0.8, delay: 0.8, options: [.curveEaseOut], animations: {
-            self.addNewJourneyButton.alpha = 1
             self.addNewJourneyButton.transform = CGAffineTransform(scaleX: 1.05, y: 1.05)
         }, completion: { _ in
             UIView.animate(withDuration: 0.3, animations: {
@@ -631,34 +565,6 @@ extension HomeViewController {
         addNewJourneyButton.layer.add(pulseAnimation, forKey: "pulseAnimation")
     }
     
-    // Add reactive button feedback
-    func setupButtonFeedback() {
-//        addNewJourneyButton.addTarget(self, action: #selector(buttonTouchDown(_:)), for: .touchDown)
-//        addNewJourneyButton.addTarget(self, action: #selector(buttonTouchUp(_:)), for: .touchUpInside)
-    }
-    
-//    @objc private func buttonTouchDown(_ sender: UIButton) {
-//        UIView.animate(withDuration: 0.1) {
-//            sender.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-//        }
-//    }
-    
-    @objc private func buttonTouchUp(_ sender: UIButton) {
-//        UIView.animate(withDuration: 0.1) {
-//            sender.transform = .identity
-//        }
-        
-        let addJourneyVC = JourneyTransportTypeSelectionViewController()
-        addJourneyVC.hidesBottomBarWhenPushed = true
-        navigationController?.pushViewController(addJourneyVC, animated: true)
-        /*
-         
-             let signUpViewModel = EmailSignUpViewModel()
-             let signUpViewController = EmailSignUpViewController(viewModel: signUpViewModel)
-             navigationController?.pushViewController(signUpViewController, animated: true)
-         */
-    }
-    
     // Add to viewDidLoad
     func setupAllAnimations() {
         // Setup initial states
@@ -666,12 +572,11 @@ extension HomeViewController {
         planeCloudImageView.alpha = 0
         planeCloudTwoImageView.alpha = 0
         titleLabel.alpha = 0
-        addNewJourneyButton.alpha = 0
+        addNewJourneyButton.alpha = 1
         
         // Setup animations that will be triggered later
         setupCloudAnimation()
         setupAddButtonPulse()
-//        setupButtonFeedback()
     }
     
     // Add this to your class

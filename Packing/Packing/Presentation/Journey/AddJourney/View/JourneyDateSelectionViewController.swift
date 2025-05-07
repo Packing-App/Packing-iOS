@@ -639,7 +639,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
                 // Configure button appearance
                 let fontSize: CGFloat = isSmallDevice ? 12 : 14
                 button.titleLabel?.font = UIFont.systemFont(ofSize: fontSize)
-                button.layer.cornerRadius = buttonHeight / 2.4
+                button.layer.cornerRadius = 4
                 button.tag = dayNumber
                 
                 if dayNumber > 0 && dayNumber <= numberOfDays {
@@ -735,7 +735,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
                 while currentDate < arrivalDate {
                     if let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate) {
                         if nextDate < arrivalDate {
-                            highlightDate(nextDate, withColor: UIColor.main.withAlphaComponent(0.4))
+                            highlightDate(nextDate, withColor: UIColor.main.withAlphaComponent(0.25))
                         }
                         currentDate = nextDate
                     } else {

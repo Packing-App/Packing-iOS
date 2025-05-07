@@ -12,6 +12,8 @@ class TemplateCell: UICollectionViewCell {
         let view = UIView()
         view.backgroundColor = UIColor(white: 0.95, alpha: 1.0)
         view.layer.cornerRadius = 50
+        view.layer.borderWidth = 1
+        view.layer.borderColor = UIColor.lightGray.cgColor
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()

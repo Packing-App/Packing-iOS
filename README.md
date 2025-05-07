@@ -92,9 +92,8 @@
 
 ### 주요 레이어 구성
 
-<div align="center">
-  <img src="https://github.com/사용자명/Packing/raw/main/Resources/architecture_diagram.png" alt="아키텍처 다이어그램" width="700">
-</div>
+![KakaoTalk_Photo_2025-05-06-23-57-10](https://github.com/user-attachments/assets/28a91891-542a-4d2c-995a-7b553de9b964)
+
 
 #### 🔷 애플리케이션 레이어
 - AppDelegate, SceneDelegate

@@ -8,9 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		CE7BDF582DB3C2E200BCB9D6 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = CE7BDF572DB3C2E200BCB9D6 /* Kingfisher */; };
-		CE7BDF772DB5554E00BCB9D6 /* RxGesture in Frameworks */ = {isa = PBXBuildFile; productRef = CE7BDF762DB5554E00BCB9D6 /* RxGesture */; };
 		CEBF1A362D9796B900AF1B94 /* ReactorKit in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A352D9796B900AF1B94 /* ReactorKit */; };
-		CEBF1A392D9796D700AF1B94 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A382D9796D700AF1B94 /* SnapKit */; };
 		CEBF1A3E2D97970000AF1B94 /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A3D2D97970000AF1B94 /* RxCocoa */; };
 		CEBF1A402D97970000AF1B94 /* RxRelay in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A3F2D97970000AF1B94 /* RxRelay */; };
 		CEBF1A422D97970000AF1B94 /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = CEBF1A412D97970000AF1B94 /* RxSwift */; };
@@ -51,11 +49,9 @@
 			files = (
 				CEBF1A422D97970000AF1B94 /* RxSwift in Frameworks */,
 				CEBF1A402D97970000AF1B94 /* RxRelay in Frameworks */,
-				CE7BDF772DB5554E00BCB9D6 /* RxGesture in Frameworks */,
 				CED2AA9A2DC5A6AE008CCDC6 /* RxDataSources in Frameworks */,
 				CE7BDF582DB3C2E200BCB9D6 /* Kingfisher in Frameworks */,
 				CEBF1AC02D9845F600AF1B94 /* KeychainAccess in Frameworks */,
-				CEBF1A392D9796D700AF1B94 /* SnapKit in Frameworks */,
 				CEBF1A362D9796B900AF1B94 /* ReactorKit in Frameworks */,
 				CED2AA982DC5A6AE008CCDC6 /* Differentiator in Frameworks */,
 				CEBF1A3E2D97970000AF1B94 /* RxCocoa in Frameworks */,
@@ -102,13 +98,11 @@
 			name = Packing;
 			packageProductDependencies = (
 				CEBF1A352D9796B900AF1B94 /* ReactorKit */,
-				CEBF1A382D9796D700AF1B94 /* SnapKit */,
 				CEBF1A3D2D97970000AF1B94 /* RxCocoa */,
 				CEBF1A3F2D97970000AF1B94 /* RxRelay */,
 				CEBF1A412D97970000AF1B94 /* RxSwift */,
 				CEBF1ABF2D9845F600AF1B94 /* KeychainAccess */,
 				CE7BDF572DB3C2E200BCB9D6 /* Kingfisher */,
-				CE7BDF762DB5554E00BCB9D6 /* RxGesture */,
 				CED2AA972DC5A6AE008CCDC6 /* Differentiator */,
 				CED2AA992DC5A6AE008CCDC6 /* RxDataSources */,
 			);
@@ -142,11 +136,9 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				CEBF1A342D9796B900AF1B94 /* XCRemoteSwiftPackageReference "ReactorKit" */,
-				CEBF1A372D9796D700AF1B94 /* XCRemoteSwiftPackageReference "SnapKit" */,
 				CEBF1A3C2D97970000AF1B94 /* XCRemoteSwiftPackageReference "RxSwift" */,
 				CEBF1ABE2D9845F600AF1B94 /* XCRemoteSwiftPackageReference "KeychainAccess" */,
 				CE7BDF562DB3C2E200BCB9D6 /* XCRemoteSwiftPackageReference "Kingfisher" */,
-				CE7BDF752DB5554E00BCB9D6 /* XCRemoteSwiftPackageReference "RxGesture" */,
 				CED2AA962DC5A6AE008CCDC6 /* XCRemoteSwiftPackageReference "RxDataSources" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -413,28 +405,12 @@
 				minimumVersion = 8.3.2;
 			};
 		};
-		CE7BDF752DB5554E00BCB9D6 /* XCRemoteSwiftPackageReference "RxGesture" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/RxSwiftCommunity/RxGesture.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 4.0.4;
-			};
-		};
 		CEBF1A342D9796B900AF1B94 /* XCRemoteSwiftPackageReference "ReactorKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ReactorKit/ReactorKit.git";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 3.2.0;
-			};
-		};
-		CEBF1A372D9796D700AF1B94 /* XCRemoteSwiftPackageReference "SnapKit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/SnapKit/SnapKit.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.7.1;
 			};
 		};
 		CEBF1A3C2D97970000AF1B94 /* XCRemoteSwiftPackageReference "RxSwift" */ = {
@@ -469,20 +445,10 @@
 			package = CE7BDF562DB3C2E200BCB9D6 /* XCRemoteSwiftPackageReference "Kingfisher" */;
 			productName = Kingfisher;
 		};
-		CE7BDF762DB5554E00BCB9D6 /* RxGesture */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = CE7BDF752DB5554E00BCB9D6 /* XCRemoteSwiftPackageReference "RxGesture" */;
-			productName = RxGesture;
-		};
 		CEBF1A352D9796B900AF1B94 /* ReactorKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = CEBF1A342D9796B900AF1B94 /* XCRemoteSwiftPackageReference "ReactorKit" */;
 			productName = ReactorKit;
-		};
-		CEBF1A382D9796D700AF1B94 /* SnapKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = CEBF1A372D9796D700AF1B94 /* XCRemoteSwiftPackageReference "SnapKit" */;
-			productName = SnapKit;
 		};
 		CEBF1A3D2D97970000AF1B94 /* RxCocoa */ = {
 			isa = XCSwiftPackageProductDependency;

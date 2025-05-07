@@ -8,7 +8,6 @@
 import UIKit
 import RxSwift
 import RxCocoa
-import SnapKit
 import AuthenticationServices
 
 // MARK: - UI VIEW
@@ -35,9 +34,8 @@ class LoginViewController: UIViewController {
     private lazy var subtitleLabel: UILabel = {
         let label = UILabel()
         label.text = "여행에 딱! \n필요한 짐만, 패킹"
-        label.font = UIFont.systemFont(ofSize: 23, weight: .black)
+        label.font = UIFont.systemFont(ofSize: 23, weight: .semibold)
         label.textAlignment = .center
-        
         label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -50,10 +48,12 @@ class LoginViewController: UIViewController {
         let imageAttachment = NSTextAttachment()
         imageAttachment.image = UIImage(named: "logoIcon")
         
-        let fontCapHeight = label.font.capHeight
-        let yOffset = (fontCapHeight - 20.0) / 2  // 이미지 높이(20)와 폰트 높이 차이의 절반만큼 조정
+        // 폰트 크기를 약간 키우고, 이미지 크기도 조정
+        let font = UIFont.systemFont(ofSize: 13, weight: .semibold) // 10 -> 13으로 크기 증가
+        let fontCapHeight = font.capHeight
+        let yOffset = (fontCapHeight - 18.0) / 2  // 이미지 높이(18)와 폰트 높이 차이의 절반만큼 조정
         
-        imageAttachment.bounds = CGRect(x: 0, y: yOffset, width: 15, height: 15)
+        imageAttachment.bounds = CGRect(x: 0, y: yOffset, width: 18, height: 18) // 15 -> 18로 크기 증가
         
         // 현재 텍스트와 이미지 결합
         let attributedString = NSMutableAttributedString(string: "3초만에 시작하기  ")
@@ -63,12 +63,12 @@ class LoginViewController: UIViewController {
         
         // 레이블 설정
         label.textAlignment = .center
-        label.font = UIFont.systemFont(ofSize: 10, weight: .semibold)
+        label.font = font
         label.translatesAutoresizingMaskIntoConstraints = false
         
         let containerView = UIView()
         containerView.backgroundColor = .systemBackground
-        containerView.layer.cornerRadius = 12
+        containerView.layer.cornerRadius = 14 // 약간 더 증가된 둥근 모서리
         containerView.translatesAutoresizingMaskIntoConstraints = false
         
         // border
@@ -78,16 +78,16 @@ class LoginViewController: UIViewController {
         containerView.addSubview(label)
         
         NSLayoutConstraint.activate([
-            label.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 5),
-            label.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -5),
-            label.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
-            label.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12)
+            label.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 8), // 5 -> 8로 여백 증가
+            label.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -8), // 5 -> 8로 여백 증가
+            label.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16), // 12 -> 16으로 여백 증가
+            label.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16) // 12 -> 16으로 여백 증가
         ])
         
         containerView.layer.shadowColor = UIColor.black.cgColor
         containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
-        containerView.layer.shadowRadius = 2
-        containerView.layer.shadowOpacity = 0.3
+        containerView.layer.shadowRadius = 3
+        containerView.layer.shadowOpacity = 0.2
         
         return containerView
     }()
@@ -95,7 +95,7 @@ class LoginViewController: UIViewController {
     private lazy var socialLoginButtons: UIStackView = {
         let stack = UIStackView()
         stack.axis = .horizontal
-        stack.spacing = 8
+        stack.spacing = 16 // 8 -> 16으로 간격 증가
         stack.distribution = .equalSpacing
         stack.alignment = .center
         stack.translatesAutoresizingMaskIntoConstraints = false
@@ -103,10 +103,31 @@ class LoginViewController: UIViewController {
     }()
     
     private lazy var emailLoginButton: UIButton = {
-        let button = UIButton()
+        var configuration = UIButton.Configuration.filled()
+        configuration.cornerStyle = .medium
+        configuration.baseForegroundColor = .white
+        configuration.baseBackgroundColor = UIColor(named: "mainColor")
+        configuration.buttonSize = .large
+        configuration.title = "이메일로 로그인"
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 15, leading: 20, bottom: 15, trailing: 20)
+        
+        // 폰트 스타일 설정
+        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
+            return outgoing
+        }
+        
+        let button = UIButton(configuration: configuration)
+        
+        // 그림자 효과 추가
+        button.layer.shadowColor = UIColor.black.withAlphaComponent(0.15).cgColor
+        button.layer.shadowOffset = CGSize(width: 0, height: 3)
+        button.layer.shadowRadius = 6
+        button.layer.shadowOpacity = 0.2
+        button.clipsToBounds = false
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.applyStyle(MainButtonStyle(color: .main))
-        button.configuration?.title = "이메일로 로그인"
+        
         return button
     }()
     
@@ -127,16 +148,19 @@ class LoginViewController: UIViewController {
     }()
     
     private lazy var guestModeButton: UIButton = {
-        let button = UIButton()
+        var configuration = UIButton.Configuration.plain()
+        configuration.title = "로그인 없이 시작하기"
+        configuration.baseForegroundColor = UIColor(named: "mainColor")
+        
+        // 폰트 스타일 설정
+        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = UIFont.systemFont(ofSize: 15, weight: .medium)
+            return outgoing
+        }
+        
+        let button = UIButton(configuration: configuration)
         button.translatesAutoresizingMaskIntoConstraints = false
-        
-        // 스타일 및 텍스트 설정
-        var config = UIButton.Configuration.plain()
-        config.title = "로그인 없이 시작하기"
-        config.baseForegroundColor = .main
-        button.configuration = config
-        
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
         return button
     }()
     
@@ -182,35 +206,53 @@ class LoginViewController: UIViewController {
         socialLoginButtons.addArrangedSubview(naverLoginButton)
         socialLoginButtons.addArrangedSubview(appleLoginButton)
         
-        // TODO: constraints with snapkit
+        // NSLayoutConstraint를 사용한 레이아웃 설정
         NSLayoutConstraint.activate([
-            logoImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 40),
+            // 로고 이미지 뷰
+            logoImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 48), // 더 여유있는 상단 여백
             logoImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            logoImageView.heightAnchor.constraint(equalToConstant: 200),
-            logoImageView.widthAnchor.constraint(equalToConstant: 200),
+            logoImageView.widthAnchor.constraint(equalToConstant: 180), // 약간 더 크게
+            logoImageView.heightAnchor.constraint(equalToConstant: 180), // 정사각형 비율 유지
             
-            subtitleLabel.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: 30),
+            // 부제목 레이블
+            subtitleLabel.topAnchor.constraint(equalTo: logoImageView.bottomAnchor, constant: 24), // 30 -> 24
             subtitleLabel.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 40),
             subtitleLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -40),
             subtitleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
-            loginPromptLabel.bottomAnchor.constraint(equalTo: socialLoginButtons.topAnchor, constant: -20),
+            // 로그인 프롬프트 레이블
+            loginPromptLabel.bottomAnchor.constraint(equalTo: socialLoginButtons.topAnchor, constant: -24), // 더 여유있는 간격
             loginPromptLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
+            // 소셜 로그인 버튼 그룹
             socialLoginButtons.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            socialLoginButtons.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 70),
-            socialLoginButtons.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -70),
-            socialLoginButtons.bottomAnchor.constraint(equalTo: emailLoginButton.topAnchor, constant: -30),
+            socialLoginButtons.leadingAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 60), // 70 -> 60
+            socialLoginButtons.trailingAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -60), // 70 -> 60
+            socialLoginButtons.bottomAnchor.constraint(equalTo: emailLoginButton.topAnchor, constant: -32), // 30 -> 32
             
+            // 각 소셜 로그인 버튼 크기 설정
+            googleLoginButton.widthAnchor.constraint(equalToConstant: 50),
+            googleLoginButton.heightAnchor.constraint(equalToConstant: 50),
+            kakaoLoginButton.widthAnchor.constraint(equalToConstant: 50),
+            kakaoLoginButton.heightAnchor.constraint(equalToConstant: 50),
+            naverLoginButton.widthAnchor.constraint(equalToConstant: 50),
+            naverLoginButton.heightAnchor.constraint(equalToConstant: 50),
+            appleLoginButton.widthAnchor.constraint(equalToConstant: 50),
+            appleLoginButton.heightAnchor.constraint(equalToConstant: 50),
+            
+            // 이메일 로그인 버튼
             emailLoginButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            emailLoginButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 70),
-            emailLoginButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -70),
-            emailLoginButton.heightAnchor.constraint(equalToConstant: 50),
-            emailLoginButton.bottomAnchor.constraint(equalTo: guestModeButton.topAnchor, constant: -16),
+            emailLoginButton.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 40), // 70 -> 40
+            emailLoginButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -40), // 70 -> 40
+            emailLoginButton.heightAnchor.constraint(equalToConstant: 55), // 50 -> 55로 높이 증가
+            emailLoginButton.bottomAnchor.constraint(equalTo: guestModeButton.topAnchor, constant: -20), // 16 -> 20
             
+            // 게스트 모드 버튼
             guestModeButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            guestModeButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            guestModeButton.heightAnchor.constraint(equalToConstant: 44), // 적절한 터치 영역
+            guestModeButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -28), // 20 -> 28로 여백 증가
 
+            // 로딩 인디케이터
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
@@ -221,6 +263,21 @@ class LoginViewController: UIViewController {
         button.setImage(UIImage(named: type), for: .normal)
         button.imageView?.contentMode = .scaleAspectFit
         button.translatesAutoresizingMaskIntoConstraints = false
+        
+        // 접근성 레이블 설정
+        switch type {
+        case "google":
+            button.accessibilityLabel = "구글로 로그인"
+        case "kakao":
+            button.accessibilityLabel = "카카오로 로그인"
+        case "naver":
+            button.accessibilityLabel = "네이버로 로그인"
+        case "apple":
+            button.accessibilityLabel = "애플로 로그인"
+        default:
+            break
+        }
+        
         return button
     }
     
@@ -350,9 +407,6 @@ class LoginViewController: UIViewController {
         present(alert, animated: true)
     }
 }
-
-
-
 
 #Preview {
     UINavigationController(rootViewController: LoginViewController())

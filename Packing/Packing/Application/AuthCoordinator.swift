@@ -185,6 +185,9 @@ class AuthCoordinator {
             if #available(iOS 15.0, *) {
                 let appearance = UITabBarAppearance()
                 appearance.configureWithDefaultBackground()
+                appearance.stackedLayoutAppearance.selected.iconColor = .main
+                appearance.stackedLayoutAppearance.selected.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.main]
+
                 tabBarController.tabBar.standardAppearance = appearance
                 tabBarController.tabBar.scrollEdgeAppearance = appearance
             }

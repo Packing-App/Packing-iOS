@@ -135,7 +135,7 @@ open Packing.xcodeproj
 
 ## 💡 구현 내용
 
-대표적인 트러블 슈팅 내용은 [노션](https://silicon-distance-ef3.notion.site/Troubleshooting-1b2f678b2fe28011932eda3dc8020a00?pvs=4)에서도 확인 가능합니다.
+대표적인 트러블 슈팅 내용은 [노션](https://silicon-distance-ef3.notion.site/Troubleshooting-1b2f678b2fe28011932eda3dc8020a00)에서도 확인 가능합니다.
 
 ### 1. ReactorKit을 활용한 단방향 데이터 흐름
 ReactorKit을 도입하여 View와 비즈니스 로직을 명확히 분리했습니다. Action -> Mutation -> State -> View 흐름으로 데이터 변화를 한눈에 보기 쉽게 관리하도록 했습니다.

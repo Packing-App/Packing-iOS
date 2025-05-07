@@ -52,23 +52,23 @@ class FriendSearchResultCell: UITableViewCell {
     }()
     
     let actionButton: UIButton = {
-//        var config = UIButton.Configuration.filled()
-//        config.baseBackgroundColor = .systemBlue
-//        config.baseForegroundColor = .white
-//        config.title = "친구 요청"
-//        config.cornerStyle = .medium
-//        config.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12)
-//        let button = UIButton(configuration: config)
-//        button.translatesAutoresizingMaskIntoConstraints = false
+        var configuration = UIButton.Configuration.filled()
+        configuration.title = "친구 요청"
+        configuration.baseBackgroundColor = .systemBlue
+        configuration.baseForegroundColor = .white
+        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+            return outgoing
+        }
+        configuration.cornerStyle = .medium
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 12, bottom: 5, trailing: 12)
         
-        let button = UIButton(type: .system)
-        button.setTitle("친구 요청", for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = .systemBlue
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
-        button.layer.cornerRadius = 10
-        button.contentEdgeInsets = UIEdgeInsets(top: 5, left: 12, bottom: 5, right: 12)
+        let button = UIButton(configuration: configuration)
         button.translatesAutoresizingMaskIntoConstraints = false
+        // 버튼의 내용이 한 줄로 표시되도록 설정
+        button.titleLabel?.lineBreakMode = .byTruncatingTail
+        button.titleLabel?.numberOfLines = 1
         return button
     }()
     
@@ -138,7 +138,9 @@ class FriendSearchResultCell: UITableViewCell {
             
             // Action button
             actionButton.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            actionButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12)
+            actionButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
+            // 버튼 너비를 고정된 값으로 설정
+            actionButton.widthAnchor.constraint(equalToConstant: 90)
         ])
     }
     

@@ -469,14 +469,12 @@ class JourneySummaryViewController: UIViewController, View {
             preferredStyle: .alert
         )
         
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         alert.addAction(UIAlertAction(title: "로그인", style: .default) { [weak self] _ in
             self?.navigateToLogin()
         })
         
         present(alert, animated: true)
     }
-    
     
     private func navigateToLogin() {
         guard let navigationController = self.navigationController else { return }

@@ -64,13 +64,21 @@ class FriendCell: UITableViewCell {
     }()
     
     let inviteButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("초대하기", for: .normal)
-        button.setTitleColor(.white, for: .normal)
-        button.backgroundColor = .systemBlue
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
-        button.layer.cornerRadius = 10
-        button.contentEdgeInsets = UIEdgeInsets(top: 5, left: 12, bottom: 5, right: 12)
+        var configuration = UIButton.Configuration.filled()
+        configuration.title = "초대하기"
+        configuration.baseBackgroundColor = .systemBlue
+        configuration.baseForegroundColor = .white
+        configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+            return outgoing
+        }
+        configuration.cornerStyle = .medium
+        configuration.contentInsets = NSDirectionalEdgeInsets(top: 5, leading: 12, bottom: 5, trailing: 12)
+        
+        let button = UIButton(configuration: configuration)
+        button.titleLabel?.lineBreakMode = .byTruncatingTail
+        button.titleLabel?.numberOfLines = 1
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -145,7 +153,9 @@ class FriendCell: UITableViewCell {
             
             // Invite button
             inviteButton.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            inviteButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12)
+            inviteButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
+            // 버튼 너비를 고정된 값으로 설정
+            inviteButton.widthAnchor.constraint(equalToConstant: 80) // 원하는 너비로 조정하세요
         ])
         
         // Constraints for when intro is visible

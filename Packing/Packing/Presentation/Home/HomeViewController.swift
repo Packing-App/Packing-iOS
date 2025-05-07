@@ -497,7 +497,7 @@ class HomeViewController: UIViewController, View {
         gradientLayer.colors = [UIColor.main.cgColor, UIColor.white.cgColor]
         gradientLayer.locations = [0, 1]
         gradientLayer.startPoint = CGPoint(x: 0.0, y: 0.4)
-        gradientLayer.endPoint = CGPoint(x: 0.0, y: 0.85)
+        gradientLayer.endPoint = CGPoint(x: 0.0, y: 0.6)
         gradientLayer.frame = view.bounds
         
         // Add gradient as the bottom-most layer

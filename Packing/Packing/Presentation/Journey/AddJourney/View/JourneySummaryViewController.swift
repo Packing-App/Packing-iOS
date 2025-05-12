@@ -146,7 +146,7 @@ class JourneySummaryViewController: UIViewController, View {
     
     private let transportLabel: UILabel = {
         let label = UILabel()
-        label.text = "여행 테마"
+        label.text = "이동 수단"
         label.font = .systemFont(ofSize: UIScreen.main.bounds.height < 700 ? 14 : 16)
         label.textColor = .black
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -354,7 +354,7 @@ class JourneySummaryViewController: UIViewController, View {
             })
             .disposed(by: disposeBag)
         
-        reactor.state.map { $0.themeText }
+        reactor.state.map { $0.destinationText }
             .distinctUntilChanged()
             .observe(on: MainScheduler.instance)
             .bind(to: destinationValueLabel.rx.text)

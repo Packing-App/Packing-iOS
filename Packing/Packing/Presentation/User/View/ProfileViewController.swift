@@ -357,22 +357,27 @@ final class ProfileViewController: UIViewController, View {
     private func updateUserInfo(_ user: User) {
         // 프로필 이미지 설정
         profileImageView.backgroundColor = .clear
-        guard let imageURL = user.profileImage else {
-            profileImageView.image = UIImage(systemName: "person.circle.fill")
-            return
-        }
-        if let url = URL(string: imageURL), !imageURL.isEmpty {
-            profileImageView.kf.indicatorType = .activity
-            profileImageView.kf.setImage(with: url)
+        
+
+        if let imageURL = user.profileImage,
+           !imageURL.isEmpty {
+            // HTTP를 HTTPS로 변환
+            let secureImageURL = imageURL.replacingOccurrences(of: "http://", with: "https://")
+            
+            if let url = URL(string: secureImageURL) {
+                profileImageView.kf.indicatorType = .activity
+                profileImageView.kf.setImage(with: url,
+                                             placeholder: UIImage(systemName: "person.circle.fill"))
+            } else {
+                profileImageView.image = UIImage(systemName: "person.circle.fill")
+            }
         } else {
             profileImageView.image = UIImage(systemName: "person.circle.fill")
         }
         
-        // 이름과 소개 설정
         nameLabel.text = user.name
         bioLabel.text = user.intro ?? "소개가 없습니다."
         
-        // 테이블뷰 리로드 (소셜 로그인 타입이 변경될 수 있으므로)
         tableView.reloadData()
         
         // 스크롤뷰 업데이트

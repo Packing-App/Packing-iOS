@@ -758,10 +758,8 @@ class JourneyDateSelectionViewController: UIViewController, View {
                 if button.tag == day {
                     button.backgroundColor = color
                     button.setTitleColor(.white, for: .normal)
-                    // make bold font
                     let isSmallDevice = UIScreen.main.bounds.height < 700
                     let fontSize: CGFloat = isSmallDevice ? 12 : 14
-                    button.titleLabel?.font = UIFont.boldSystemFont(ofSize: fontSize)
                     break
                 }
             }

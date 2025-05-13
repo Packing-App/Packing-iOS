@@ -8,11 +8,11 @@
     <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" height="80">
   </a>
   <p>
-    <a href="#✨-주요-기능">주요 기능</a> •
-    <a href="#🔧-기술-스택">기술 스택</a> •
-    <a href="#📐-아키텍처">아키텍처</a> •
-    <a href="#🚀-설치-방법">설치 방법</a> •
-    <a href="#💡-구현-내용">구현 내용</a>
+    <a href="#-주요-기능">주요 기능</a> •
+    <a href="#-기술-스택">기술 스택</a> •
+    <a href="#-아키텍처">아키텍처</a> •
+    <a href="#-설치-방법">설치 방법</a> •
+    <a href="#-주요-트러블-슈팅">트러블 슈팅</a>
   </p>
 </div>
 

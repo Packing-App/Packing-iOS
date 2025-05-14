@@ -17,6 +17,9 @@ class HomeViewController: UIViewController, View {
     var disposeBag = DisposeBag()
     typealias Reactor = HomeViewReactor
     
+    // Height constraint for templates collection view
+    private var templatesCollectionViewHeightConstraint: NSLayoutConstraint?
+    
     // 커스텀 데이터 소스 생성 (일반 여행 + 빈 셀 지원)
     private lazy var journeyDataSource = RxCollectionViewSectionedReloadDataSource<SectionModel<String, Journey?>>(
         configureCell: { _, collectionView, indexPath, item in
@@ -188,19 +191,19 @@ class HomeViewController: UIViewController, View {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
         
-        // 화면 크기에 따라 다른 방식 적용
+        // More reliable width calculation
         let screenWidth = UIScreen.main.bounds.width
+        let horizontalPadding: CGFloat = 40 // 20 + 20 from constraints
+        let interitemSpacing: CGFloat = 10
+        let numberOfColumns: CGFloat = 3
         
-        let itemWidth: CGFloat
-        if screenWidth > 428 {
-            itemWidth = 110 // Pro Max에서는 고정 너비 사용
-        } else {
-            itemWidth = (screenWidth - 60) / 3 // 기존 계산법 유지
-        }
+        let availableWidth = screenWidth - horizontalPadding - (interitemSpacing * (numberOfColumns - 1))
+        let itemWidth = floor(availableWidth / numberOfColumns)
         
         layout.itemSize = CGSize(width: itemWidth, height: itemWidth + 30)
         layout.minimumLineSpacing = 15
         layout.minimumInteritemSpacing = 10
+        layout.sectionInset = .zero // No section insets
         
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .clear
@@ -320,6 +323,17 @@ class HomeViewController: UIViewController, View {
             .bind(to: templatesCollectionView.rx.items(cellIdentifier: "TemplateCell", cellType: TemplateCell.self)) { indexPath, template, cell in
                 cell.configure(with: template)
             }
+            .disposed(by: disposeBag)
+        
+        // 템플릿 개수 변경 시 높이 업데이트
+        reactor.state
+            .observe(on: MainScheduler.instance)
+            .map { $0.themeTemplates.count }
+            .distinctUntilChanged()
+            .delay(.milliseconds(100), scheduler: MainScheduler.instance) // Small delay to ensure collection view has laid out
+            .subscribe(onNext: { [weak self] count in
+                self?.updateTemplatesCollectionViewHeight(itemCount: count)
+            })
             .disposed(by: disposeBag)
         
         // 로딩 상태 바인딩
@@ -460,9 +474,13 @@ class HomeViewController: UIViewController, View {
             templatesCollectionView.topAnchor.constraint(equalTo: templatesSectionLabel.bottomAnchor, constant: 20),
             templatesCollectionView.leadingAnchor.constraint(equalTo: templatesSectionView.leadingAnchor, constant: 20),
             templatesCollectionView.trailingAnchor.constraint(equalTo: templatesSectionView.trailingAnchor, constant: -20),
-            templatesCollectionView.heightAnchor.constraint(greaterThanOrEqualToConstant: 450),
             templatesCollectionView.bottomAnchor.constraint(equalTo: templatesSectionView.bottomAnchor, constant: -10)
         ])
+        
+        // Create dynamic height constraint for templates collection view
+        templatesCollectionViewHeightConstraint = templatesCollectionView.heightAnchor.constraint(equalToConstant: 450)
+        templatesCollectionViewHeightConstraint?.priority = .defaultHigh // Set priority to avoid conflicts
+        templatesCollectionViewHeightConstraint?.isActive = true
     }
     
     private func updateUserNameLabels() {
@@ -476,6 +494,26 @@ class HomeViewController: UIViewController, View {
             titleLabel.text = "회원님!\n여행 준비를 같이 해볼까요?"
             myTravelPlansSectionLabel.text = "회원님의 여행 계획"
         }
+    }
+    
+    private func updateTemplatesCollectionViewHeight(itemCount: Int) {
+        let numberOfItems = CGFloat(itemCount)
+        let numberOfRows = ceil(numberOfItems / 3.0)
+        let screenWidth = UIScreen.main.bounds.width
+        let horizontalPadding: CGFloat = 40
+        let interitemSpacing: CGFloat = 10
+        let numberOfColumns: CGFloat = 3
+        
+        let availableWidth = screenWidth - horizontalPadding - (interitemSpacing * (numberOfColumns - 1))
+        let itemWidth = floor(availableWidth / numberOfColumns)
+        let itemHeight = itemWidth + 30
+        let lineSpacing: CGFloat = 15
+        let totalHeight = (numberOfRows * itemHeight) + ((numberOfRows - 1) * lineSpacing)
+        
+        templatesCollectionViewHeightConstraint?.constant = totalHeight
+        
+        // Force layout update
+        view.layoutIfNeeded()
     }
     
     private func configureNavigationBar() {

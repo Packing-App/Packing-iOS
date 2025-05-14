@@ -39,7 +39,7 @@ struct Journey: Identifiable, Codable {
     let destination: String // 도착지
     let startDate: Date
     let endDate: Date
-    let theme: TravelTheme
+    let themes: [TravelTheme]
     let imageUrl: String?
     let isPrivate: Bool
     let participants: [User]  // 여행 참가자 ID 목록
@@ -49,7 +49,7 @@ struct Journey: Identifiable, Codable {
     enum CodingKeys: String, CodingKey {
         case id = "_id"
         case creatorId, title, transportType, origin, destination
-        case startDate, endDate, theme, imageUrl, isPrivate, participants
+        case startDate, endDate, themes, imageUrl, isPrivate, participants
         case createdAt, updatedAt
     }
 }

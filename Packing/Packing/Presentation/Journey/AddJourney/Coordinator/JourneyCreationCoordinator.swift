@@ -219,8 +219,8 @@ class JourneyCreationCoordinator: NSObject {
         createJourneyReactor.action.onNext(.setDates(start: start, end: end))
     }
     
-    func updateTheme(_ theme: TravelTheme) {
-        createJourneyReactor.action.onNext(.setTheme(theme))
+    func updateThemes(_ themes: Set<TravelTheme>) {
+        createJourneyReactor.action.onNext(.setThemes(themes))
     }
     
     func updateTitle(_ title: String) {

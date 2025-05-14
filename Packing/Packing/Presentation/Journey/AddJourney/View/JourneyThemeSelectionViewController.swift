@@ -67,13 +67,23 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         return label
     }()
     
+    private let subtitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "복수 선택이 가능해요"
+        label.font = UIFont.systemFont(ofSize: 13, weight: .regular)
+        label.textColor = .darkGray
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
     private lazy var themeCollectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
         
         // iPad 여부에 따라 간격 조정
         let isIPad = UIDevice.current.userInterfaceIdiom == .pad
-        layout.minimumLineSpacing = isIPad ? 20 : 10
+        layout.minimumLineSpacing = isIPad ? 20 : 15
         layout.minimumInteritemSpacing = isIPad ? 20 : 10
         
         // iPad에서 여백 추가
@@ -86,8 +96,7 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.backgroundColor = .clear
         
-        // iPad에서는 스크롤 가능하도록 설정
-        collectionView.isScrollEnabled = isIPad
+        collectionView.isScrollEnabled = true
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.register(ThemeCell.self, forCellWithReuseIdentifier: "ThemeCell")
         
@@ -135,7 +144,7 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         themeCollectionView.rx.itemSelected
             .map { indexPath in
                 let theme = reactor.currentState.themeTemplates[indexPath.item].themeName
-                return Reactor.Action.selectTheme(theme)
+                return Reactor.Action.toggleTheme(theme)
             }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
@@ -150,15 +159,14 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         // 테마 컬렉션뷰 데이터 바인딩
         reactor.state.map { $0.themeTemplates }
             .observe(on: MainScheduler.instance)
-//            .distinctUntilChanged()
             .bind(to: themeCollectionView.rx.items(cellIdentifier: "ThemeCell", cellType: ThemeCell.self)) { indexPath, template, cell in
-                let isSelected = template.themeName == reactor.currentState.selectedTheme
+                let isSelected = reactor.currentState.selectedThemes.contains(template.themeName)
                 cell.configure(with: template, isSelected: isSelected)
             }
             .disposed(by: disposeBag)
         
         // 선택된 테마 상태 업데이트
-        reactor.state.map { $0.selectedTheme }
+        reactor.state.map { $0.selectedThemes }
             .observe(on: MainScheduler.instance)
             .distinctUntilChanged()
             .subscribe(onNext: { [weak self] _ in
@@ -215,6 +223,7 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         
         // Add question label to container
         containerView.addSubview(questionLabel)
+        containerView.addSubview(subtitleLabel)
         
         // Add collection view
         containerView.addSubview(themeCollectionView)
@@ -243,8 +252,13 @@ class JourneyThemeSelectionViewController: UIViewController, View {
             questionLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             questionLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             
+            // Subtitle label constraints
+            subtitleLabel.topAnchor.constraint(equalTo: questionLabel.bottomAnchor, constant: 5),
+            subtitleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
+            subtitleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
+            
             // Collection view constraints
-            themeCollectionView.topAnchor.constraint(equalTo: questionLabel.bottomAnchor, constant: isSmallDevice ? 15 : 20),
+            themeCollectionView.topAnchor.constraint(equalTo: subtitleLabel.bottomAnchor, constant: isSmallDevice ? 15 : 20),
             themeCollectionView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 20),
             themeCollectionView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -20),
             themeCollectionView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -20),
@@ -290,19 +304,19 @@ extension JourneyThemeSelectionViewController: UICollectionViewDelegateFlowLayou
             }
             
             // 아이템 높이는, 이미지(정사각형) + 타이틀 라벨 + 여백
-            let height = width + 20 // 이미지 + 텍스트 영역
+            let height = width + 30 // 이미지 + 텍스트 영역 (여백 증가)
             
             return CGSize(width: width, height: height)
         } else {
-            // 기존 iPhone 로직 유지
+            // 기존 iPhone 로직 유지 (여백 증가)
             let width = (collectionView.bounds.width - 20) / 3
-            return CGSize(width: width, height: width + 20)
+            return CGSize(width: width, height: width + 30)
         }
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
         // iPad에서는 더 큰 간격 사용
-        return UIDevice.current.userInterfaceIdiom == .pad ? 20 : 10
+        return UIDevice.current.userInterfaceIdiom == .pad ? 25 : 15
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
@@ -310,4 +324,3 @@ extension JourneyThemeSelectionViewController: UICollectionViewDelegateFlowLayou
         return UIDevice.current.userInterfaceIdiom == .pad ? 20 : 10
     }
 }
-

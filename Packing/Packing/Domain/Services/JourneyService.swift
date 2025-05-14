@@ -18,7 +18,7 @@ protocol JourneyServiceProtocol {
                        destination: String,
                        startDate: Date,
                        endDate: Date,
-                       theme: TravelTheme,
+                       themes: [TravelTheme],
                        isPrivate: Bool) -> Observable<Journey>
 
     // 여행 정보 업데이트
@@ -29,7 +29,7 @@ protocol JourneyServiceProtocol {
                       destination: String?,
                       startDate: Date?,
                       endDate: Date?,
-                      theme: TravelTheme?,
+                      themes: [TravelTheme]?,
                       isPrivate: Bool?) -> Observable<Journey>
     
     // 여행 삭제
@@ -82,7 +82,7 @@ class JourneyService: JourneyServiceProtocol {
                 return Observable.error(error)
             }
     }
-    
+
     // MARK: - 새로운 여행 생성
     func createJourney(title: String,
                       transportType: TransportType,
@@ -90,7 +90,7 @@ class JourneyService: JourneyServiceProtocol {
                       destination: String,
                       startDate: Date,
                       endDate: Date,
-                      theme: TravelTheme,
+                      themes: [TravelTheme],
                       isPrivate: Bool) -> Observable<Journey> {
                 
         return apiClient.requestWithDateDecoding(APIEndpoint.createJourney(
@@ -100,7 +100,7 @@ class JourneyService: JourneyServiceProtocol {
             destination: destination,
             startDate: startDate,
             endDate: endDate,
-            theme: theme,
+            themes: themes,
             isPrivate: isPrivate
         ))
         .map { (response: APIResponse<Journey>) -> Journey in
@@ -122,7 +122,7 @@ class JourneyService: JourneyServiceProtocol {
                       destination: String?,
                       startDate: Date?,
                       endDate: Date?,
-                      theme: TravelTheme?,
+                      themes: [TravelTheme]?,
                       isPrivate: Bool?) -> Observable<Journey> {
         
         return apiClient.requestWithDateDecoding(APIEndpoint.updateJourney(
@@ -133,7 +133,7 @@ class JourneyService: JourneyServiceProtocol {
             destination: destination,
             startDate: startDate,
             endDate: endDate,
-            theme: theme,
+            themes: themes,
             isPrivate: isPrivate
         ))
         .map { (response: APIResponse<Journey>) -> Journey in
@@ -195,6 +195,7 @@ class JourneyService: JourneyServiceProtocol {
     
     // MARK: - 여행 추천 준비물 조회
     func getRecommendations(journeyId: String) -> Observable<RecommendationResponse> {
+        print(#fileID, #function, #line, "- ")
         return apiClient.requestWithDateDecoding(APIEndpoint.getRecommendations(journeyId: journeyId))
             .map { (response: APIResponse<RecommendationResponse>) -> RecommendationResponse in
                 guard let recommendations = response.data else {

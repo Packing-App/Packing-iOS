@@ -281,7 +281,7 @@ class JourneySummaryViewController: UIViewController, View {
             print("로그인 후 여행 정보 확인:")
             print("- 출발지: \(journeyModel.origin)")
             print("- 도착지: \(journeyModel.destination)")
-            print("- 테마: \(String(describing: journeyModel.theme?.displayName))")
+            print("- 테마: \(String(describing: journeyModel.themes.first?.displayName))")
             print("- 출발일: \(String(describing: journeyModel.startDate))")
         }
     }

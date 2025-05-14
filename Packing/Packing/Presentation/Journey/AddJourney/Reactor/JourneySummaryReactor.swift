@@ -68,6 +68,13 @@ class JourneySummaryReactor: Reactor {
             dateRangeText = "날짜 미설정"
         }
         
+        var themeFirstName: String
+        if model.themes.first != nil {
+            themeFirstName = model.themes.first!.displayName
+        } else {
+            themeFirstName = "테마 미설정"
+        }
+        
         self.initialState = State(
             title: defaultTitle,
             isPrivate: model.isPrivate,
@@ -77,7 +84,7 @@ class JourneySummaryReactor: Reactor {
             shouldComplete: false,
             requireLogin: false,
             transportTypeText: model.transportType?.displayName ?? "",
-            themeText: model.theme?.displayName ?? "",
+            themeText: themeFirstName,
             originText: model.origin,
             destinationText: model.destination,
             dateRangeText: dateRangeText

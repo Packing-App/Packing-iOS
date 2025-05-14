@@ -34,7 +34,7 @@ class ThemeCell: UICollectionViewCell {
     private let titleLabel: UILabel = {
         let label = UILabel()
         let isSmallDevice = UIScreen.main.bounds.height < 700
-        label.font = UIFont.systemFont(ofSize: isSmallDevice ? 10 : 12)
+        label.font = UIFont.boldSystemFont(ofSize: isSmallDevice ? 10 : 12)
         label.textColor = .black
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false

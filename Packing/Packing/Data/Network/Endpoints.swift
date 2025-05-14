@@ -104,7 +104,7 @@ enum APIEndpoint: Endpoints {
         destination: String,
         startDate: Date,
         endDate: Date,
-        theme: TravelTheme,
+        themes: [TravelTheme],
         isPrivate: Bool
     )
     
@@ -117,7 +117,7 @@ enum APIEndpoint: Endpoints {
         destination: String?,
         startDate: Date?,
         endDate: Date?,
-        theme: TravelTheme?,
+        themes: [TravelTheme]?,
         isPrivate: Bool?
     )
     
@@ -492,7 +492,7 @@ enum APIEndpoint: Endpoints {
         case .getJourneys, .getJourneyById, .deleteJourney, .getRecommendations, .removeParticipant:
             return nil
             
-        case .createJourney(let title, let transportType, let origin, let destination, let startDate, let endDate, let theme, let isPrivate):
+        case .createJourney(let title, let transportType, let origin, let destination, let startDate, let endDate, let themes, let isPrivate):
             let dateFormatter = ISO8601DateFormatter()
             return [
                 "title": title,
@@ -501,11 +501,11 @@ enum APIEndpoint: Endpoints {
                 "destination": destination,
                 "startDate": dateFormatter.string(from: startDate),
                 "endDate": dateFormatter.string(from: endDate),
-                "theme": theme.rawValue,
+                "themes": themes.map { $0.rawValue },
                 "isPrivate": isPrivate
             ]
             
-        case .updateJourney(_, let title, let transportType, let origin, let destination, let startDate, let endDate, let theme, let isPrivate):
+        case .updateJourney(_, let title, let transportType, let origin, let destination, let startDate, let endDate, let themes, let isPrivate):
             var params: [String: Any] = [:]
             let dateFormatter = ISO8601DateFormatter()
             
@@ -515,7 +515,7 @@ enum APIEndpoint: Endpoints {
             if let destination = destination { params["destination"] = destination }
             if let startDate = startDate { params["startDate"] = dateFormatter.string(from: startDate) }
             if let endDate = endDate { params["endDate"] = dateFormatter.string(from: endDate) }
-            if let theme = theme { params["theme"] = theme.rawValue }
+            if let themes = themes { params["themes"] = themes.map { $0.rawValue } }
             if let isPrivate = isPrivate { params["isPrivate"] = isPrivate }
             
             return params

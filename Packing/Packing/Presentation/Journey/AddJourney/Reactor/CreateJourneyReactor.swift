@@ -13,7 +13,7 @@ import RxCocoa
 // 여행 생성 과정에서 필요한 필드를 담는 모델
 struct JourneyCreationModel {
     var transportType: TransportType?
-    var theme: TravelTheme?
+    var themes: Set<TravelTheme> = []
     var origin: String = ""
     var destination: String = ""
     var startDate: Date?
@@ -31,7 +31,7 @@ struct JourneyCreationModel {
     }
     
     func canProceedFromTheme() -> Bool {
-        return theme != nil
+        return !themes.isEmpty
     }
     
     func canCreateJourney() -> Bool {
@@ -40,7 +40,7 @@ struct JourneyCreationModel {
                !destination.isEmpty &&
                startDate != nil &&
                endDate != nil &&
-               theme != nil
+               !themes.isEmpty
     }
 }
 
@@ -51,7 +51,7 @@ class CreateJourneyReactor: Reactor {
         case setOrigin(String)
         case setDestination(String)
         case setDates(start: Date, end: Date)
-        case setTheme(TravelTheme)
+        case setThemes(Set<TravelTheme>)
         case setTitle(String)
         case setIsPrivate(Bool)
         case createJourney
@@ -63,7 +63,7 @@ class CreateJourneyReactor: Reactor {
         case setOrigin(String)
         case setDestination(String)
         case setDates(start: Date, end: Date)
-        case setTheme(TravelTheme)
+        case setThemes(Set<TravelTheme>)
         case setTitle(String)
         case setIsPrivate(Bool)
         case setCreatingJourney(Bool)
@@ -101,8 +101,8 @@ class CreateJourneyReactor: Reactor {
         case .setDates(let start, let end):
             return .just(.setDates(start: start, end: end))
             
-        case .setTheme(let theme):
-            return .just(.setTheme(theme))
+        case .setThemes(let themes):
+            return .just(.setThemes(themes))
             
         case .setTitle(let title):
             return .just(.setTitle(title))
@@ -120,6 +120,9 @@ class CreateJourneyReactor: Reactor {
             // 여행 제목이 비어있으면 목적지를 제목으로 사용
             let title = model.title.isEmpty ? "\(model.destination) 여행" : model.title
             
+            // 선택된 테마들을 배열로 변환
+            let themes = Array(model.themes)
+            
             return Observable.concat([
                 .just(.setCreatingJourney(true)),
                 
@@ -130,7 +133,7 @@ class CreateJourneyReactor: Reactor {
                     destination: model.destination,
                     startDate: model.startDate!,
                     endDate: model.endDate!,
-                    theme: model.theme!,
+                    themes: themes,
                     isPrivate: model.isPrivate
                 )
                 .map { Mutation.setCreatedJourney($0) }
@@ -164,8 +167,8 @@ class CreateJourneyReactor: Reactor {
             newState.journeyModel.startDate = start
             newState.journeyModel.endDate = end
             
-        case .setTheme(let theme):
-            newState.journeyModel.theme = theme
+        case .setThemes(let themes):
+            newState.journeyModel.themes = themes
             
         case .setTitle(let title):
             newState.journeyModel.title = title

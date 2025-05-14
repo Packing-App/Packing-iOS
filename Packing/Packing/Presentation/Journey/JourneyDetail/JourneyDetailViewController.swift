@@ -331,7 +331,7 @@ struct JourneyDetailView: View {
             HStack {
                 Image(systemName: themeIcon)
                     .foregroundColor(.secondary)
-                Text("테마: \(journey.theme.displayName)")
+                Text("테마: \(journey.themes.first!.displayName)")
                     .font(.system(size: 14))
                     .foregroundColor(.secondary)
             }
@@ -685,7 +685,10 @@ struct JourneyDetailView: View {
     }
     
     private var themeIcon: String {
-        switch journey.theme {
+        guard let firstTheme = journey.themes.first else {
+            return "star.fill" // 기본 아이콘
+        }
+        switch firstTheme {
         case .mountain: return "mountain.2.fill"
         case .camping: return "tent.fill"
         case .waterSports: return "drop.fill"
@@ -695,6 +698,28 @@ struct JourneyDetailView: View {
         case .fishing: return "water.waves"
         case .skiing: return "snowflake"
         case .picnic: return "leaf.fill"
+            
+        case .business: return "briefcase.fill"
+        case .beach: return "beach.umbrella.fill"
+        case .cultural: return "building.columns.fill"
+        case .photography: return "camera.fill"
+        case .family: return "figure.2.and.child.holdinghands"
+        case .backpacking: return "backpack.fill"
+        case .wellness: return "heart.circle.fill"
+        case .safari: return "binoculars.fill"
+        case .cruise: return "sailboat.fill"
+        case .desert: return "sun.dust.fill"
+        case .sports: return "sportscourt.fill"
+        case .roadtrip: return "car.fill"
+        case .study: return "book.fill"
+        case .glamping: return "sparkles"
+        case .medical: return "cross.fill"
+        case .adventure: return "figure.climbing"
+        case .diving: return "figure.pool.swim"
+        case .music: return "music.note"
+        case .wine: return "wineglass.fill"
+        case .urban: return "building.2.fill"
+        case .island: return "island.fill"
         case .other: return "star.fill"
         }
     }

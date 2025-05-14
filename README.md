@@ -161,6 +161,7 @@
 - ReactorKit (단방향 데이터 흐름 아키텍처)
 - RxSwift & RxCocoa
 - RxDataSources
+- Swift concurrency task, async await (SwiftUI View에 사용)
 - Kingfisher (이미지 캐싱)
 - KeychainSwift (토큰 데이터 관리)
 - UIKit Codebase (No storyboard)
@@ -176,7 +177,8 @@
 
 ## 📐 아키텍처
 
-로그인 화면의 경우에는 MVVM in-out으로, 나머지 UIKit 화면은 ReactorKit을 통해 단방향 데이터 흐름을 관리하도록 하였습니다.
+- 로그인 화면의 경우에는 MVVM in-out으로, 나머지 UIKit 화면은 ReactorKit을 통해 단방향 데이터 흐름을 관리하도록 하였습니다.
+- 여행 상세 화면인 JourneyDetailView의 경우에는 SwiftUI로 구현하였습니다. UIKit 프로젝트에서 UIHostingController로 보여주었습니다. 간단한 단일 뷰 였기 때문에 그리고 SwiftUI의 철학 상, 따로 뷰모델을 굳이 만들지 않았습니다.
 
 ### 주요 레이어 구성
 

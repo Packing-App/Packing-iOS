@@ -415,7 +415,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
         
         if let departureDate = startDate {
             var config = departureDateButton.configuration
-            config?.title = "출발 \(dateFormatter.string(from: departureDate))".localized
+            config?.title = "출발 %@".localized(with: dateFormatter.string(from: departureDate))
             departureDateButton.configuration = config
         } else {
             var config = departureDateButton.configuration
@@ -425,7 +425,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
         
         if let arrivalDate = endDate {
             var config = arrivalDateButton.configuration
-            config?.title = "도착 \(dateFormatter.string(from: arrivalDate))".localized
+            config?.title = "도착 %@".localized(with: dateFormatter.string(from: arrivalDate))
             arrivalDateButton.configuration = config
         } else {
             var config = arrivalDateButton.configuration

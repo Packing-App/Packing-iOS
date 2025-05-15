@@ -115,7 +115,7 @@ class ThemeTemplateViewController: UIViewController, View {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        themeTitleLabel.text = themeName.displayName + " 준비물".localized
+        themeTitleLabel.text = "%@ 준비물".localized(with: themeName.displayName)
         title = themeName.displayName
         tableView.dataSource = self
         tableView.delegate = self

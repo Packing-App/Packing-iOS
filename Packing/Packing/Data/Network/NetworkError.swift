@@ -54,7 +54,7 @@ enum NetworkError: Error, LocalizedError, Equatable {
         case .invalidResponse:
             return "유효하지 않은 응답입니다.".localized
         case .decodingFailed(let error):
-            return "디코딩 실패: \(error.localizedDescription)".localized
+            return "디코딩 실패: %@".localized(with: error.localizedDescription)
         case .serverError(let message):
             return message
         case .unauthorized(let message):

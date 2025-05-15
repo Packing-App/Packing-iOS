@@ -138,7 +138,7 @@ class JourneyDetailViewController: UIViewController {
                     // 오류 알림 표시
                     let errorAlert = UIAlertController(
                         title: "오류".localized,
-                        message: "여행을 삭제하는데 실패했습니다: \(error.localizedDescription)".localized,
+                        message: "여행을 삭제하는데 실패했습니다: %@".localized(with: error.localizedDescription),
                         preferredStyle: .alert
                     )
                     errorAlert.addAction(UIAlertAction(title: "확인".localized, style: .default))
@@ -331,7 +331,7 @@ struct JourneyDetailView: View {
             HStack {
                 Image(systemName: transportIcon)
                     .foregroundColor(.secondary)
-                Text("이동 수단: \(journey.transportType.displayName)".localized)
+                Text("이동 수단: %@".localized(with: journey.transportType.displayName))
                     .font(.system(size: 14))
                     .foregroundColor(.secondary)
             }
@@ -339,7 +339,7 @@ struct JourneyDetailView: View {
             HStack {
                 Image(systemName: themeIcon)
                     .foregroundColor(.secondary)
-                Text("테마: \(journey.themes.first!.displayName)".localized)
+                Text("테마: %@".localized(with: journey.themes.first!.displayName))
                     .font(.system(size: 14))
                     .foregroundColor(.secondary)
             }
@@ -955,7 +955,7 @@ struct ParticipantView: View {
             }
             
         }
-        .accessibilityLabel(isCreator ? "방장 \(participant.name)".localized : participant.name)
+        .accessibilityLabel(isCreator ? "방장 %@".localized(with: participant.name) : participant.name)
     }
     
     private var fallbackProfileView: some View {
@@ -1022,7 +1022,7 @@ struct PackingItemRow: View {
                         .foregroundColor(.secondary)
                     
                     if isSharedTab, let assignedTo = item.assignedTo {
-                        Text("담당: \(assignedTo.name)".localized)
+                        Text("담당: %@".localized(with: assignedTo.name))
                             .font(.system(size: 12))
                             .foregroundColor(.main)
                             .lineLimit(1)
@@ -1069,7 +1069,7 @@ struct PackingItemRow: View {
                 onDelete()
             }
         } message: {
-            Text("\(item.name) 준비물을 삭제하시겠습니까?".localized)
+            Text("%@ 준비물을 삭제하시겠습니까?".localized(with: item.name))
         }
         .frame(minHeight: UIConstants.minTapTargetSize)
     }

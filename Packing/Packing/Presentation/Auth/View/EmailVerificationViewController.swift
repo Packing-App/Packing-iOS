@@ -249,7 +249,7 @@ class EmailVerificationViewController: UIViewController {
 
         let alert = UIAlertController(
             title: "회원가입 성공".localized,
-            message: "\(user.name)님, 회원가입이 완료되었습니다!".localized,
+            message: "%@님, 회원가입이 완료되었습니다!".localized(with: user.name),
             preferredStyle: .alert
         )
         

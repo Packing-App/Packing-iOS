@@ -87,7 +87,7 @@ class JourneySelectionViewController: UIViewController {
         case .inviteFriend:
             title = "여행 선택".localized
             guard let friend = selectedFriend else { return }
-            titleLabel.text = "\(friend.name)님을 초대할 여행을 선택해주세요".localized
+            titleLabel.text = "%@님을 초대할 여행을 선택해주세요".localized(with: friend.name)
         case .addPackingItems:
             title = "여행 선택".localized
             titleLabel.text = "준비물을 추가할 여행을 선택해주세요".localized
@@ -177,7 +177,7 @@ class JourneySelectionViewController: UIViewController {
                 self?.loadingIndicator.stopAnimating()
                 self?.showSuccessAlert(
                     title: "초대 완료".localized,
-                    message: "\(friend.name)님을 '\(journey.title)' 여행에 초대했습니다.".localized,
+                    message: "%@님을 '%@' 여행에 초대했습니다.".localized(with: friend.name, journey.title),
                     shouldNavigateToMain: true
                 )
             }, onError: { [weak self] error in
@@ -205,11 +205,11 @@ class JourneySelectionViewController: UIViewController {
             self?.loadingIndicator.stopAnimating()
             
             let itemCount = names.count
-            let itemCountText = itemCount > 1 ? "\(itemCount)개의 준비물이".localized : "준비물이".localized
-            
+            let itemCountText = itemCount > 1 ? "%d개의 준비물이".localized(with: itemCount) : "준비물이".localized
+
             self?.showSuccessAlert(
                 title: "준비물 추가 완료".localized,
-                message: "\(itemCountText) '\(journey.title)' 여행에 추가되었습니다.".localized,
+                message: "%@ '%@' 여행에 추가되었습니다.".localized(with: itemCountText, journey.title),
                 shouldNavigateToMain: true
             )
         }, onError: { [weak self] error in

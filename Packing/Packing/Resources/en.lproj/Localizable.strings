@@ -5,3 +5,332 @@
   Created by 이융의 on 5/15/25.
   
 */
+
+/* Navigation Items */
+"내 여행" = "My Trips";
+"내 친구" = "My Friends";
+"내 프로필" = "My Profile";
+"패킹" = "PACKING";
+" 패킹" = "PACKING";
+
+/* Authentication */
+"세션 만료" = "Session Expired";
+"로그인 세션이 만료되었습니다. 다시 로그인해주세요." = "Your login session has expired. Please log in again.";
+"이메일 로그인" = "Email Login";
+"이메일" = "Email";
+"비밀번호" = "Password";
+"로그인" = "Login";
+"회원가입" = "Sign Up";
+"로그인 없이 시작하기" = "Start Without Login";
+"3초만에 시작하기  " = "Get Started in 3 Seconds";
+"이메일로 로그인" = "Login with Email";
+"여행에 딱! \n필요한 짐만, 패킹" = "Pack Only\nWhat You Need!";
+"로그인에 실패했습니다." = "Login failed.";
+"사용자가 로그인을 취소했습니다." = "User cancelled login.";
+"데이터가 없습니다." = "No data available.";
+"로그인 필요" = "Login Required";
+"여행 정보를 저장하고 추천 아이템을 확인하려면 로그인이 필요합니다. 로그인하면 지금까지 입력한 여행 정보가 유지됩니다." = "Login is required to save trip information and view recommended items. Your trip information will be preserved after login.";
+
+/* Email Sign Up */
+"이메일을 입력하세요." = "Enter your email";
+"이메일 주소" = "Email address";
+"비밀번호를 입력하세요." = "Enter your password";
+"영문, 숫자를 조합한 8~20 글자" = "8-20 characters with letters and numbers";
+"비밀번호를 다시 입력하세요." = "Re-enter your password";
+"비밀번호 확인" = "Confirm password";
+"이름(별명)을 입력하세요." = "Enter your name (nickname)";
+"사용할 이름(별명)" = "Name (nickname) to use";
+"다음" = "Next";
+"유효한 이메일 주소를 입력하세요." = "Please enter a valid email address.";
+"영문, 숫자를 조합한 8~20자리를 입력하세요." = "Please enter 8-20 characters with letters and numbers.";
+"비밀번호가 일치하지 않습니다." = "Passwords do not match.";
+"이름은 20자 이내로 입력해주세요." = "Name must be within 20 characters.";
+
+/* Email Verification */
+"인증번호를 입력하세요." = "Enter verification code";
+"재전송" = "Resend";
+"인증번호" = "Verification code";
+"완료" = "Complete";
+"이메일 인증" = "Email Verification";
+"회원가입 성공" = "Sign Up Success";
+"%@님, 회원가입이 완료되었습니다!" = "%@, your sign up is complete!";
+"인증 코드가 이메일로 발송되었습니다." = "Verification code has been sent to your email.";
+"6자리 숫자를 입력해주세요." = "Please enter 6-digit number.";
+"인증번호가 재발송되었습니다." = "Verification code has been resent.";
+"인증번호 발송 실패" = "Failed to send verification code";
+
+/* Network Errors */
+"유효하지 않은 URL입니다." = "Invalid URL.";
+"유효하지 않은 응답입니다." = "Invalid response.";
+"디코딩 실패: %@" = "Decoding failed: %@";
+"권한이 없습니다." = "Unauthorized.";
+"리소스를 찾을 수 없습니다." = "Resource not found.";
+"네트워크 연결을 확인해주세요." = "Please check your network connection.";
+"알 수 없는 오류가 발생했습니다." = "An unknown error occurred.";
+
+/* Journey Types */
+"비행기" = "Airplane";
+"기차" = "Train";
+"배" = "Ship";
+"버스" = "Bus";
+"도보" = "Walking";
+"기타" = "Other";
+
+/* Travel Themes */
+"등산" = "Hiking";
+"캠핑" = "Camping";
+"수상 스포츠" = "Water Sports";
+"자전거 타기" = "Cycling";
+"쇼핑" = "Shopping";
+"테마파크" = "Theme Park";
+"낚시" = "Fishing";
+"스키" = "Skiing";
+"피크닉" = "Picnic";
+"출장/비즈니스" = "Business";
+"해변 휴양" = "Beach Resort";
+"문화/역사 탐방" = "Cultural/Historical Tour";
+"사진 여행" = "Photography Trip";
+"가족 여행" = "Family Trip";
+"배낭여행" = "Backpacking";
+"스파/힐링" = "Spa/Wellness";
+"사파리" = "Safari";
+"크루즈" = "Cruise";
+"사막 여행" = "Desert Trip";
+"스포츠 경기관람" = "Sports Events";
+"자동차 여행" = "Road Trip";
+"어학연수" = "Language Study";
+"글램핑" = "Glamping";
+"의료 관광" = "Medical Tourism";
+"익스트림" = "Extreme";
+"다이빙" = "Diving";
+"음악 축제" = "Music Festival";
+"와인 투어" = "Wine Tour";
+"도시 관광" = "City Tour";
+"섬 여행" = "Island Travel";
+
+/* Item Categories */
+"의류" = "Clothing";
+"전자기기" = "Electronics";
+"세면도구" = "Toiletries";
+"서류" = "Documents";
+"의약품" = "Medicine";
+"필수품" = "Essentials";
+
+/* Common Actions */
+"알림" = "Notice";
+"확인" = "OK";
+"취소" = "Cancel";
+"저장" = "Save";
+"삭제" = "Delete";
+"수정" = "Edit";
+"선택" = "Select";
+"추가" = "Add";
+"초대" = "Invite";
+"거절" = "Decline";
+"수락" = "Accept";
+"오류" = "Error";
+"경고" = "Warning";
+"성공" = "Success";
+
+/* Journey Creation */
+"여행 정보를 입력해주세요" = "Enter your travel information";
+"어디서 출발하시나요?" = "Where are you departing from?";
+"어디로 떠나시나요?" = "Where are you going?";
+"출발 날짜" = "Departure Date";
+"도착 날짜" = "Arrival Date";
+"출발지를 입력해주세요" = "Please enter departure location";
+"도착지를 입력해주세요" = "Please enter destination";
+"출발 날짜를 선택해주세요" = "Please select departure date";
+"도착 날짜를 선택해주세요" = "Please select arrival date";
+"도착 날짜는 출발 날짜 이후여야 합니다" = "Arrival date must be after departure date";
+"출발 %@" = "Departure %@";
+"도착 %@" = "Arrival %@";
+"출발 날짜 선택" = "Select Departure Date";
+"도착 날짜 선택" = "Select Arrival Date";
+"yyyy년 M월" = "MMMM yyyy";
+
+/* Journey Summary */
+"나의 여행" = "My Trip";
+"해외여행" = "International Trip";
+"여행 날짜" = "Travel Dates";
+"날짜 미설정" = "Dates not set";
+"이동 수단" = "Transportation";
+"미설정" = "Not set";
+"여행 목적지" = "Destination";
+"여행 제목을 입력해주세요" = "Enter trip title";
+"혼자 여행하기" = "Solo Travel";
+"위 정보가 맞으면 완료 버튼을 눌러주세요" = "If the information is correct, please press Complete";
+"%@ 여행" = "%@ Trip";
+
+/* Journey Themes */
+"여행 테마를 선택해주세요" = "Select your travel theme";
+"여러 개 선택할 수 있어요!" = "You can select multiple!";
+"여행에 딱 맞는 준비물을 추천해드릴게요!" = "We'll recommend items perfect for your trip!";
+"딱 맞는 준비물" = "perfect items";
+
+/* Transportation */
+"여행을 어떻게 가시나요?" = "How are you traveling?";
+"건너뛰기" = "Skip";
+"이동수단" = "Transportation";
+"여행정보" = "Travel Info";
+"여행테마" = "Travel Theme";
+
+/* Recommendations */
+"잠시만 기다려주세요.\n%@을 가는 여행자님에게\n꼭 필요한 준비물을 추천해드릴게요." = "Please wait.\nWe're preparing must-have items\nfor your trip to %@.";
+"추천 준비물" = "Recommended Items";
+"여행에 필요한 준비물을 확인하고 체크해보세요" = "Check and select items needed for your trip";
+"전체 선택" = "Select All";
+"전체 해제" = "Deselect All";
+"%d개 담기" = "Add %d items";
+"필수" = "Essential";
+"%d개" = "%d items";
+
+/* Friends */
+"이메일로 친구 검색" = "Search friends by email";
+"친구 목록이 비어있습니다" = "Your friend list is empty";
+"친구를 추가하여 함께 여행 계획을 세워보세요" = "Add friends to plan trips together";
+"친구 추가하기" = "Add Friends";
+"검색 결과가 없습니다" = "No search results";
+"다른 이메일로 검색해보세요" = "Try searching with another email";
+"친구 요청" = "Friend Request";
+"이미 친구" = "Already Friends";
+"요청 중" = "Pending";
+"초대하기" = "Invite";
+"친구 삭제" = "Remove Friend";
+"%@님을 친구 목록에서 삭제하시겠습니까?" = "Remove %@ from your friend list?";
+
+/* Friend Requests */
+"받은 요청" = "Received";
+"보낸 요청" = "Sent";
+"친구 요청이 없습니다." = "No friend requests.";
+"받은 친구 요청이 없습니다." = "No received friend requests.";
+"보낸 친구 요청이 없습니다." = "No sent friend requests.";
+"대기 중" = "Pending";
+"Unknown User" = "Unknown User";
+"Unknown Email" = "Unknown Email";
+
+/* Journey Selection */
+"여행 계획이 없습니다." = "No travel plans.";
+"여행 선택" = "Select Trip";
+"%@님을 초대할 여행을 선택해주세요" = "Select a trip to invite %@";
+"준비물을 추가할 여행을 선택해주세요" = "Select a trip to add items";
+"초대 완료" = "Invitation Sent";
+"%@님을 '%@' 여행에 초대했습니다." = "Invited %@ to '%@' trip.";
+"%d개의 준비물이" = "%d items";
+"준비물이" = "items";
+"준비물 추가 완료" = "Items Added";
+"%@ '%@' 여행에 추가되었습니다." = "%@ added to '%@' trip.";
+
+/* Home */
+"새로운 여행 준비하기" = "Start Planning a New Trip";
+"테마별 여행 준비물 모음" = "Travel Items by Theme";
+"%@님!\n여행 준비를 같이 해볼까요?" = "Hi %@!\nLet's plan your trip together!";
+"%@님의 여행 계획" = "%@'s Travel Plans";
+"회원님!\n여행 준비를 같이 해볼까요?" = "Hi!\nLet's plan your trip together!";
+"회원님의 여행 계획" = "Your Travel Plans";
+"여행을 추가해보세요" = "Add a Trip";
+
+/* Theme Template */
+"필요한 준비물을 선택하고 여행에 추가하세요" = "Select items you need and add to your trip";
+"선택 항목 추가" = "Add Selected Items";
+"%@ 준비물" = "%@ Items";
+
+/* Profile */
+"내 프로필" = "My Profile";
+"수정" = "Edit";
+"소개가 없습니다." = "No bio.";
+"로그아웃" = "Log Out";
+"정말 로그아웃 하시겠습니까?" = "Are you sure you want to log out?";
+"회원탈퇴" = "Delete Account";
+"정말 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다." = "Are you sure you want to delete your account? This action cannot be undone.";
+"탈퇴하기" = "Delete";
+"네이버" = "Naver";
+"카카오" = "Kakao";
+"애플" = "Apple";
+"구글" = "Google";
+"이메일" = "Email";
+
+/* Edit Profile */
+"프로필 수정" = "Edit Profile";
+"사진 변경" = "Change Photo";
+"이름" = "Name";
+"이름을 입력하세요" = "Enter your name";
+"소개" = "Bio";
+"저장" = "Save";
+"이름은 필수 입력 항목입니다." = "Name is required.";
+"사진 접근 권한 필요" = "Photo Access Required";
+"프로필 사진을 변경하려면 사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요." = "Photo library access is required to change your profile picture. Please enable access in Settings.";
+"설정으로 이동" = "Go to Settings";
+
+/* Journey Detail */
+"여행 삭제" = "Delete Trip";
+"이 여행을 삭제하시겠습니까?" = "Delete this trip?";
+"여행을 삭제하는데 실패했습니다: %@" = "Failed to delete trip: %@";
+"준비물 로딩 중..." = "Loading items...";
+"준비물을 로딩 중입니다. 잠시만 기다려주세요." = "Loading items. Please wait.";
+"이동 수단: %@" = "Transportation: %@";
+"테마: %@" = "Theme: %@";
+"여행 참가자" = "Trip Members";
+"준비물 체크" = "Packing Checklist";
+"준비물 유형" = "Item Type";
+"개인 준비물" = "Personal Items";
+"공용 준비물" = "Shared Items";
+"준비물 추가하기" = "Add Items";
+"개인 준비물이 없습니다" = "No personal items";
+"공용 준비물이 없습니다" = "No shared items";
+"방장 %@" = "Host %@";
+"담당: %@" = "Assigned to: %@";
+"체크 해제하기" = "Uncheck";
+"체크하기" = "Check";
+"삭제하기" = "Delete";
+"준비물 삭제" = "Delete Item";
+"%@ 준비물을 삭제하시겠습니까?" = "Delete %@ item?";
+
+/* Add Packing Item */
+"아이템 정보" = "Item Information";
+"준비물 이름" = "Item Name";
+"수량: %d개" = "Quantity: %d";
+"카테고리" = "Category";
+"준비물 유형" = "Item Type";
+"공용 준비물" = "Shared Item";
+"담당자" = "Assignee";
+"담당자 미지정" = "Unassigned";
+"방장" = "Host";
+"참가자" = "Member";
+"저장 중..." = "Saving...";
+"준비물 추가" = "Add Item";
+
+/* Weather */
+"여행지 날씨" = "Destination Weather";
+"여행 기간 날씨" = "Trip Period Weather";
+"간략히 보기" = "Show Less";
+"상세 보기" = "Show More";
+"습도" = "Humidity";
+"풍속" = "Wind Speed";
+"강수량" = "Precipitation";
+"구름" = "Clouds";
+"정보 없음" = "No Data";
+"현재 날씨 정보를 불러올 수 없습니다." = "Cannot load current weather information.";
+"예보를 불러올 수 없습니다." = "Cannot load forecast.";
+
+/* Notifications */
+"알림" = "Notifications";
+"모두 읽음" = "Mark All Read";
+"알림이 없습니다" = "No notifications";
+"여행 초대 및 정보 알림이 여기에 표시됩니다" = "Travel invitations and updates will appear here";
+"초대를 수락하는 중..." = "Accepting invitation...";
+"초대를 거절하는 중..." = "Declining invitation...";
+"초대 수락됨" = "Invitation Accepted";
+"초대 거절됨" = "Invitation Declined";
+"여행에 참여하셨습니다." = "You've joined the trip.";
+"초대가 거절되었습니다." = "Invitation declined.";
+"요청을 처리하는 중 문제가 발생했습니다. 다시 시도해주세요." = "There was a problem processing your request. Please try again.";
+"친구 요청" = "Friend Request";
+"친구 요청 수락" = "Friend Request Accepted";
+"날씨" = "Weather";
+"리마인더" = "Reminder";
+
+/* Location Search */
+"여행지 검색" = "Search destination";
+"출발지 선택" = "Select Departure";
+"목적지 선택" = "Select Destination";

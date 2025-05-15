@@ -33,7 +33,7 @@ struct AddPackingItemSheet: View {
                     Section(header: Text("아이템 정보".localized)) {
                         TextField("준비물 이름".localized, text: $itemName)
                         
-                        Stepper("수량: \(itemCount)개".localized, value: $itemCount, in: 1...99)
+                        Stepper("수량: %d개".localized(with: itemCount), value: $itemCount, in: 1...99)
                     }
                     
                     // 카테고리 선택

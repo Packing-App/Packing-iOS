@@ -446,7 +446,7 @@ extension FriendsViewController: UITableViewDelegate {
             // 확인 알림 표시
             let alert = UIAlertController(
                 title: "친구 삭제".localized,
-                message: "\(friend.name)님을 친구 목록에서 삭제하시겠습니까?".localized,
+                message: "%@님을 친구 목록에서 삭제하시겠습니까?".localized(with: friend.name),
                 preferredStyle: .alert
             )
             

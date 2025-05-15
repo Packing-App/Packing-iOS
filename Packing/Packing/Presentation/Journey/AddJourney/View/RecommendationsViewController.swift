@@ -384,7 +384,7 @@ class RecommendationsViewController: UIViewController, View {
     
     private func updateSelectionUI(selectedItems: [String: Int], selectedCount: Int) {
         // Update add items button
-        addItemsButton.setTitle("\(selectedCount)개 담기".localized, for: .normal)
+        addItemsButton.setTitle("%d개 담기".localized(with: selectedCount), for: .normal)
         addItemsButton.isEnabled = selectedCount > 0
         addItemsButton.alpha = selectedCount > 0 ? 1.0 : 0.5
         
@@ -408,7 +408,7 @@ class RecommendationsViewController: UIViewController, View {
             }
             
             if let countLabel = itemCountLabels[itemName] {
-                countLabel.text = count > 0 ? "\(count)개".localized : ""
+                countLabel.text = count > 0 ? "%d개".localized(with: count) : ""
             }
         }
     }

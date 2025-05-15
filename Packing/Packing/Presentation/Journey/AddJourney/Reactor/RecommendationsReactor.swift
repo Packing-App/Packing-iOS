@@ -59,7 +59,7 @@ class RecommendationsReactor: Reactor {
         self.packingItemsService = packingItemService
         self.journey = journey
         self.initialState = State(
-            loadingMessage: "잠시만 기다려주세요.\n\(journey.destination)을 가는 여행자님에게\n꼭 필요한 준비물을 추천해드릴게요.".localized
+            loadingMessage: "잠시만 기다려주세요.\n%@을 가는 여행자님에게\n꼭 필요한 준비물을 추천해드릴게요.".localized(with: journey.destination)
         )
         
     }

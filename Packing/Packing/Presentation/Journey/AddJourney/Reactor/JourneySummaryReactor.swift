@@ -56,8 +56,8 @@ class JourneySummaryReactor: Reactor {
         let model = coordinator.getJourneyModel()
         
         // 제목이 비어있다면 기본 제목 설정
-        let defaultTitle = model.title.isEmpty ? "\(model.destination) 여행".localized : model.title
-        
+        let defaultTitle = model.title.isEmpty ? "%@ 여행".localized(with: model.destination) : model.title
+
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy.MM.dd"
         

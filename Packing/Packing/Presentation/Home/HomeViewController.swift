@@ -486,10 +486,10 @@ class HomeViewController: UIViewController, View {
     private func updateUserNameLabels() {
         if let name = UserManager.shared.currentUser?.name {
             // 타이틀 레이블 업데이트
-            titleLabel.text = "\(name)님!\n여행 준비를 같이 해볼까요?".localized
-            
+            titleLabel.text = "%@님!\n여행 준비를 같이 해볼까요?".localized(with: name)
+
             // 여행 계획 섹션 레이블 업데이트
-            myTravelPlansSectionLabel.text = "\(name)님의 여행 계획".localized
+            myTravelPlansSectionLabel.text = "%@님의 여행 계획".localized(with: name)
         } else {
             titleLabel.text = "회원님!\n여행 준비를 같이 해볼까요?".localized
             myTravelPlansSectionLabel.text = "회원님의 여행 계획".localized

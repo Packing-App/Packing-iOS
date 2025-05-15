@@ -26,7 +26,7 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
         let iconSize: CGFloat = isSmallDevice ? 20 : 24
         imageAttachment.bounds = CGRect(x: 0, y: -6, width: iconSize, height: iconSize)
         attachmentString.append(NSAttributedString(attachment: imageAttachment))
-        attachmentString.append(NSAttributedString(string: " 패킹"))
+        attachmentString.append(NSAttributedString(string: " 패킹".localized))
         label.attributedText = attachmentString
         label.sizeToFit()
         
@@ -58,7 +58,7 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
     
     private let questionLabel: UILabel = {
         let label = UILabel()
-        label.text = "여행을 어떻게 가시나요?"
+        label.text = "여행을 어떻게 가시나요?".localized
         let isSmallDevice = UIScreen.main.bounds.height < 700
         label.font = UIFont.systemFont(ofSize: isSmallDevice ? 16 : 17, weight: .semibold)
         label.textColor = .black
@@ -79,7 +79,7 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
     
     private let skipButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("건너뛰기", for: .normal)
+        button.setTitle("건너뛰기".localized, for: .normal)
         button.setTitleColor(.main, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 14)
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -88,7 +88,7 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
     
     private let nextButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("다음", for: .normal)
+        button.setTitle("다음".localized, for: .normal)
         button.setTitleColor(.white, for: .normal)
         button.backgroundColor = .lightGray // Start with disabled state
         button.layer.cornerRadius = 8
@@ -224,12 +224,12 @@ class JourneyTransportTypeSelectionViewController: UIViewController, View {
     
     private func configureTransportOptions() {
         let transportOptions = [
-            ("airplane", "비행기"),
-            ("tram", "기차"),
-            ("ferry", "배"),
-            ("bus", "버스"),
-            ("figure.walk", "도보"),
-            ("ellipsis", "기타")
+            ("airplane", "비행기".localized),
+            ("tram", "기차".localized),
+            ("ferry", "배".localized),
+            ("bus", "버스".localized),
+            ("figure.walk", "도보".localized),
+            ("ellipsis", "기타".localized)
         ]
         
         // TransportType.allCases와 크기가 동일한지 확인

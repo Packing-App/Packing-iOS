@@ -18,7 +18,7 @@ class FriendsViewController: UIViewController, View {
     // MARK: - UI Components
     private lazy var searchController: UISearchController = {
         let controller = UISearchController(searchResultsController: nil)
-        controller.searchBar.placeholder = "이메일로 친구 검색"
+        controller.searchBar.placeholder = "이메일로 친구 검색".localized
         controller.obscuresBackgroundDuringPresentation = false
         controller.searchBar.returnKeyType = .search
         return controller
@@ -77,7 +77,7 @@ class FriendsViewController: UIViewController, View {
     
     private lazy var emptyStateTitle: UILabel = {
         let label = UILabel()
-        label.text = "친구 목록이 비어있습니다"
+        label.text = "친구 목록이 비어있습니다".localized
         label.font = .systemFont(ofSize: 17, weight: .semibold)
         label.textColor = .label
         label.textAlignment = .center
@@ -87,7 +87,7 @@ class FriendsViewController: UIViewController, View {
     
     private lazy var emptyStateSubtitle: UILabel = {
         let label = UILabel()
-        label.text = "친구를 추가하여 함께 여행 계획을 세워보세요"
+        label.text = "친구를 추가하여 함께 여행 계획을 세워보세요".localized
         label.font = .systemFont(ofSize: 14)
         label.textColor = .secondaryLabel
         label.textAlignment = .center
@@ -98,7 +98,7 @@ class FriendsViewController: UIViewController, View {
     
     private lazy var emptyStateButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("친구 추가하기", for: .normal)
+        button.setTitle("친구 추가하기".localized, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         button.backgroundColor = .main
         button.tintColor = .white
@@ -212,7 +212,7 @@ class FriendsViewController: UIViewController, View {
     
     private func setupNavigationBar() {
         navigationController?.navigationBar.prefersLargeTitles = true
-        title = "내 친구"
+        title = "내 친구".localized
         // 검색 컨트롤러 설정
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = true
@@ -322,14 +322,14 @@ class FriendsViewController: UIViewController, View {
             .subscribe(onNext: { [weak self] mode in
                 switch mode {
                 case .friendsList:
-                    self?.emptyStateTitle.text = "친구 목록이 비어있습니다"
-                    self?.emptyStateSubtitle.text = "친구를 추가하여 함께 여행 계획을 세워보세요"
+                    self?.emptyStateTitle.text = "친구 목록이 비어있습니다".localized
+                    self?.emptyStateSubtitle.text = "친구를 추가하여 함께 여행 계획을 세워보세요".localized
                     self?.emptyStateButton.setTitle("친구 추가하기", for: .normal)
                     self?.emptyStateImageView.image = UIImage(systemName: "person.2.slash")
                 case .searchResults:
-                    self?.emptyStateTitle.text = "검색 결과가 없습니다"
-                    self?.emptyStateSubtitle.text = "다른 이메일로 검색해보세요"
-                    self?.emptyStateButton.setTitle("친구 추가하기", for: .normal)
+                    self?.emptyStateTitle.text = "검색 결과가 없습니다".localized
+                    self?.emptyStateSubtitle.text = "다른 이메일로 검색해보세요".localized
+                    self?.emptyStateButton.setTitle("친구 추가하기".localized, for: .normal)
                     self?.emptyStateImageView.image = UIImage(systemName: "magnifyingglass")
                 }
             })
@@ -382,19 +382,19 @@ class FriendsViewController: UIViewController, View {
                     // 친구 상태에 따라 버튼 설정
                     if let friendshipStatus = result.friendshipStatus, friendshipStatus == .accepted {
                         // 이미 친구인 경우 - 이 검색결과는 표시하지 않음 (이미 친구 목록에 있으므로)
-                        cell.actionButton.setTitle("이미 친구", for: .normal)
+                        cell.actionButton.setTitle("이미 친구".localized, for: .normal)
                         cell.actionButton.backgroundColor = .systemGray5
                         cell.actionButton.setTitleColor(.systemGray, for: .normal)
                         cell.actionButton.isEnabled = false
                     } else if let friendshipStatus = result.friendshipStatus, friendshipStatus == .pending {
                         // 요청 중인 경우 - 비활성화된 버튼 표시
-                        cell.actionButton.setTitle("요청 중", for: .normal)
+                        cell.actionButton.setTitle("요청 중".localized, for: .normal)
                         cell.actionButton.backgroundColor = .systemGray5
                         cell.actionButton.setTitleColor(.systemGray, for: .normal)
                         cell.actionButton.isEnabled = false
                     } else {
                         // 친구 아닌 경우 - 요청 버튼 표시
-                        cell.actionButton.setTitle("친구 요청", for: .normal)
+                        cell.actionButton.setTitle("친구 요청".localized, for: .normal)
                         cell.actionButton.backgroundColor = .main
                         cell.actionButton.setTitleColor(.white, for: .normal)
                         cell.actionButton.isEnabled = true
@@ -420,11 +420,11 @@ class FriendsViewController: UIViewController, View {
     
     private func showErrorAlert(_ error: Error) {
         let alert = UIAlertController(
-            title: "오류",
+            title: "오류".localized,
             message: error.localizedDescription,
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        alert.addAction(UIAlertAction(title: "확인".localized, style: .default))
         present(alert, animated: true)
     }
 }
@@ -435,7 +435,7 @@ extension FriendsViewController: UITableViewDelegate {
             return nil
         }
         
-        let deleteAction = UIContextualAction(style: .destructive, title: "삭제") { [weak self] (action, view, completion) in
+        let deleteAction = UIContextualAction(style: .destructive, title: "삭제".localized) { [weak self] (action, view, completion) in
             guard let self = self else {
                 completion(false)
                 return
@@ -445,16 +445,16 @@ extension FriendsViewController: UITableViewDelegate {
             
             // 확인 알림 표시
             let alert = UIAlertController(
-                title: "친구 삭제",
-                message: "\(friend.name)님을 친구 목록에서 삭제하시겠습니까?",
+                title: "친구 삭제".localized,
+                message: "\(friend.name)님을 친구 목록에서 삭제하시겠습니까?".localized,
                 preferredStyle: .alert
             )
             
-            alert.addAction(UIAlertAction(title: "취소", style: .cancel) { _ in
+            alert.addAction(UIAlertAction(title: "취소".localized, style: .cancel) { _ in
                 completion(false)
             })
             
-            alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { _ in
+            alert.addAction(UIAlertAction(title: "삭제".localized, style: .destructive) { _ in
                 reactor.action.onNext(.removeFriend(friend.friendshipId))
                 completion(true)
             })

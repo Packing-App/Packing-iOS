@@ -19,12 +19,12 @@ enum TransportType: String, Codable, CaseIterable {
     
     var displayName: String {
         switch self {
-        case .plane: return "비행기"
-        case .train: return "기차"
-        case .ship: return "배"
-        case .bus: return "버스"
-        case .walk: return "도보"
-        case .other: return "기타"
+        case .plane: return "비행기".localized
+        case .train: return "기차".localized
+        case .ship: return "배".localized
+        case .bus: return "버스".localized
+        case .walk: return "도보".localized
+        case .other: return "기타".localized
         }
     }
 }

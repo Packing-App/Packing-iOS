@@ -46,7 +46,7 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
     
     // MARK: - UI Setup
     private func setupUI() {
-        title = "알림"
+        title = "알림".localized
         view.backgroundColor = .systemGroupedBackground
         
         setupNavigationBar()
@@ -58,7 +58,7 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
     
     private func setupNavigationBar() {
         navigationItem.rightBarButtonItem = UIBarButtonItem(
-            title: "모두 읽음",
+            title: "모두 읽음".localized,
             style: .plain,
             target: self,
             action: #selector(markAllAsRead)
@@ -117,7 +117,7 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
         
         // 라벨 추가
         let label = UILabel()
-        label.text = "알림이 없습니다"
+        label.text = "알림이 없습니다".localized
         label.textAlignment = .center
         label.textColor = .secondaryLabel
         label.font = UIFont.preferredFont(forTextStyle: .title3)
@@ -133,7 +133,7 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
         
         // 설명 라벨 추가
         let descriptionLabel = UILabel()
-        descriptionLabel.text = "여행 초대 및 정보 알림이 여기에 표시됩니다"
+        descriptionLabel.text = "여행 초대 및 정보 알림이 여기에 표시됩니다".localized
         descriptionLabel.textAlignment = .center
         descriptionLabel.textColor = .tertiaryLabel
         descriptionLabel.font = UIFont.preferredFont(forTextStyle: .body)
@@ -207,7 +207,7 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
         
         let alert = UIAlertController(
             title: nil,
-            message: accept ? "초대를 수락하는 중..." : "초대를 거절하는 중...",
+            message: accept ? "초대를 수락하는 중...".localized : "초대를 거절하는 중...".localized,
             preferredStyle: .alert
         )
         
@@ -242,15 +242,15 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
         
         if success {
             // 성공 메시지
-            let title = accepted ? "초대 수락됨" : "초대 거절됨"
-            let message = accepted ? "여행에 참여하셨습니다." : "초대가 거절되었습니다."
+            let title = accepted ? "초대 수락됨".localized : "초대 거절됨".localized
+            let message = accepted ? "여행에 참여하셨습니다.".localized : "초대가 거절되었습니다.".localized
             
             let alert = UIAlertController(
                 title: title,
                 message: message,
                 preferredStyle: .alert
             )
-            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            alert.addAction(UIAlertAction(title: "확인".localized, style: .default))
             present(alert, animated: true)
             
             // 알림 새로고침
@@ -258,11 +258,11 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
         } else {
             // 실패 메시지
             let alert = UIAlertController(
-                title: "오류",
-                message: "요청을 처리하는 중 문제가 발생했습니다. 다시 시도해주세요.",
+                title: "오류".localized,
+                message: "요청을 처리하는 중 문제가 발생했습니다. 다시 시도해주세요.".localized,
                 preferredStyle: .alert
             )
-            alert.addAction(UIAlertAction(title: "확인", style: .default))
+            alert.addAction(UIAlertAction(title: "확인".localized, style: .default))
             present(alert, animated: true)
         }
     }
@@ -333,11 +333,11 @@ class NotificationsViewController: UIViewController, View, InvitationCallbackDel
                 self?.dismissLoadingAlert()
                 
                 let alert = UIAlertController(
-                    title: "오류",
+                    title: "오류".localized,
                     message: error.localizedDescription,
                     preferredStyle: .alert
                 )
-                alert.addAction(UIAlertAction(title: "확인", style: .default))
+                alert.addAction(UIAlertAction(title: "확인".localized, style: .default))
                 self?.present(alert, animated: true)
             })
             .disposed(by: disposeBag)

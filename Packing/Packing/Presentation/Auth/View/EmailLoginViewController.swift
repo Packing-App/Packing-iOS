@@ -30,7 +30,7 @@ class EmailLoginViewController: UIViewController {
     
     private lazy var emailTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "이메일"
+        textField.placeholder = "이메일".localized
         textField.keyboardType = .emailAddress
         textField.autocorrectionType = .no
         textField.autocapitalizationType = .none
@@ -41,7 +41,7 @@ class EmailLoginViewController: UIViewController {
     
     private lazy var passwordTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "비밀번호"
+        textField.placeholder = "비밀번호".localized
         textField.isSecureTextEntry = true
         textField.borderStyle = .roundedRect
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -52,7 +52,7 @@ class EmailLoginViewController: UIViewController {
         let button = UIButton()
         button.translatesAutoresizingMaskIntoConstraints = false
         button.applyStyle(MainButtonStyle(color: .main))
-        button.configuration?.title = "로그인"
+        button.configuration?.title = "로그인".localized
         return button
     }()
     
@@ -60,7 +60,7 @@ class EmailLoginViewController: UIViewController {
         let button = UIButton()
         button.translatesAutoresizingMaskIntoConstraints = false
         button.applyStyle(MainButtonStyle(color: .black))
-        button.configuration?.title = "회원가입"
+        button.configuration?.title = "회원가입".localized
         return button
     }()
     
@@ -87,7 +87,7 @@ class EmailLoginViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.navigationItem.title = "이메일 로그인"
+        self.navigationItem.title = "이메일 로그인".localized
         self.view.backgroundColor = .systemBackground
         
         setupUI()
@@ -230,8 +230,8 @@ class EmailLoginViewController: UIViewController {
     }
     
     private func showAlert(message: String) {
-        let alert = UIAlertController(title: "알림", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        let alert = UIAlertController(title: "알림".localized, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인".localized, style: .default))
         present(alert, animated: true)
     }
     

@@ -217,7 +217,7 @@ class NotificationTableViewCell: UITableViewCell {
     private func setupAcceptButton() {
         configureButton(
             acceptButton,
-            title: "수락",
+            title: "수락".localized,
             icon: "checkmark",
             backgroundColor: UIColor.systemGreen.withAlphaComponent(0.1),
             textColor: .systemGreen
@@ -228,7 +228,7 @@ class NotificationTableViewCell: UITableViewCell {
     private func setupRejectButton() {
         configureButton(
             rejectButton,
-            title: "거절",
+            title: "거절".localized,
             icon: "xmark",
             backgroundColor: UIColor.systemRed.withAlphaComponent(0.1),
             textColor: .systemRed
@@ -322,21 +322,21 @@ class NotificationTableViewCell: UITableViewCell {
         switch type {
         case .friendRequest:
             typeIconView.image = UIImage(systemName: "person.badge.plus")
-            typeLabel.text = "친구 요청"
+            typeLabel.text = "친구 요청".localized
         case .friendRequestResponse:
             typeIconView.image = UIImage(systemName: "person.badge.shield.checkmark")
-            typeLabel.text = "친구 요청 수락"
+            typeLabel.text = "친구 요청 수락".localized
 
         case .weather:
             typeIconView.image = UIImage(systemName: "cloud.sun")
-            typeLabel.text = "날씨"
+            typeLabel.text = "날씨".localized
         case .reminder:
             typeIconView.image = UIImage(systemName: "bell")
-            typeLabel.text = "리마인더"
+            typeLabel.text = "리마인더".localized
             
         case .invitation:
             typeIconView.image = UIImage(systemName: "envelope")
-            typeLabel.text = "초대"
+            typeLabel.text = "초대".localized
         case .journeyInvitationResponse:
             typeIconView.image = UIImage(systemName: "envelope.badge.person.crop")
         }

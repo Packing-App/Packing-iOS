@@ -29,7 +29,7 @@ class EmailVerificationViewController: UIViewController {
     
     private lazy var verificationLabel: UILabel = {
         let label = UILabel()
-        label.text = "인증번호를 입력하세요."
+        label.text = "인증번호를 입력하세요.".localized
         label.font = .systemFont(ofSize: 15, weight: .medium)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -37,7 +37,7 @@ class EmailVerificationViewController: UIViewController {
     
     private lazy var resendButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("재전송", for: .normal)
+        button.setTitle("재전송".localized, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 13)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
@@ -45,7 +45,7 @@ class EmailVerificationViewController: UIViewController {
     
     private lazy var verificationTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "인증번호"
+        textField.placeholder = "인증번호".localized
         textField.borderStyle = .roundedRect
         textField.keyboardType = .numberPad
         textField.delegate = self
@@ -79,7 +79,7 @@ class EmailVerificationViewController: UIViewController {
     }()
     
     private lazy var completeButton: UIBarButtonItem = {
-        let button = UIBarButtonItem(title: "완료", style: .done, target: nil, action: nil)
+        let button = UIBarButtonItem(title: "완료".localized, style: .done, target: nil, action: nil)
         button.isEnabled = false
         return button
     }()
@@ -137,7 +137,7 @@ class EmailVerificationViewController: UIViewController {
     
     private func setupUI() {
         self.navigationItem.rightBarButtonItem = completeButton
-        title = "이메일 인증"
+        title = "이메일 인증".localized
         view.backgroundColor = .systemBackground
         
         verificationHeaderStack.addArrangedSubview(verificationLabel)
@@ -248,12 +248,12 @@ class EmailVerificationViewController: UIViewController {
         isVerificationSuccessful = true
 
         let alert = UIAlertController(
-            title: "회원가입 성공",
-            message: "\(user.name)님, 회원가입이 완료되었습니다!",
+            title: "회원가입 성공".localized,
+            message: "\(user.name)님, 회원가입이 완료되었습니다!".localized,
             preferredStyle: .alert
         )
         
-        alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: "확인".localized, style: .default) { [weak self] _ in
             self?.navigateToMainScreen()
         })
         
@@ -268,7 +268,7 @@ class EmailVerificationViewController: UIViewController {
     
     private func showAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        alert.addAction(UIAlertAction(title: "확인".localized, style: .default))
         present(alert, animated: true)
     }
     
@@ -290,19 +290,3 @@ extension EmailVerificationViewController: UITextFieldDelegate {
     }
 }
 
-// MARK: - Preview
-#Preview {
-    let viewModel = EmailVerificationViewModel(
-        email: "test@example.com",
-        password: "password123",
-        name: "테스트 사용자",
-        tokenData: TokenData(
-            accessToken: "test_token",
-            refreshToken: "test_refresh_token",
-            user: User.exampleUser
-        )
-    )
-    let viewController = EmailVerificationViewController(viewModel: viewModel)
-    let navigationController = UINavigationController(rootViewController: viewController)
-    return navigationController
-}

@@ -30,14 +30,14 @@ final class EditProfileViewController: UIViewController, View {
     
     private let changeImageButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("사진 변경", for: .normal)
+        button.setTitle("사진 변경".localized, for: .normal)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
     
     private let nameLabel: UILabel = {
         let label = UILabel()
-        label.text = "이름"
+        label.text = "이름".localized
         label.font = .systemFont(ofSize: 16, weight: .medium)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -45,7 +45,7 @@ final class EditProfileViewController: UIViewController, View {
     
     private let nameTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "이름을 입력하세요"
+        textField.placeholder = "이름을 입력하세요".localized
         textField.borderStyle = .roundedRect
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
@@ -53,7 +53,7 @@ final class EditProfileViewController: UIViewController, View {
     
     private let introLabel: UILabel = {
         let label = UILabel()
-        label.text = "소개"
+        label.text = "소개".localized
         label.font = .systemFont(ofSize: 16, weight: .medium)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -71,7 +71,7 @@ final class EditProfileViewController: UIViewController, View {
     
     private let saveButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("저장", for: .normal)
+        button.setTitle("저장".localized, for: .normal)
         button.backgroundColor = .systemBlue
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 8
@@ -119,12 +119,12 @@ final class EditProfileViewController: UIViewController, View {
     
     // MARK: - UI Setup
     private func setupUI() {
-        title = "프로필 수정"
+        title = "프로필 수정".localized
         view.backgroundColor = .systemBackground
         
         // 네비게이션 바 설정
         navigationItem.leftBarButtonItem = UIBarButtonItem(
-            title: "취소",
+            title: "취소".localized,
             style: .plain,
             target: self,
             action: #selector(cancelButtonTapped)
@@ -132,7 +132,7 @@ final class EditProfileViewController: UIViewController, View {
 
         // 오른쪽에 완료 버튼 추가
         navigationItem.rightBarButtonItem = UIBarButtonItem(
-            title: "완료",
+            title: "완료".localized,
             style: .done,
             target: self,
             action: #selector(saveButtonTapped)
@@ -277,18 +277,18 @@ final class EditProfileViewController: UIViewController, View {
     
     private func showPhotoLibraryPermissionDeniedAlert() {
         let alert = UIAlertController(
-            title: "사진 접근 권한 필요",
-            message: "프로필 사진을 변경하려면 사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.",
+            title: "사진 접근 권한 필요".localized,
+            message: "프로필 사진을 변경하려면 사진 라이브러리 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.".localized,
             preferredStyle: .alert
         )
         
-        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
+        alert.addAction(UIAlertAction(title: "설정으로 이동".localized, style: .default) { _ in
             if let url = URL(string: UIApplication.openSettingsURLString) {
                 UIApplication.shared.open(url)
             }
         })
         
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "취소".localized, style: .cancel))
         present(alert, animated: true)
     }
     
@@ -297,8 +297,8 @@ final class EditProfileViewController: UIViewController, View {
     }
     
     private func showAlert(message: String) {
-        let alert = UIAlertController(title: "알림", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        let alert = UIAlertController(title: "알림".localized, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인".localized, style: .default))
         present(alert, animated: true)
     }
     

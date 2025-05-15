@@ -80,37 +80,37 @@ enum TravelTheme: String, Codable, CaseIterable, Equatable {
 
     var displayName: String {
         switch self {
-        case .mountain: return "등산"
-        case .camping: return "캠핑"
-        case .waterSports: return "수상 스포츠"
-        case .cycling: return "자전거 타기"
-        case .shopping: return "쇼핑"
-        case .themepark: return "테마파크"
-        case .fishing: return "낚시"
-        case .skiing: return "스키"
-        case .picnic: return "피크닉"
-        case .business: return "출장/비즈니스"
-        case .beach: return "해변 휴양"
-        case .cultural: return "문화/역사 탐방"
-        case .photography: return "사진 여행"
-        case .family: return "가족 여행"
-        case .backpacking: return "배낭여행"
-        case .wellness: return "스파/힐링"
-        case .safari: return "사파리"
-        case .cruise: return "크루즈"
-        case .desert: return "사막 여행"
-        case .sports: return "스포츠 경기관람"
-        case .roadtrip: return "자동차 여행"
-        case .study: return "어학연수"
-        case .glamping: return "글램핑"
-        case .medical: return "의료 관광"
-        case .adventure: return "익스트림"
-        case .diving: return "다이빙"
-        case .music: return "음악 축제"
-        case .wine: return "와인 투어"
-        case .urban: return "도시 관광"
-        case .island: return "섬 여행"
-        case .other: return "기타"
+        case .mountain: return "등산".localized
+        case .camping: return "캠핑".localized
+        case .waterSports: return "수상 스포츠".localized
+        case .cycling: return "자전거 타기".localized
+        case .shopping: return "쇼핑".localized
+        case .themepark: return "테마파크".localized
+        case .fishing: return "낚시".localized
+        case .skiing: return "스키".localized
+        case .picnic: return "피크닉".localized
+        case .business: return "출장/비즈니스".localized
+        case .beach: return "해변 휴양".localized
+        case .cultural: return "문화/역사 탐방".localized
+        case .photography: return "사진 여행".localized
+        case .family: return "가족 여행".localized
+        case .backpacking: return "배낭여행".localized
+        case .wellness: return "스파/힐링".localized
+        case .safari: return "사파리".localized
+        case .cruise: return "크루즈".localized
+        case .desert: return "사막 여행".localized
+        case .sports: return "스포츠 경기관람".localized
+        case .roadtrip: return "자동차 여행".localized
+        case .study: return "어학연수".localized
+        case .glamping: return "글램핑".localized
+        case .medical: return "의료 관광".localized
+        case .adventure: return "익스트림".localized
+        case .diving: return "다이빙".localized
+        case .music: return "음악 축제".localized
+        case .wine: return "와인 투어".localized
+        case .urban: return "도시 관광".localized
+        case .island: return "섬 여행".localized
+        case .other: return "기타".localized
         }
     }
     
@@ -130,13 +130,13 @@ enum ItemCategory: String, Codable, CaseIterable, Equatable {
     
     var displayName: String {
         switch self {
-        case .clothing: return "의류"
-        case .electronics: return "전자기기"
-        case .toiletries: return "세면도구"
-        case .documents: return "서류"
-        case .medicines: return "의약품"
-        case .essentials: return "필수품"
-        case .other: return "기타"
+        case .clothing: return "의류".localized
+        case .electronics: return "전자기기".localized
+        case .toiletries: return "세면도구".localized
+        case .documents: return "서류".localized
+        case .medicines: return "의약품".localized
+        case .essentials: return "필수품".localized
+        case .other: return "기타".localized
         }
     }
 }

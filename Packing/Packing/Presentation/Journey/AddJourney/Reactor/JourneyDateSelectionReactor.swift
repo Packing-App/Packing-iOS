@@ -140,15 +140,15 @@ class JourneyDateSelectionReactor: Reactor {
             var errorMessage: String? = nil
             
             if newState.origin.isEmpty {
-                errorMessage = "출발지를 입력해주세요"
+                errorMessage = "출발지를 입력해주세요".localized
             } else if newState.destination.isEmpty {
-                errorMessage = "도착지를 입력해주세요"
+                errorMessage = "도착지를 입력해주세요".localized
             } else if newState.startDate == nil {
-                errorMessage = "출발 날짜를 선택해주세요"
+                errorMessage = "출발 날짜를 선택해주세요".localized
             } else if newState.endDate == nil {
-                errorMessage = "도착 날짜를 선택해주세요"
+                errorMessage = "도착 날짜를 선택해주세요".localized
             } else if let start = newState.startDate, let end = newState.endDate, end < start {
-                errorMessage = "도착 날짜는 출발 날짜 이후여야 합니다"
+                errorMessage = "도착 날짜는 출발 날짜 이후여야 합니다".localized
             }
             
             newState.errorMessage = errorMessage

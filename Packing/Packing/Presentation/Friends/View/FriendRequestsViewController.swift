@@ -20,7 +20,7 @@ class FriendRequestsViewController: UIViewController, View {
     
     // MARK: - UI Components
     private lazy var segmentedControl: UISegmentedControl = {
-        let segmented = UISegmentedControl(items: ["받은 요청", "보낸 요청"])
+        let segmented = UISegmentedControl(items: ["받은 요청".localized, "보낸 요청".localized])
         segmented.selectedSegmentIndex = 0
         segmented.translatesAutoresizingMaskIntoConstraints = false
         return segmented
@@ -47,7 +47,7 @@ class FriendRequestsViewController: UIViewController, View {
     
     private lazy var emptyStateLabel: UILabel = {
         let label = UILabel()
-        label.text = "친구 요청이 없습니다."
+        label.text = "친구 요청이 없습니다.".localized
         label.textAlignment = .center
         label.textColor = .gray
         label.isHidden = true
@@ -112,7 +112,7 @@ class FriendRequestsViewController: UIViewController, View {
     }
     
     private func setupNavigationBar() {
-        title = "친구 요청"
+        title = "친구 요청".localized
     }
     
     // MARK: - ReactorKit Binding
@@ -160,10 +160,10 @@ class FriendRequestsViewController: UIViewController, View {
         segmentedControl.rx.selectedSegmentIndex
             .subscribe(onNext: { [weak self] index in
                 if index == 0 {
-                    self?.emptyStateLabel.text = "받은 친구 요청이 없습니다."
+                    self?.emptyStateLabel.text = "받은 친구 요청이 없습니다.".localized
                     self?.emptyStateLabel.isHidden = !reactor.currentState.receivedRequests.isEmpty
                 } else {
-                    self?.emptyStateLabel.text = "보낸 친구 요청이 없습니다."
+                    self?.emptyStateLabel.text = "보낸 친구 요청이 없습니다.".localized
                     self?.emptyStateLabel.isHidden = !reactor.currentState.sentRequests.isEmpty
                 }
             })
@@ -213,11 +213,11 @@ class FriendRequestsViewController: UIViewController, View {
     
     private func showErrorAlert(_ error: Error) {
         let alert = UIAlertController(
-            title: "오류",
+            title: "오류".localized,
             message: error.localizedDescription,
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        alert.addAction(UIAlertAction(title: "확인".localized, style: .default))
         present(alert, animated: true)
     }
 }
@@ -256,7 +256,7 @@ class ReceivedRequestCell: UITableViewCell {
     
     let acceptButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("수락", for: .normal)
+        button.setTitle("수락".localized, for: .normal)
         button.setTitleColor(.systemGreen, for: .normal)
         button.layer.borderWidth = 1
         button.layer.borderColor = UIColor.systemGreen.cgColor
@@ -267,7 +267,7 @@ class ReceivedRequestCell: UITableViewCell {
     
     let rejectButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("거절", for: .normal)
+        button.setTitle("거절".localized, for: .normal)
         button.setTitleColor(.red, for: .normal)
         button.layer.borderWidth = 1
         button.layer.borderColor = UIColor.red.cgColor
@@ -335,8 +335,8 @@ class ReceivedRequestCell: UITableViewCell {
     
     func configure(with request: ReceivedFriendRequest) {
         guard let requesterId = request.requesterId else {
-            nameLabel.text = "Unknown User"
-            emailLabel.text = "Unknown Email"
+            nameLabel.text = "Unknown User".localized
+            emailLabel.text = "Unknown Email".localized
             profileImageView.image = UIImage(systemName: "person.circle.fill")
             profileImageView.tintColor = .gray
             return
@@ -388,7 +388,7 @@ class SentRequestCell: UITableViewCell {
     private let statusLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 14)
-        label.text = "대기 중"
+        label.text = "대기 중".localized
         label.textColor = .main
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -442,8 +442,8 @@ class SentRequestCell: UITableViewCell {
     
     func configure(with request: SentFriendRequest) {
         guard let receiverId = request.receiverId else {
-            nameLabel.text = "Unknown User"
-            emailLabel.text = "Unknown User"
+            nameLabel.text = "Unknown User".localized
+            emailLabel.text = "Unknown User".localized
             profileImageView.image = UIImage(systemName: "person.circle.fill")
             profileImageView.tintColor = .gray
             return

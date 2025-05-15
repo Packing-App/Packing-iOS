@@ -26,7 +26,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
         let iconSize: CGFloat = isSmallDevice ? 20 : 24
         imageAttachment.bounds = CGRect(x: 0, y: -6, width: iconSize, height: iconSize)
         attachmentString.append(NSAttributedString(attachment: imageAttachment))
-        attachmentString.append(NSAttributedString(string: " 패킹"))
+        attachmentString.append(NSAttributedString(string: " 패킹".localized))
         label.attributedText = attachmentString
         label.sizeToFit()
         
@@ -58,7 +58,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "여행 정보를 입력해주세요"
+        label.text = "여행 정보를 입력해주세요".localized
         let isSmallDevice = UIScreen.main.bounds.height < 700
         label.font = UIFont.systemFont(ofSize: isSmallDevice ? 16 : 17, weight: .semibold)
         label.textColor = .black
@@ -72,7 +72,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
         
         // Use UIButtonConfiguration for iOS 15+ compatibility
         var config = UIButton.Configuration.plain()
-        config.title = "어디서 출발하시나요?"
+        config.title = "어디서 출발하시나요?".localized
         config.baseForegroundColor = .gray
         config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 50, bottom: 0, trailing: 0)
         config.background.backgroundColor = .white
@@ -105,7 +105,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
         
         // Use UIButtonConfiguration for iOS 15+ compatibility
         var config = UIButton.Configuration.plain()
-        config.title = "어디로 떠나시나요?"
+        config.title = "어디로 떠나시나요?".localized
         config.baseForegroundColor = .gray
         config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 50, bottom: 0, trailing: 0)
         config.background.backgroundColor = .white
@@ -146,7 +146,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
         let button = UIButton(type: .system)
         
         var config = UIButton.Configuration.plain()
-        config.title = "출발 날짜"
+        config.title = "출발 날짜".localized
         config.baseForegroundColor = .black
         config.background.backgroundColor = .white
         button.configuration = config
@@ -165,7 +165,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
         let button = UIButton(type: .system)
         
         var config = UIButton.Configuration.plain()
-        config.title = "도착 날짜"
+        config.title = "도착 날짜".localized
         config.baseForegroundColor = .black
         config.background.backgroundColor = .white
         button.configuration = config
@@ -232,7 +232,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
         let button = UIButton(type: .system)
         
         var config = UIButton.Configuration.filled()
-        config.title = "다음"
+        config.title = "다음".localized
         config.baseForegroundColor = .white
         config.background.backgroundColor = .black
         config.cornerStyle = .medium
@@ -303,7 +303,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
             .distinctUntilChanged()
             .subscribe(onNext: { [weak self] origin in
                 var config = self?.departureButton.configuration
-                config?.title = origin.isEmpty ? "어디서 출발하시나요?" : origin
+                config?.title = origin.isEmpty ? "어디서 출발하시나요?".localized : origin
                 config?.baseForegroundColor = origin.isEmpty ? .gray : .black
                 self?.departureButton.configuration = config
             })
@@ -315,7 +315,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
             .distinctUntilChanged()
             .subscribe(onNext: { [weak self] destination in
                 var config = self?.destinationButton.configuration
-                config?.title = destination.isEmpty ? "어디로 떠나시나요?" : destination
+                config?.title = destination.isEmpty ? "어디로 떠나시나요?".localized : destination
                 config?.baseForegroundColor = destination.isEmpty ? .gray : .black
                 self?.destinationButton.configuration = config
             })
@@ -415,21 +415,21 @@ class JourneyDateSelectionViewController: UIViewController, View {
         
         if let departureDate = startDate {
             var config = departureDateButton.configuration
-            config?.title = "출발 \(dateFormatter.string(from: departureDate))"
+            config?.title = "출발 \(dateFormatter.string(from: departureDate))".localized
             departureDateButton.configuration = config
         } else {
             var config = departureDateButton.configuration
-            config?.title = "출발 날짜 선택"
+            config?.title = "출발 날짜 선택".localized
             departureDateButton.configuration = config
         }
         
         if let arrivalDate = endDate {
             var config = arrivalDateButton.configuration
-            config?.title = "도착 \(dateFormatter.string(from: arrivalDate))"
+            config?.title = "도착 \(dateFormatter.string(from: arrivalDate))".localized
             arrivalDateButton.configuration = config
         } else {
             var config = arrivalDateButton.configuration
-            config?.title = "도착 날짜 선택"
+            config?.title = "도착 날짜 선택".localized
             arrivalDateButton.configuration = config
         }
         
@@ -437,8 +437,8 @@ class JourneyDateSelectionViewController: UIViewController, View {
     }
     
     private func showAlert(message: String) {
-        let alert = UIAlertController(title: "알림", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        let alert = UIAlertController(title: "알림".localized, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인".localized, style: .default))
         present(alert, animated: true)
     }
     
@@ -563,7 +563,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
     }
     
     private func setupWeekdaysLabels() {
-        let weekdays = ["일", "월", "화", "수", "목", "금", "토"]
+        let weekdays = ["일", "월", "화", "수", "목", "금", "토"].map { $0.localized }
         let isSmallDevice = UIScreen.main.bounds.height < 700
 
         for weekday in weekdays {
@@ -596,7 +596,7 @@ class JourneyDateSelectionViewController: UIViewController, View {
         
         // Update month label
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy년 M월"
+        dateFormatter.dateFormat = "yyyy년 M월".localized
         monthYearLabel.text = dateFormatter.string(from: currentMonth)
         
         // Calculate days in month and first weekday

@@ -20,11 +20,11 @@ enum AuthError: Error {
         case .apiError(let error):
             return error.localizedDescription
         case .loginFailed:
-            return "로그인에 실패했습니다."
+            return "로그인에 실패했습니다.".localized
         case .userCancelled:
-            return "사용자가 로그인을 취소했습니다."
+            return "사용자가 로그인을 취소했습니다.".localized
         case .noData:
-            return "데이터가 없습니다."
+            return "데이터가 없습니다.".localized
         }
     }
 }

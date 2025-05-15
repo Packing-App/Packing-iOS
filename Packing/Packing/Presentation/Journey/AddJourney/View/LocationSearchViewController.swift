@@ -22,7 +22,7 @@ class LocationSearchViewController: UIViewController {
     // MARK: - UI Elements
     private let searchBar: UISearchBar = {
         let searchBar = UISearchBar()
-        searchBar.placeholder = "여행지 검색"
+        searchBar.placeholder = "여행지 검색".localized
         searchBar.translatesAutoresizingMaskIntoConstraints = false
         return searchBar
     }()
@@ -79,7 +79,7 @@ class LocationSearchViewController: UIViewController {
             tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
         
-        let title = searchType == .departure ? "출발지 선택" : "목적지 선택"
+        let title = searchType == .departure ? "출발지 선택".localized : "목적지 선택".localized
         let titleLabel = UILabel()
         titleLabel.text = title
         titleLabel.font = UIFont.systemFont(ofSize: 18, weight: .medium)

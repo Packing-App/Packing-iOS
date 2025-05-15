@@ -56,7 +56,7 @@ class TravelPlanCell: UICollectionViewCell {
     
     private let addTripLabel: UILabel = {
         let label = UILabel()
-        label.text = "여행을 추가해보세요"
+        label.text = "여행을 추가해보세요".localized
         label.font = .systemFont(ofSize: 14, weight: .medium)
         label.textColor = .darkGray
         label.textAlignment = .center

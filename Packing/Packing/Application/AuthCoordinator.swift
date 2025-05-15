@@ -154,7 +154,7 @@ class AuthCoordinator {
             let homeViewController = HomeViewController()
             let homeNavigationController = UINavigationController(rootViewController: homeViewController)
             homeNavigationController.tabBarItem = UITabBarItem(
-                title: "내 여행",
+                title: "내 여행".localized,
                 image: UIImage(systemName: "house"),
                 selectedImage: UIImage(systemName: "house.fill")
             )
@@ -163,7 +163,7 @@ class AuthCoordinator {
             let friendsViewController = FriendsViewController()
             let friendsNavigationController = UINavigationController(rootViewController: friendsViewController)
             friendsNavigationController.tabBarItem = UITabBarItem(
-                title: "내 친구",
+                title: "내 친구".localized,
                 image: UIImage(systemName: "person.2"),
                 selectedImage: UIImage(systemName: "person.2.fill")
             )
@@ -173,7 +173,7 @@ class AuthCoordinator {
             let profileViewController = ProfileViewController(reactor: profileReactor)
             let profileNavigationController = UINavigationController(rootViewController: profileViewController)
             profileNavigationController.tabBarItem = UITabBarItem(
-                title: "내 프로필",
+                title: "내 프로필".localized,
                 image: UIImage(systemName: "person"),
                 selectedImage: UIImage(systemName: "person.fill")
             )

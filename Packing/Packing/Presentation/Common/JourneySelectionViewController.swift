@@ -62,7 +62,7 @@ class JourneySelectionViewController: UIViewController {
     
     private let emptyLabel: UILabel = {
         let label = UILabel()
-        label.text = "여행 계획이 없습니다."
+        label.text = "여행 계획이 없습니다.".localized
         label.textAlignment = .center
         label.textColor = .gray
         label.isHidden = true
@@ -85,12 +85,12 @@ class JourneySelectionViewController: UIViewController {
         // Set title based on mode
         switch selectionMode {
         case .inviteFriend:
-            title = "여행 선택"
+            title = "여행 선택".localized
             guard let friend = selectedFriend else { return }
-            titleLabel.text = "\(friend.name)님을 초대할 여행을 선택해주세요"
+            titleLabel.text = "\(friend.name)님을 초대할 여행을 선택해주세요".localized
         case .addPackingItems:
-            title = "여행 선택"
-            titleLabel.text = "준비물을 추가할 여행을 선택해주세요"
+            title = "여행 선택".localized
+            titleLabel.text = "준비물을 추가할 여행을 선택해주세요".localized
         }
         
         view.addSubview(titleLabel)
@@ -176,8 +176,8 @@ class JourneySelectionViewController: UIViewController {
             .subscribe(onNext: { [weak self] response in
                 self?.loadingIndicator.stopAnimating()
                 self?.showSuccessAlert(
-                    title: "초대 완료",
-                    message: "\(friend.name)님을 '\(journey.title)' 여행에 초대했습니다.",
+                    title: "초대 완료".localized,
+                    message: "\(friend.name)님을 '\(journey.title)' 여행에 초대했습니다.".localized,
                     shouldNavigateToMain: true
                 )
             }, onError: { [weak self] error in
@@ -205,11 +205,11 @@ class JourneySelectionViewController: UIViewController {
             self?.loadingIndicator.stopAnimating()
             
             let itemCount = names.count
-            let itemCountText = itemCount > 1 ? "\(itemCount)개의 준비물이" : "준비물이"
+            let itemCountText = itemCount > 1 ? "\(itemCount)개의 준비물이".localized : "준비물이".localized
             
             self?.showSuccessAlert(
-                title: "준비물 추가 완료",
-                message: "\(itemCountText) '\(journey.title)' 여행에 추가되었습니다.",
+                title: "준비물 추가 완료".localized,
+                message: "\(itemCountText) '\(journey.title)' 여행에 추가되었습니다.".localized,
                 shouldNavigateToMain: true
             )
         }, onError: { [weak self] error in
@@ -227,7 +227,7 @@ class JourneySelectionViewController: UIViewController {
             preferredStyle: .alert
         )
         
-        alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: "확인".localized, style: .default) { [weak self] _ in
             if shouldNavigateToMain {
                 // Navigate to main screen
                 AuthCoordinator.shared.showMainScreen()
@@ -241,12 +241,12 @@ class JourneySelectionViewController: UIViewController {
     
     private func showErrorAlert(message: String) {
         let alert = UIAlertController(
-            title: "오류",
+            title: "오류".localized,
             message: message,
             preferredStyle: .alert
         )
         
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        alert.addAction(UIAlertAction(title: "확인".localized, style: .default))
         
         present(alert, animated: true)
     }

@@ -146,3 +146,10 @@ extension UIView {
         return layer
     }
 }
+
+// MARK: - Localization
+extension String {
+    var localized: String {
+        return NSLocalizedString(self, comment: "")
+    }
+}

@@ -25,7 +25,7 @@ class RecommendationsViewController: UIViewController, View {
         imageAttachment.image = UIImage(named: "logoIconWhite")
         imageAttachment.bounds = CGRect(x: 0, y: -7, width: 24, height: 24)
         attachmentString.append(NSAttributedString(attachment: imageAttachment))
-        attachmentString.append(NSAttributedString(string: " 패킹"))
+        attachmentString.append(NSAttributedString(string: " 패킹".localized))
         label.attributedText = attachmentString
         label.textAlignment = .center
         label.font = .systemFont(ofSize: 20, weight: .semibold)
@@ -117,23 +117,23 @@ class RecommendationsViewController: UIViewController, View {
         containerStackView.translatesAutoresizingMaskIntoConstraints = false
         
         // Labels
-        titleLabel.text = "추천 준비물"
+        titleLabel.text = "추천 준비물".localized
         titleLabel.font = .systemFont(ofSize: 28, weight: .bold)
         titleLabel.textColor = .label
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        subtitleLabel.text = "여행에 필요한 준비물을 확인하고 체크해보세요"
+        subtitleLabel.text = "여행에 필요한 준비물을 확인하고 체크해보세요".localized
         subtitleLabel.font = .systemFont(ofSize: 16, weight: .regular)
         subtitleLabel.textColor = .secondaryLabel
         subtitleLabel.numberOfLines = 0
         subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
         
         // Action buttons
-        selectAllButton.setTitle("전체 선택", for: .normal)
+        selectAllButton.setTitle("전체 선택".localized, for: .normal)
         selectAllButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         selectAllButton.translatesAutoresizingMaskIntoConstraints = false
         
-        addItemsButton.setTitle("0개 담기", for: .normal)
+        addItemsButton.setTitle("0개 담기".localized, for: .normal)
         addItemsButton.setTitleColor(.white, for: .normal)
         addItemsButton.backgroundColor = .main
         addItemsButton.layer.cornerRadius = 12
@@ -244,7 +244,7 @@ class RecommendationsViewController: UIViewController, View {
                 let shouldSelect = currentSelectedCount < totalItemCount
                 
                 // Update button text
-                self.selectAllButton.setTitle(shouldSelect ? "전체 해제" : "전체 선택", for: .normal)
+                self.selectAllButton.setTitle(shouldSelect ? "전체 해제".localized : "전체 선택".localized, for: .normal)
                 
                 // Send action to reactor
                 reactor.action.onNext(.selectAll(select: shouldSelect))
@@ -384,13 +384,13 @@ class RecommendationsViewController: UIViewController, View {
     
     private func updateSelectionUI(selectedItems: [String: Int], selectedCount: Int) {
         // Update add items button
-        addItemsButton.setTitle("\(selectedCount)개 담기", for: .normal)
+        addItemsButton.setTitle("\(selectedCount)개 담기".localized, for: .normal)
         addItemsButton.isEnabled = selectedCount > 0
         addItemsButton.alpha = selectedCount > 0 ? 1.0 : 0.5
         
         // Update global select all button
         let totalItems = itemCheckboxes.count
-        selectAllButton.setTitle(selectedCount == totalItems ? "전체 해제" : "전체 선택", for: .normal)
+        selectAllButton.setTitle(selectedCount == totalItems ? "전체 해제".localized : "전체 선택".localized, for: .normal)
         
         // Update category select all buttons
         updateCategorySelectButtons()
@@ -408,7 +408,7 @@ class RecommendationsViewController: UIViewController, View {
             }
             
             if let countLabel = itemCountLabels[itemName] {
-                countLabel.text = count > 0 ? "\(count)개" : ""
+                countLabel.text = count > 0 ? "\(count)개".localized : ""
             }
         }
     }
@@ -431,7 +431,7 @@ class RecommendationsViewController: UIViewController, View {
             // Update button state and title
             let allSelected = selectedInCategory == categoryItems.count && categoryItems.count > 0
             button.isSelected = allSelected
-            button.setTitle(allSelected ? "전체 해제" : "전체 선택", for: .normal)
+            button.setTitle(allSelected ? "전체 해제".localized : "전체 선택".localized, for: .normal)
         }
     }
     
@@ -463,7 +463,7 @@ class RecommendationsViewController: UIViewController, View {
             // Restore button title
             guard let reactor = reactor else { return }
             let selectedCount = reactor.currentState.selectedItems.filter { $0.value > 0 }.count
-            addItemsButton.setTitle("\(selectedCount)개 담기", for: .normal)
+            addItemsButton.setTitle("\(selectedCount)개 담기".localized, for: .normal)
         }
     }
     
@@ -527,7 +527,7 @@ class RecommendationsViewController: UIViewController, View {
         
         // Category select all button
         let selectAllButton = UIButton(type: .system)
-        selectAllButton.setTitle("전체 선택", for: .normal)
+        selectAllButton.setTitle("전체 선택".localized, for: .normal)
         selectAllButton.titleLabel?.font = .systemFont(ofSize: 14)
         selectAllButton.translatesAutoresizingMaskIntoConstraints = false
         
@@ -545,7 +545,7 @@ class RecommendationsViewController: UIViewController, View {
                 
                 // Update button text
                 selectAllButton?.isSelected = shouldSelect
-                selectAllButton?.setTitle(shouldSelect ? "전체 해제" : "전체 선택", for: .normal)
+                selectAllButton?.setTitle(shouldSelect ? "전체 해제".localized : "전체 선택".localized, for: .normal)
                 
                 // Send action to reactor
                 reactor.action.onNext(.selectAllInCategory(category: categoryKey.rawValue, select: shouldSelect))
@@ -606,7 +606,7 @@ class RecommendationsViewController: UIViewController, View {
         // Essential badge if needed
         let essentialBadge = UILabel()
         if item.isEssential {
-            essentialBadge.text = "필수"
+            essentialBadge.text = "필수".localized
             essentialBadge.font = .systemFont(ofSize: 12, weight: .medium)
             essentialBadge.textColor = .white
             essentialBadge.backgroundColor = .systemRed
@@ -705,11 +705,11 @@ class RecommendationsViewController: UIViewController, View {
         print("Error: \(error.localizedDescription)")
         
         let alert = UIAlertController(
-            title: "오류",
+            title: "오류".localized,
             message: error.localizedDescription,
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        alert.addAction(UIAlertAction(title: "확인".localized, style: .default))
         present(alert, animated: true)
     }
     

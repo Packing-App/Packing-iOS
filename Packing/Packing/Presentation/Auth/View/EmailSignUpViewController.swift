@@ -47,7 +47,7 @@ class EmailSignUpViewController: UIViewController {
     // MARK: - Email Section
     private lazy var emailLabel: UILabel = {
         let label = UILabel()
-        label.text = "이메일을 입력하세요."
+        label.text = "이메일을 입력하세요.".localized
         label.font = .systemFont(ofSize: 15, weight: .medium)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -55,7 +55,7 @@ class EmailSignUpViewController: UIViewController {
     
     private lazy var emailTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "이메일 주소"
+        textField.placeholder = "이메일 주소".localized
         textField.keyboardType = .emailAddress
         textField.autocorrectionType = .no
         textField.autocapitalizationType = .none
@@ -86,7 +86,7 @@ class EmailSignUpViewController: UIViewController {
     // MARK: - Password Section
     private lazy var passwordLabel: UILabel = {
         let label = UILabel()
-        label.text = "비밀번호를 입력하세요."
+        label.text = "비밀번호를 입력하세요.".localized
         label.font = .systemFont(ofSize: 15, weight: .medium)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -94,7 +94,7 @@ class EmailSignUpViewController: UIViewController {
     
     private lazy var passwordTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "영문, 숫자를 조합한 8~20 글자"
+        textField.placeholder = "영문, 숫자를 조합한 8~20 글자".localized
         textField.isSecureTextEntry = true
         textField.borderStyle = .roundedRect
         textField.delegate = self
@@ -123,7 +123,7 @@ class EmailSignUpViewController: UIViewController {
     // MARK: - Password Confirm Section
     private lazy var confirmPasswordLabel: UILabel = {
         let label = UILabel()
-        label.text = "비밀번호를 다시 입력하세요."
+        label.text = "비밀번호를 다시 입력하세요.".localized
         label.font = .systemFont(ofSize: 15, weight: .medium)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -131,7 +131,7 @@ class EmailSignUpViewController: UIViewController {
     
     private lazy var confirmPasswordTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "비밀번호 확인"
+        textField.placeholder = "비밀번호 확인".localized
         textField.isSecureTextEntry = true
         textField.isUserInteractionEnabled = true
         textField.borderStyle = .roundedRect
@@ -161,7 +161,7 @@ class EmailSignUpViewController: UIViewController {
     // MARK: - Name Section
     private lazy var nameLabel: UILabel = {
         let label = UILabel()
-        label.text = "이름(별명)을 입력하세요."
+        label.text = "이름(별명)을 입력하세요.".localized
         label.font = .systemFont(ofSize: 15, weight: .medium)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -169,7 +169,7 @@ class EmailSignUpViewController: UIViewController {
     
     private lazy var nameTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "사용할 이름(별명)"
+        textField.placeholder = "사용할 이름(별명)".localized
         textField.autocapitalizationType = .none
         textField.borderStyle = .roundedRect
         textField.delegate = self
@@ -197,7 +197,7 @@ class EmailSignUpViewController: UIViewController {
     
     // MARK: - Next Button Section
     private lazy var nextButton: UIBarButtonItem = {
-        let button = UIBarButtonItem(title: "다음", style: .done, target: nil, action: nil)
+        let button = UIBarButtonItem(title: "다음".localized, style: .done, target: nil, action: nil)
         button.isEnabled = false
         return button
     }()
@@ -233,7 +233,7 @@ class EmailSignUpViewController: UIViewController {
     // MARK: - UI Setup
     
     private func setupUI() {
-        self.navigationItem.title = "회원가입"
+        self.navigationItem.title = "회원가입".localized
         self.navigationItem.rightBarButtonItem = nextButton
         
         view.backgroundColor = .systemBackground
@@ -441,8 +441,8 @@ class EmailSignUpViewController: UIViewController {
     // MARK: - Helper Methods
     
     private func showAlert(message: String) {
-        let alert = UIAlertController(title: "알림", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        let alert = UIAlertController(title: "알림".localized, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인".localized, style: .default))
         present(alert, animated: true)
     }
     

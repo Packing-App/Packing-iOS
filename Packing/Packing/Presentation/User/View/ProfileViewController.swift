@@ -73,7 +73,7 @@ final class ProfileViewController: UIViewController, View {
     
     private lazy var editProfileButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("수정", for: .normal)
+        button.setTitle("수정".localized, for: .normal)
         button.setTitleColor(.main, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 16)
         button.backgroundColor = UIColor.systemGray6
@@ -156,7 +156,7 @@ final class ProfileViewController: UIViewController, View {
     
     // MARK: - UI Setup
     private func setupUI() {
-        title = "내 프로필"
+        title = "내 프로필".localized
         view.backgroundColor = .systemGray6
         
         // 스크롤뷰 설정
@@ -376,7 +376,7 @@ final class ProfileViewController: UIViewController, View {
         }
         
         nameLabel.text = user.name
-        bioLabel.text = user.intro ?? "소개가 없습니다."
+        bioLabel.text = user.intro ?? "소개가 없습니다.".localized
         
         tableView.reloadData()
         
@@ -450,13 +450,13 @@ final class ProfileViewController: UIViewController, View {
     
     private func showLogoutConfirmation() {
         let alert = UIAlertController(
-            title: "로그아웃",
-            message: "정말 로그아웃 하시겠습니까?",
+            title: "로그아웃".localized,
+            message: "정말 로그아웃 하시겠습니까?".localized,
             preferredStyle: .alert
         )
         
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        alert.addAction(UIAlertAction(title: "로그아웃", style: .destructive) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: "취소".localized, style: .cancel))
+        alert.addAction(UIAlertAction(title: "로그아웃".localized, style: .destructive) { [weak self] _ in
             self?.reactor?.action.onNext(.logout)
         })
         
@@ -465,13 +465,13 @@ final class ProfileViewController: UIViewController, View {
     
     private func showDeleteAccountConfirmation() {
         let alert = UIAlertController(
-            title: "회원탈퇴",
-            message: "정말 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+            title: "회원탈퇴".localized,
+            message: "정말 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.".localized,
             preferredStyle: .alert
         )
         
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        alert.addAction(UIAlertAction(title: "탈퇴하기", style: .destructive) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: "취소".localized, style: .cancel))
+        alert.addAction(UIAlertAction(title: "탈퇴하기".localized, style: .destructive) { [weak self] _ in
             self?.reactor?.action.onNext(.deleteAccount)
         })
         
@@ -479,8 +479,8 @@ final class ProfileViewController: UIViewController, View {
     }
     
     private func showAlert(message: String) {
-        let alert = UIAlertController(title: "알림", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        let alert = UIAlertController(title: "알림".localized, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인".localized, style: .default))
         present(alert, animated: true)
     }
     
@@ -503,15 +503,15 @@ final class ProfileViewController: UIViewController, View {
     private func getSocialTypeName(for type: LoginType) -> String {
         switch type {
         case .naver:
-            return "네이버"
+            return "네이버".localized
         case .kakao:
-            return "카카오"
+            return "카카오".localized
         case .apple:
-            return "애플"
+            return "애플".localized
         case .google:
-            return "구글"
+            return "구글".localized
         case .email:
-            return "이메일"
+            return "이메일".localized
         }
     }
     

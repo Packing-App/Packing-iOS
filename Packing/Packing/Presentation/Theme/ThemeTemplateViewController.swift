@@ -52,7 +52,7 @@ class ThemeTemplateViewController: UIViewController, View {
         let label = UILabel()
         label.font = .systemFont(ofSize: 14, weight: .regular)
         label.textColor = .secondaryLabel
-        label.text = "필요한 준비물을 선택하고 여행에 추가하세요"
+        label.text = "필요한 준비물을 선택하고 여행에 추가하세요".localized
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -67,7 +67,7 @@ class ThemeTemplateViewController: UIViewController, View {
     private lazy var floatingAddButton: UIButton = {
         let button = UIButton(type: .system)
         button.backgroundColor = .main
-        button.setTitle("선택 항목 추가", for: .normal)
+        button.setTitle("선택 항목 추가".localized, for: .normal)
         button.setTitleColor(.white, for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
         button.layer.cornerRadius = 25
@@ -106,7 +106,7 @@ class ThemeTemplateViewController: UIViewController, View {
     }()
     
     private lazy var selectAllButton: UIBarButtonItem = {
-        let button = UIBarButtonItem(title: "전체 선택", style: .plain, target: self, action: #selector(selectAllButtonTapped))
+        let button = UIBarButtonItem(title: "전체 선택".localized, style: .plain, target: self, action: #selector(selectAllButtonTapped))
         return button
     }()
     
@@ -115,7 +115,7 @@ class ThemeTemplateViewController: UIViewController, View {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        themeTitleLabel.text = themeName.displayName + " 준비물"
+        themeTitleLabel.text = themeName.displayName + " 준비물".localized
         title = themeName.displayName
         tableView.dataSource = self
         tableView.delegate = self
@@ -272,8 +272,8 @@ class ThemeTemplateViewController: UIViewController, View {
     }
     
     private func showErrorAlert(message: String) {
-        let alert = UIAlertController(title: "오류", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        let alert = UIAlertController(title: "오류".localized, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인".localized, style: .default))
         present(alert, animated: true)
     }
     
@@ -309,7 +309,7 @@ class ThemeTemplateViewController: UIViewController, View {
                 }
             }
             selectedItems.removeAll()
-            selectAllButton.title = "전체 선택"
+            selectAllButton.title = "전체 선택".localized
         } else {
             // 모든 항목 선택
             selectedItems.removeAll()
@@ -326,7 +326,7 @@ class ThemeTemplateViewController: UIViewController, View {
                     selectedItems.append(indexPath)
                 }
             }
-            selectAllButton.title = "전체 해제"
+            selectAllButton.title = "전체 해제".localized
         }
         
         updateSelectionCount()

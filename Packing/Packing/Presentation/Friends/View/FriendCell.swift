@@ -65,7 +65,7 @@ class FriendCell: UITableViewCell {
     
     let inviteButton: UIButton = {
         var configuration = UIButton.Configuration.filled()
-        configuration.title = "초대하기"
+        configuration.title = "초대하기".localized
         configuration.baseBackgroundColor = .main
         configuration.baseForegroundColor = .white
         configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in

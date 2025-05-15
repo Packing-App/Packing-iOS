@@ -30,15 +30,15 @@ struct AddPackingItemSheet: View {
             ZStack {
                 Form {
                     // 아이템 이름 입력
-                    Section(header: Text("아이템 정보")) {
-                        TextField("준비물 이름", text: $itemName)
+                    Section(header: Text("아이템 정보".localized)) {
+                        TextField("준비물 이름".localized, text: $itemName)
                         
-                        Stepper("수량: \(itemCount)개", value: $itemCount, in: 1...99)
+                        Stepper("수량: \(itemCount)개".localized, value: $itemCount, in: 1...99)
                     }
                     
                     // 카테고리 선택
-                    Section(header: Text("카테고리")) {
-                        Picker("카테고리", selection: $selectedCategory) {
+                    Section(header: Text("카테고리".localized)) {
+                        Picker("카테고리".localized, selection: $selectedCategory) {
                             ForEach(ItemCategory.allCases, id: \.self) { category in
                                 HStack {
                                     Image(systemName: categoryIcon(for: category))
@@ -51,19 +51,19 @@ struct AddPackingItemSheet: View {
                     }
                     
                     // 개인/공용 선택
-                    Section(header: Text("준비물 유형")) {
-                        Toggle("공용 준비물", isOn: $isShared)
+                    Section(header: Text("준비물 유형".localized)) {
+                        Toggle("공용 준비물".localized, isOn: $isShared)
                             .toggleStyle(SwitchToggleStyle(tint: .blue))
                     }
                     
                     // 담당자 지정 (공용일 때만 표시)
                     if isShared {
-                        Section(header: Text("담당자")) {
-                            Picker("담당자", selection: $selectedAssignee) {
-                                Text("담당자 미지정").tag(String?.none)
+                        Section(header: Text("담당자".localized)) {
+                            Picker("담당자".localized, selection: $selectedAssignee) {
+                                Text("담당자 미지정".localized).tag(String?.none)
                                 ForEach(self.journey.participants.map { $0.id }, id: \.self) { participantId in
                                     let isCreator = participantId == journey.creatorId
-                                    Text(isCreator ? "방장" : "참가자")
+                                    Text(isCreator ? "방장".localized : "참가자".localized)
                                         .tag(participantId as String?)
                                 }
                             }
@@ -83,7 +83,7 @@ struct AddPackingItemSheet: View {
                         ProgressView()
                             .scaleEffect(1.5)
                             .padding()
-                        Text("저장 중...")
+                        Text("저장 중...".localized)
                             .foregroundColor(.white)
                             .font(.headline)
                     }
@@ -92,18 +92,18 @@ struct AddPackingItemSheet: View {
                     .cornerRadius(10)
                 }
             }
-            .navigationTitle("준비물 추가")
+            .navigationTitle("준비물 추가".localized)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("취소") {
+                    Button("취소".localized) {
                         presentationMode.wrappedValue.dismiss()
                     }
                     .disabled(isLoading)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("저장") {
+                    Button("저장".localized) {
                         saveItem()
                     }
                     .disabled(itemName.isEmpty || isLoading)
@@ -114,9 +114,9 @@ struct AddPackingItemSheet: View {
                 set: { errorMessage = $0?.message }
             )) { error in
                 Alert(
-                    title: Text("오류"),
+                    title: Text("오류".localized),
                     message: Text(error.message),
-                    dismissButton: .default(Text("확인"))
+                    dismissButton: .default(Text("확인".localized))
                 )
             }
         }

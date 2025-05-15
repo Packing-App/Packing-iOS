@@ -80,8 +80,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             guard let rootViewController = self.window?.rootViewController else { return }
             
             let alert = UIAlertController(
-                title: "세션 만료",
-                message: "로그인 세션이 만료되었습니다. 다시 로그인해주세요.",
+                title: "세션 만료".localized,
+                message: "로그인 세션이 만료되었습니다. 다시 로그인해주세요.".localized,
                 preferredStyle: .alert
             )
             

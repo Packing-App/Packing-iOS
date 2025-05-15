@@ -26,7 +26,7 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         let iconSize: CGFloat = isSmallDevice ? 20 : 24
         imageAttachment.bounds = CGRect(x: 0, y: -6, width: iconSize, height: iconSize)
         attachmentString.append(NSAttributedString(attachment: imageAttachment))
-        attachmentString.append(NSAttributedString(string: " 패킹"))
+        attachmentString.append(NSAttributedString(string: " 패킹".localized))
         label.attributedText = attachmentString
         label.sizeToFit()
         
@@ -58,7 +58,7 @@ class JourneyThemeSelectionViewController: UIViewController, View {
     
     private let questionLabel: UILabel = {
         let label = UILabel()
-        label.text = "여행 테마를 선택해주세요"
+        label.text = "여행 테마를 선택해주세요".localized
         let isSmallDevice = UIScreen.main.bounds.height < 700
         label.font = UIFont.systemFont(ofSize: isSmallDevice ? 16 : 17, weight: .semibold)
         label.textColor = .black
@@ -69,7 +69,7 @@ class JourneyThemeSelectionViewController: UIViewController, View {
     
     private let subtitleLabel: UILabel = {
         let label = UILabel()
-        label.text = "여러 개 선택할 수 있어요!"
+        label.text = "여러 개 선택할 수 있어요!".localized
         label.font = UIFont.systemFont(ofSize: 13, weight: .regular)
         label.textColor = .darkGray
         label.textAlignment = .center
@@ -105,10 +105,10 @@ class JourneyThemeSelectionViewController: UIViewController, View {
     
     private let helperLabel: UILabel = {
         let label = UILabel()
-        label.text = "여행에 딱 맞는 준비물을 추천해드릴게요!"
+        label.text = "여행에 딱 맞는 준비물을 추천해드릴게요!".localized
         label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
         label.textColor = .darkGray
-        label.asColor(targetString: "딱 맞는 준비물", color: .main)
+        label.asColor(targetString: "딱 맞는 준비물".localized, color: .main)
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -116,7 +116,7 @@ class JourneyThemeSelectionViewController: UIViewController, View {
     
     private let nextButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("다음", for: .normal)
+        button.setTitle("다음".localized, for: .normal)
         button.setTitleColor(.white, for: .normal)
         button.backgroundColor = .lightGray
         button.layer.cornerRadius = 8

@@ -56,7 +56,7 @@ class ItemCell: UITableViewCell {
     
     private let essentialLabel: UILabel = {
         let label = UILabel()
-        label.text = "필수"
+        label.text = "필수".localized
         label.font = .systemFont(ofSize: 11, weight: .bold)
         label.textColor = .systemRed
         label.translatesAutoresizingMaskIntoConstraints = false

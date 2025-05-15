@@ -50,7 +50,7 @@ class HomeViewController: UIViewController, View {
         imageAttachment.image = UIImage(named: "logoIconWhite")
         imageAttachment.bounds = CGRect(x: 0, y: -7, width: 24, height: 24)
         attachmentString.append(NSAttributedString(attachment: imageAttachment))
-        attachmentString.append(NSAttributedString(string: " 패킹"))
+        attachmentString.append(NSAttributedString(string: " 패킹".localized))
         label.attributedText = attachmentString
         label.sizeToFit()
         
@@ -116,7 +116,7 @@ class HomeViewController: UIViewController, View {
         configuration.baseForegroundColor = UIColor(hexCode: "333A56")
         configuration.baseBackgroundColor = .white
         configuration.buttonSize = .large
-        configuration.title = "새로운 여행 준비하기"
+        configuration.title = "새로운 여행 준비하기".localized
         configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
             outgoing.font = UIFont.systemFont(ofSize: 17, weight: .heavy)
@@ -180,7 +180,7 @@ class HomeViewController: UIViewController, View {
     
     private lazy var templatesSectionLabel: UILabel = {
         let label = UILabel()
-        label.text = "테마별 여행 준비물 모음"
+        label.text = "테마별 여행 준비물 모음".localized
         label.font = .systemFont(ofSize: 18, weight: .semibold)
         label.textColor = .black
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -486,13 +486,13 @@ class HomeViewController: UIViewController, View {
     private func updateUserNameLabels() {
         if let name = UserManager.shared.currentUser?.name {
             // 타이틀 레이블 업데이트
-            titleLabel.text = "\(name)님!\n여행 준비를 같이 해볼까요?"
+            titleLabel.text = "\(name)님!\n여행 준비를 같이 해볼까요?".localized
             
             // 여행 계획 섹션 레이블 업데이트
-            myTravelPlansSectionLabel.text = "\(name)님의 여행 계획"
+            myTravelPlansSectionLabel.text = "\(name)님의 여행 계획".localized
         } else {
-            titleLabel.text = "회원님!\n여행 준비를 같이 해볼까요?"
-            myTravelPlansSectionLabel.text = "회원님의 여행 계획"
+            titleLabel.text = "회원님!\n여행 준비를 같이 해볼까요?".localized
+            myTravelPlansSectionLabel.text = "회원님의 여행 계획".localized
         }
     }
     
@@ -529,8 +529,8 @@ class HomeViewController: UIViewController, View {
     }
     
     private func showErrorAlert(message: String) {
-        let alert = UIAlertController(title: "오류", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        let alert = UIAlertController(title: "오류".localized, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인".localized, style: .default))
         present(alert, animated: true)
     }
 }

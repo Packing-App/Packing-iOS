@@ -1,0 +1,12 @@
+/* 
+  InfoPlist.strings
+  Packing
+
+  Created by 이융의 on 5/15/25.
+  
+*/
+
+"CFBundleDisplayName" = "패킹";
+"CFBundleName" = "패킹";
+
+"NSPhotoLibraryUsageDescription" = "프로필 사진을 선택하기 위해 사진 라이브러리 접근 권한이 필요합니다.";

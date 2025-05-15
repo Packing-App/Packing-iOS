@@ -69,7 +69,7 @@ final class EditProfileViewReactor: Reactor {
         case .save:
             // 이름이 비어있으면 저장 불가
             guard !currentState.name.isEmpty else {
-                return .just(.setError(NetworkError.serverError("이름은 필수 입력 항목입니다.")))
+                return .just(.setError(NetworkError.serverError("이름은 필수 입력 항목입니다.".localized)))
             }
             
             return Observable.concat([

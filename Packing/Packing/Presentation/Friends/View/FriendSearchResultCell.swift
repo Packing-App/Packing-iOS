@@ -53,7 +53,7 @@ class FriendSearchResultCell: UITableViewCell {
     
     let actionButton: UIButton = {
         var configuration = UIButton.Configuration.filled()
-        configuration.title = "친구 요청"
+        configuration.title = "친구 요청".localized
         configuration.baseBackgroundColor = .main
         configuration.baseForegroundColor = .white
         configuration.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in

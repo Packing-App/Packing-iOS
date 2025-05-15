@@ -30,7 +30,7 @@ class JourneySummaryViewController: UIViewController, View {
         let iconSize: CGFloat = isSmallDevice ? 20 : 24
         imageAttachment.bounds = CGRect(x: 0, y: -6, width: iconSize, height: iconSize)
         attachmentString.append(NSAttributedString(attachment: imageAttachment))
-        attachmentString.append(NSAttributedString(string: " 패킹"))
+        attachmentString.append(NSAttributedString(string: " 패킹".localized))
         label.attributedText = attachmentString
         label.sizeToFit()
         
@@ -62,7 +62,7 @@ class JourneySummaryViewController: UIViewController, View {
     
     private let journeyTitleLabel: UILabel = {
         let label = UILabel()
-        label.text = "나의 여행"
+        label.text = "나의 여행".localized
         label.font = .systemFont(ofSize: UIScreen.main.bounds.height < 700 ? 20 : 24, weight: .bold)
         label.textColor = .black
         label.textAlignment = .center
@@ -91,7 +91,7 @@ class JourneySummaryViewController: UIViewController, View {
     
     private let themeLabel: UILabel = {
         let label = UILabel()
-        label.text = "해외여행"
+        label.text = "해외여행".localized
         label.font = .systemFont(ofSize: UIScreen.main.bounds.height < 700 ? 14 : 16, weight: .medium)
         label.textColor = .main
         label.textAlignment = .center
@@ -120,7 +120,7 @@ class JourneySummaryViewController: UIViewController, View {
     
     private let dateLabel: UILabel = {
         let label = UILabel()
-        label.text = "여행 날짜"
+        label.text = "여행 날짜".localized
         label.font = .systemFont(ofSize: UIScreen.main.bounds.height < 700 ? 14 : 16)
         label.textColor = .black
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -129,7 +129,7 @@ class JourneySummaryViewController: UIViewController, View {
     
     private let dateValueLabel: UILabel = {
         let label = UILabel()
-        label.text = "날짜 미설정"
+        label.text = "날짜 미설정".localized
         label.font = .systemFont(ofSize: UIScreen.main.bounds.height < 700 ? 14 : 16)
         label.textColor = .darkGray
         label.textAlignment = .right
@@ -146,7 +146,7 @@ class JourneySummaryViewController: UIViewController, View {
     
     private let transportLabel: UILabel = {
         let label = UILabel()
-        label.text = "이동 수단"
+        label.text = "이동 수단".localized
         label.font = .systemFont(ofSize: UIScreen.main.bounds.height < 700 ? 14 : 16)
         label.textColor = .black
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -155,7 +155,7 @@ class JourneySummaryViewController: UIViewController, View {
     
     private let transportValueLabel: UILabel = {
         let label = UILabel()
-        label.text = "미설정"
+        label.text = "미설정".localized
         label.font = .systemFont(ofSize: UIScreen.main.bounds.height < 700 ? 14 : 16)
         label.textColor = .darkGray
         label.textAlignment = .right
@@ -172,7 +172,7 @@ class JourneySummaryViewController: UIViewController, View {
     
     private let destinationLabel: UILabel = {
         let label = UILabel()
-        label.text = "여행 목적지"
+        label.text = "여행 목적지".localized
         label.font = .systemFont(ofSize: UIScreen.main.bounds.height < 700 ? 14 : 16)
         label.textColor = .black
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -181,7 +181,7 @@ class JourneySummaryViewController: UIViewController, View {
     
     private let destinationValueLabel: UILabel = {
         let label = UILabel()
-        label.text = "미설정"
+        label.text = "미설정".localized
         label.font = .systemFont(ofSize: UIScreen.main.bounds.height < 700 ? 14 : 16)
         label.textColor = .darkGray
         label.textAlignment = .right
@@ -191,7 +191,7 @@ class JourneySummaryViewController: UIViewController, View {
     
     private let titleTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "여행 제목을 입력해주세요"
+        textField.placeholder = "여행 제목을 입력해주세요".localized
         textField.borderStyle = .roundedRect
         textField.font = .systemFont(ofSize: UIScreen.main.bounds.height < 700 ? 14 : 16)
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -207,7 +207,7 @@ class JourneySummaryViewController: UIViewController, View {
     
     private let privateSwitchLabel: UILabel = {
         let label = UILabel()
-        label.text = "혼자 여행하기"
+        label.text = "혼자 여행하기".localized
         label.font = .systemFont(ofSize: UIScreen.main.bounds.height < 700 ? 12 : 14)
         label.textColor = .darkGray
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -216,7 +216,7 @@ class JourneySummaryViewController: UIViewController, View {
     
     private let helperLabel: UILabel = {
         let label = UILabel()
-        label.text = "위 정보가 맞으면 완료 버튼을 눌러주세요"
+        label.text = "위 정보가 맞으면 완료 버튼을 눌러주세요".localized
         label.font = .systemFont(ofSize: UIScreen.main.bounds.height < 700 ? 12 : 14)
         label.textColor = .darkGray
         label.textAlignment = .center
@@ -226,7 +226,7 @@ class JourneySummaryViewController: UIViewController, View {
     
     private let completeButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("완료", for: .normal)
+        button.setTitle("완료".localized, for: .normal)
         button.setTitleColor(.white, for: .normal)
         button.backgroundColor = .black
         button.layer.cornerRadius = 8
@@ -430,7 +430,7 @@ class JourneySummaryViewController: UIViewController, View {
             .distinctUntilChanged { $0?.localizedDescription == $1?.localizedDescription }
             .filter { $0 != nil }
             .subscribe(onNext: { [weak self] error in
-                self?.showAlert(title: "오류", message: error?.localizedDescription ?? "알 수 없는 오류가 발생했습니다.")
+                self?.showAlert(title: "오류".localized, message: error?.localizedDescription ?? "알 수 없는 오류가 발생했습니다.".localized)
             })
             .disposed(by: disposeBag)
         
@@ -448,7 +448,7 @@ class JourneySummaryViewController: UIViewController, View {
     // MARK: - Helper Methods
     private func showAlert(title: String, message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        alert.addAction(UIAlertAction(title: "확인".localized, style: .default))
         present(alert, animated: true)
     }
     
@@ -458,18 +458,18 @@ class JourneySummaryViewController: UIViewController, View {
     
     private func showAlert(title: String, message: String, completion: ((UIAlertAction) -> Void)? = nil) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "확인", style: .default, handler: completion))
+        alert.addAction(UIAlertAction(title: "확인".localized, style: .default, handler: completion))
         present(alert, animated: true)
     }
     
     private func showLoginRequiredAlert() {
         let alert = UIAlertController(
-            title: "로그인 필요",
-            message: "여행 정보를 저장하고 추천 아이템을 확인하려면 로그인이 필요합니다. 로그인하면 지금까지 입력한 여행 정보가 유지됩니다.",
+            title: "로그인 필요".localized,
+            message: "여행 정보를 저장하고 추천 아이템을 확인하려면 로그인이 필요합니다. 로그인하면 지금까지 입력한 여행 정보가 유지됩니다.".localized,
             preferredStyle: .alert
         )
         
-        alert.addAction(UIAlertAction(title: "로그인", style: .default) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: "로그인".localized, style: .default) { [weak self] _ in
             self?.navigateToLogin()
         })
         

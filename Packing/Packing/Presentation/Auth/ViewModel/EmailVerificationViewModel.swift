@@ -60,7 +60,7 @@ class EmailVerificationViewModel {
         let isLoadingRelay = BehaviorRelay<Bool>(value: false)
         let signUpResultRelay = PublishRelay<Result<User, AuthError>>()
         let errorMessageRelay = PublishRelay<String>()
-        let verificationMessageRelay = BehaviorRelay<String?>(value: "인증 코드가 이메일로 발송되었습니다.")
+        let verificationMessageRelay = BehaviorRelay<String?>(value: "인증 코드가 이메일로 발송되었습니다.".localized)
         let resendButtonEnabledRelay = BehaviorRelay<Bool>(value: true)
         
         // 인증 코드 구독 및 저장
@@ -78,7 +78,7 @@ class EmailVerificationViewModel {
         let codeErrorMessage = input.verificationCode
             .map { [weak self] code in
                 guard let self = self, !code.isEmpty else { return nil as String? }
-                return self.isValidCode(code) ? nil : "6자리 숫자를 입력해주세요."
+                return self.isValidCode(code) ? nil : "6자리 숫자를 입력해주세요.".localized
             }
         
         // 완료 버튼 활성화 여부
@@ -111,17 +111,17 @@ class EmailVerificationViewModel {
             .subscribe(onNext: { result in
                 switch result {
                 case .success:
-                    verificationMessageRelay.accept("인증번호가 재발송되었습니다.")
+                    verificationMessageRelay.accept("인증번호가 재발송되었습니다.".localized)
                     
                     // 3초 후 메시지 숨기기
                     DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                        if verificationMessageRelay.value == "인증번호가 재발송되었습니다." {
+                        if verificationMessageRelay.value == "인증번호가 재발송되었습니다.".localized {
                             verificationMessageRelay.accept(nil)
                         }
                     }
                     
                 case .failure(let error):
-                    verificationMessageRelay.accept("인증번호 발송 실패")
+                    verificationMessageRelay.accept("인증번호 발송 실패".localized)
                     errorMessageRelay.accept(error.localizedDescription)
                 }
             })
@@ -171,7 +171,7 @@ class EmailVerificationViewModel {
             resendButtonEnabled: resendButtonEnabledRelay.asDriver(),
             
             signUpResult: signUpResultRelay.asDriver(onErrorJustReturn: .failure(.loginFailed)),
-            errorMessage: errorMessageRelay.asDriver(onErrorJustReturn: "알 수 없는 오류가 발생했습니다.")
+            errorMessage: errorMessageRelay.asDriver(onErrorJustReturn: "알 수 없는 오류가 발생했습니다.".localized)
         )
     }
     

@@ -24,7 +24,7 @@ struct WeatherSection: View {
         VStack(alignment: .leading, spacing: 15) {
             // Section header
             HStack {
-                Text("여행지 날씨")
+                Text("여행지 날씨".localized)
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.primary)
                 
@@ -40,7 +40,7 @@ struct WeatherSection: View {
                             showFullForecast.toggle()
                         }
                     }) {
-                        Text(showFullForecast ? "간략히 보기" : "상세 보기")
+                        Text(showFullForecast ? "간략히 보기".localized : "상세 보기".localized)
                             .font(.system(size: 14))
                             .foregroundStyle(Color.main)
                     }
@@ -65,7 +65,7 @@ struct WeatherSection: View {
                 Divider()
                     .padding(.vertical, 5)
                 
-                Text("여행 기간 날씨")
+                Text("여행 기간 날씨".localized)
                     .font(.system(size: 16, weight: .medium))
                     .padding(.top, 5)
                 
@@ -120,7 +120,7 @@ struct WeatherSection: View {
                         Text("\(Int(weather.temp))°C")
                             .font(.system(size: 20, weight: .bold))
                         
-                        Text("최저 \(Int(weather.tempMin))° / 최고 \(Int(weather.tempMax))°")
+                        Text("최저 \(Int(weather.tempMin))° / 최고 \(Int(weather.tempMax))°".lowercased())
                             .font(.system(size: 12))
                             .foregroundColor(.secondary)
                     }
@@ -131,13 +131,13 @@ struct WeatherSection: View {
             
             // Additional weather details
             HStack(spacing: 20) {
-                weatherDetailItem(icon: "drop.fill", value: "\(weather.humidity)%", label: "습도")
-                weatherDetailItem(icon: "wind", value: "\(Int(weather.windSpeed))m/s", label: "풍속")
+                weatherDetailItem(icon: "drop.fill", value: "\(weather.humidity)%", label: "습도".localized)
+                weatherDetailItem(icon: "wind", value: "\(Int(weather.windSpeed))m/s", label: "풍속".localized)
                 
                 if weather.rain > 0 {
-                    weatherDetailItem(icon: "cloud.rain.fill", value: "\(weather.rain)mm", label: "강수량")
+                    weatherDetailItem(icon: "cloud.rain.fill", value: "\(weather.rain)mm", label: "강수량".localized)
                 } else {
-                    weatherDetailItem(icon: "cloud.fill", value: "\(weather.clouds)%", label: "구름")
+                    weatherDetailItem(icon: "cloud.fill", value: "\(weather.clouds)%", label: "구름".localized)
                 }
             }
             .padding(.top, 5)
@@ -247,7 +247,7 @@ struct WeatherSection: View {
                     .foregroundColor(.gray)
             }
             
-            Text("정보 없음")
+            Text("정보 없음".localized)
                 .font(.system(size: 12))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -271,7 +271,7 @@ struct WeatherSection: View {
                 self.loadForecast()
             }, onError: { error in
                 self.isLoading = false
-                self.error = "현재 날씨 정보를 불러올 수 없습니다."
+                self.error = "현재 날씨 정보를 불러올 수 없습니다.".localized
                 print("날씨 로드 오류: \(error)")
             })
             .disposed(by: disposeBag)
@@ -285,7 +285,7 @@ struct WeatherSection: View {
                 self.isLoading = false
             }, onError: { error in
                 self.isLoading = false
-                self.error = "예보를 불러올 수 없습니다."
+                self.error = "예보를 불러올 수 없습니다.".localized
                 print("예보 로드 오류: \(error)")
             })
             .disposed(by: disposeBag)

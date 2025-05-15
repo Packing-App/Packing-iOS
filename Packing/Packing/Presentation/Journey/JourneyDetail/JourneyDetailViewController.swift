@@ -94,13 +94,13 @@ class JourneyDetailViewController: UIViewController {
     @objc private func deleteJourneyTapped() {
         // 확인 알림 표시
         let alert = UIAlertController(
-            title: "여행 삭제",
-            message: "이 여행을 삭제하시겠습니까?",
+            title: "여행 삭제".localized,
+            message: "이 여행을 삭제하시겠습니까?".localized,
             preferredStyle: .alert
         )
         
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: "취소".localized, style: .cancel))
+        alert.addAction(UIAlertAction(title: "삭제".localized, style: .destructive) { [weak self] _ in
             guard let self = self, let journey = self.journey else { return }
             
             self.deleteJourney(id: journey.id)
@@ -137,11 +137,11 @@ class JourneyDetailViewController: UIViewController {
                     loadingView.removeFromSuperview()
                     // 오류 알림 표시
                     let errorAlert = UIAlertController(
-                        title: "오류",
-                        message: "여행을 삭제하는데 실패했습니다: \(error.localizedDescription)",
+                        title: "오류".localized,
+                        message: "여행을 삭제하는데 실패했습니다: \(error.localizedDescription)".localized,
                         preferredStyle: .alert
                     )
-                    errorAlert.addAction(UIAlertAction(title: "확인", style: .default))
+                    errorAlert.addAction(UIAlertAction(title: "확인".localized, style: .default))
                     self.present(errorAlert, animated: true)
                 }
             }
@@ -221,9 +221,9 @@ struct JourneyDetailView: View {
             set: { errorMessage = $0?.message }
         )) { error in
             Alert(
-                title: Text("오류"),
+                title: Text("오류".localized),
                 message: Text(error.message),
-                dismissButton: .default(Text("확인"))
+                dismissButton: .default(Text("확인".localized))
             )
         }
         .onAppear {
@@ -249,7 +249,7 @@ struct JourneyDetailView: View {
             VStack(spacing: 20) {
                 ProgressView()
                     .scaleEffect(1.5)
-                Text("준비물 로딩 중...")
+                Text("준비물 로딩 중...".localized)
                     .font(.headline)
                     .foregroundColor(.secondary)
             }
@@ -260,7 +260,7 @@ struct JourneyDetailView: View {
                     .shadow(radius: 5)
             )
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("준비물을 로딩 중입니다. 잠시만 기다려주세요.")
+            .accessibilityLabel("준비물을 로딩 중입니다. 잠시만 기다려주세요.".localized)
         }
         .edgesIgnoringSafeArea(.all)
     }
@@ -331,7 +331,7 @@ struct JourneyDetailView: View {
             HStack {
                 Image(systemName: transportIcon)
                     .foregroundColor(.secondary)
-                Text("이동 수단: \(journey.transportType.displayName)")
+                Text("이동 수단: \(journey.transportType.displayName)".localized)
                     .font(.system(size: 14))
                     .foregroundColor(.secondary)
             }
@@ -339,7 +339,7 @@ struct JourneyDetailView: View {
             HStack {
                 Image(systemName: themeIcon)
                     .foregroundColor(.secondary)
-                Text("테마: \(journey.themes.first!.displayName)")
+                Text("테마: \(journey.themes.first!.displayName)".localized)
                     .font(.system(size: 14))
                     .foregroundColor(.secondary)
             }
@@ -352,7 +352,7 @@ struct JourneyDetailView: View {
     private var participantsSection: some View {
         VStack(alignment: .leading) {
             HStack {
-                Text("여행 참가자")
+                Text("여행 참가자".localized)
                     .font(.headline)
                     .foregroundColor(.primary)
                 Spacer()
@@ -366,7 +366,7 @@ struct JourneyDetailView: View {
                         }
                     }
                 }, label: {
-                    Text("초대하기")
+                    Text("초대하기".localized)
                         .font(.subheadline)
                         .foregroundColor(.main)
                 })
@@ -401,7 +401,7 @@ struct JourneyDetailView: View {
     private var progressSection: some View {
         VStack(alignment: .leading, spacing: 15) {
             HStack {
-                Text("준비물 체크")
+                Text("준비물 체크".localized)
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.primary)
                 
@@ -422,9 +422,9 @@ struct JourneyDetailView: View {
     
     private func itemsTabView(screenWidth: CGFloat) -> some View {
         VStack(spacing: 10) {
-            Picker("준비물 유형", selection: $selectedTab) {
-                Text("개인 준비물").tag(0)
-                Text("공용 준비물").tag(1)
+            Picker("준비물 유형".localized, selection: $selectedTab) {
+                Text("개인 준비물".localized).tag(0)
+                Text("공용 준비물".localized).tag(1)
             }
             .pickerStyle(SegmentedPickerStyle())
             .padding(.horizontal, UIConstants.horizontalPadding)
@@ -448,7 +448,7 @@ struct JourneyDetailView: View {
             } label: {
                 HStack {
                     Image(systemName: "plus")
-                    Text("준비물 추가하기")
+                    Text("준비물 추가하기".localized)
                 }
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.main)
@@ -477,7 +477,7 @@ struct JourneyDetailView: View {
     private func packingItemsList(items: [PackingItem]) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             if items.isEmpty {
-                Text(selectedTab == 0 ? "개인 준비물이 없습니다" : "공용 준비물이 없습니다")
+                Text(selectedTab == 0 ? "개인 준비물이 없습니다".localized : "공용 준비물이 없습니다".localized)
                     .font(.system(size: 16))
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -895,7 +895,7 @@ struct FullScreenImageView: View {
                 }
                 Spacer()
             }
-            .padding()
+            .padding(.vertical)
         }
         .edgesIgnoringSafeArea(.all)
         .statusBar(hidden: true)
@@ -955,7 +955,7 @@ struct ParticipantView: View {
             }
             
         }
-        .accessibilityLabel(isCreator ? "방장 \(participant.name)" : participant.name)
+        .accessibilityLabel(isCreator ? "방장 \(participant.name)".localized : participant.name)
     }
     
     private var fallbackProfileView: some View {
@@ -1022,7 +1022,7 @@ struct PackingItemRow: View {
                         .foregroundColor(.secondary)
                     
                     if isSharedTab, let assignedTo = item.assignedTo {
-                        Text("담당: \(assignedTo.name)")
+                        Text("담당: \(assignedTo.name)".localized)
                             .font(.system(size: 12))
                             .foregroundColor(.main)
                             .lineLimit(1)
@@ -1050,7 +1050,7 @@ struct PackingItemRow: View {
                 onToggle(isChecked)
             }) {
                 Label(
-                    isChecked ? "체크 해제하기" : "체크하기",
+                    isChecked ? "체크 해제하기".localized : "체크하기".localized,
                     systemImage: isChecked ? "circle" : "checkmark.circle"
                 )
             }
@@ -1060,16 +1060,16 @@ struct PackingItemRow: View {
             Button(role: .destructive, action: {
                 showDeleteConfirm = true
             }) {
-                Label("삭제하기", systemImage: "trash")
+                Label("삭제하기".localized, systemImage: "trash")
             }
         }
-        .alert("준비물 삭제", isPresented: $showDeleteConfirm) {
-            Button("취소", role: .cancel) { }
-            Button("삭제", role: .destructive) {
+        .alert("준비물 삭제".localized, isPresented: $showDeleteConfirm) {
+            Button("취소".localized, role: .cancel) { }
+            Button("삭제".localized, role: .destructive) {
                 onDelete()
             }
         } message: {
-            Text("\(item.name) 준비물을 삭제하시겠습니까?")
+            Text("\(item.name) 준비물을 삭제하시겠습니까?".localized)
         }
         .frame(minHeight: UIConstants.minTapTargetSize)
     }

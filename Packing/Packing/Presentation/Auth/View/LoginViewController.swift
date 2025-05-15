@@ -33,7 +33,7 @@ class LoginViewController: UIViewController {
     
     private lazy var subtitleLabel: UILabel = {
         let label = UILabel()
-        label.text = "여행에 딱! \n필요한 짐만, 패킹"
+        label.text = "여행에 딱! \n필요한 짐만, 패킹".localized
         label.font = UIFont.systemFont(ofSize: 23, weight: .semibold)
         label.textAlignment = .center
         label.numberOfLines = 0
@@ -56,7 +56,7 @@ class LoginViewController: UIViewController {
         imageAttachment.bounds = CGRect(x: 0, y: yOffset, width: 18, height: 18) // 15 -> 18로 크기 증가
         
         // 현재 텍스트와 이미지 결합
-        let attributedString = NSMutableAttributedString(string: "3초만에 시작하기  ")
+        let attributedString = NSMutableAttributedString(string: "3초만에 시작하기  ".localized)
         attributedString.append(NSAttributedString(attachment: imageAttachment))
         label.attributedText = attributedString
         label.sizeToFit()
@@ -108,7 +108,7 @@ class LoginViewController: UIViewController {
         configuration.baseForegroundColor = .white
         configuration.baseBackgroundColor = UIColor(named: "mainColor")
         configuration.buttonSize = .large
-        configuration.title = "이메일로 로그인"
+        configuration.title = "이메일로 로그인".localized
         configuration.contentInsets = NSDirectionalEdgeInsets(top: 15, leading: 20, bottom: 15, trailing: 20)
         
         // 폰트 스타일 설정
@@ -149,7 +149,7 @@ class LoginViewController: UIViewController {
     
     private lazy var guestModeButton: UIButton = {
         var configuration = UIButton.Configuration.plain()
-        configuration.title = "로그인 없이 시작하기"
+        configuration.title = "로그인 없이 시작하기".localized
         configuration.baseForegroundColor = UIColor(named: "mainColor")
         
         // 폰트 스타일 설정
@@ -190,7 +190,7 @@ class LoginViewController: UIViewController {
     
     // MARK: - UI Setup
     private func setupUI() {
-        title = "패킹"
+        title = "패킹".localized
         view.backgroundColor = .systemBackground
         
         view.addSubview(logoImageView)
@@ -402,8 +402,8 @@ class LoginViewController: UIViewController {
     }
     
     private func showAlert(message: String) {
-        let alert = UIAlertController(title: "알림", message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        let alert = UIAlertController(title: "알림".localized, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인".localized, style: .default))
         present(alert, animated: true)
     }
 }

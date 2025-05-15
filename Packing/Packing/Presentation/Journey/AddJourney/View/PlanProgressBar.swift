@@ -73,7 +73,7 @@ class PlanProgressBar: UIView {
     
     private lazy var transportText: UILabel = {
         let transportText = UILabel()
-        transportText.text = "이동수단"
+        transportText.text = "이동수단".localized
         transportText.font = UIFont.systemFont(ofSize: 10)
         transportText.addCharacterSpacing(-0.025)
         transportText.translatesAutoresizingMaskIntoConstraints = false
@@ -82,7 +82,7 @@ class PlanProgressBar: UIView {
     
     private lazy var infoText: UILabel = {
         let infoText = UILabel()
-        infoText.text = "여행정보"
+        infoText.text = "여행정보".localized
         infoText.font = UIFont.systemFont(ofSize: 10)
         infoText.addCharacterSpacing(-0.025)
         infoText.translatesAutoresizingMaskIntoConstraints = false
@@ -91,7 +91,7 @@ class PlanProgressBar: UIView {
     
     private lazy var themeText: UILabel = {
         let themeText = UILabel()
-        themeText.text = "여행테마"
+        themeText.text = "여행테마".localized
         themeText.font = UIFont.systemFont(ofSize: 10)
         themeText.addCharacterSpacing(-0.025)
         themeText.translatesAutoresizingMaskIntoConstraints = false
@@ -100,7 +100,7 @@ class PlanProgressBar: UIView {
     
     private lazy var completeText: UILabel = {
         let completeText = UILabel()
-        completeText.text = "완료"
+        completeText.text = "완료".localized
         completeText.font = UIFont.systemFont(ofSize: 10)
         completeText.addCharacterSpacing(-0.025)
         completeText.translatesAutoresizingMaskIntoConstraints = false

@@ -48,23 +48,23 @@ enum NetworkError: Error, LocalizedError, Equatable {
     var localizedDescription: String {
         switch self {
         case .invalidURL:
-            return "유효하지 않은 URL입니다."
+            return "유효하지 않은 URL입니다.".localized
         case .requestFailed(let error):
             return "요청 실패: \(error.localizedDescription)"
         case .invalidResponse:
-            return "유효하지 않은 응답입니다."
+            return "유효하지 않은 응답입니다.".localized
         case .decodingFailed(let error):
-            return "디코딩 실패: \(error.localizedDescription)"
+            return "디코딩 실패: \(error.localizedDescription)".localized
         case .serverError(let message):
             return message
         case .unauthorized(let message):
-            return message ?? "권한이 없습니다."
+            return message ?? "권한이 없습니다.".localized
         case .notFound:
-            return "리소스를 찾을 수 없습니다."
+            return "리소스를 찾을 수 없습니다.".localized
         case .networkError:
-            return "네트워크 연결을 확인해주세요."
+            return "네트워크 연결을 확인해주세요.".localized
         case .unknown:
-            return "알 수 없는 오류가 발생했습니다."
+            return "알 수 없는 오류가 발생했습니다.".localized
         }
     }
 }

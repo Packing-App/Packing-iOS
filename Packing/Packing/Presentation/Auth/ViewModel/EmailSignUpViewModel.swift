@@ -94,7 +94,7 @@ class EmailSignUpViewModel {
         let emailErrorMessage = input.email
             .map { [weak self] email in
                 guard let self = self, !email.isEmpty else { return nil as String? }
-                return self.isValidEmail(email) ? nil : "유효한 이메일 주소를 입력하세요."
+                return self.isValidEmail(email) ? nil : "유효한 이메일 주소를 입력하세요.".localized
             }
         
         // 비밀번호 유효성 검사
@@ -107,7 +107,7 @@ class EmailSignUpViewModel {
         let passwordErrorMessage = input.password
             .map { [weak self] password in
                 guard let self = self, !password.isEmpty else { return nil as String? }
-                return self.isValidPassword(password) ? nil : "영문, 숫자를 조합한 8~20자리를 입력하세요."
+                return self.isValidPassword(password) ? nil : "영문, 숫자를 조합한 8~20자리를 입력하세요.".localized
             }
         
         // 비밀번호 확인 유효성 검사
@@ -121,7 +121,7 @@ class EmailSignUpViewModel {
                 if confirmPassword.isEmpty {
                     return nil as String?
                 }
-                return password == confirmPassword ? nil : "비밀번호가 일치하지 않습니다."
+                return password == confirmPassword ? nil : "비밀번호가 일치하지 않습니다.".localized
             }
         
         // 이름 유효성 검사
@@ -135,7 +135,7 @@ class EmailSignUpViewModel {
                 if name.isEmpty {
                     return nil as String?
                 }
-                return name.count <= 20 ? nil : "이름은 20자 이내로 입력해주세요."
+                return name.count <= 20 ? nil : "이름은 20자 이내로 입력해주세요.".localized
             }
         
         // 다음 버튼 활성화 여부
@@ -199,7 +199,7 @@ class EmailSignUpViewModel {
             isNextButtonEnabled: isNextButtonEnabled.asDriver(onErrorJustReturn: false),
             
             isLoading: isLoadingRelay.asDriver(),
-            errorMessage: errorMessageRelay.asDriver(onErrorJustReturn: "알 수 없는 오류가 발생했습니다."),
+            errorMessage: errorMessageRelay.asDriver(onErrorJustReturn: "알 수 없는 오류가 발생했습니다.".localized),
             registerSuccess: registerSuccessRelay.asDriver(onErrorJustReturn: ("", "", "", TokenData(accessToken: "", refreshToken: "", user: User.exampleUser)))
         )
     }

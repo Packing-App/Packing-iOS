@@ -56,7 +56,7 @@ class JourneySummaryReactor: Reactor {
         let model = coordinator.getJourneyModel()
         
         // 제목이 비어있다면 기본 제목 설정
-        let defaultTitle = model.title.isEmpty ? "\(model.destination) 여행" : model.title
+        let defaultTitle = model.title.isEmpty ? "\(model.destination) 여행".localized : model.title
         
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy.MM.dd"
@@ -65,14 +65,14 @@ class JourneySummaryReactor: Reactor {
         if let start = model.startDate, let end = model.endDate {
             dateRangeText = "\(dateFormatter.string(from: start)) - \(dateFormatter.string(from: end))"
         } else {
-            dateRangeText = "날짜 미설정"
+            dateRangeText = "날짜 미설정".localized
         }
         
         var themeFirstName: String
         if model.themes.first != nil {
             themeFirstName = model.themes.first!.displayName
         } else {
-            themeFirstName = "테마 미설정"
+            themeFirstName = "테마 미설정".localized
         }
         
         self.initialState = State(

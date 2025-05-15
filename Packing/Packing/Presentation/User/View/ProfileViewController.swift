@@ -259,7 +259,7 @@ final class ProfileViewController: UIViewController, View {
                 guard let self = self else { return }
                 
                 var content = cell.defaultContentConfiguration()
-                content.text = menuItem.rawValue
+                content.text = menuItem.displayName
                 
                 // Configure cell based on menu item
                 switch menuItem {
@@ -430,17 +430,17 @@ final class ProfileViewController: UIViewController, View {
         switch menuItem {
         case .privacy:
             let privacyURL = "https://silicon-distance-ef3.notion.site/1e9f678b2fe280dab47aeea7232736ec?pvs=4"
-            let webViewController = WebViewViewController(urlString: privacyURL, title: "개인정보 처리방침")
+            let webViewController = WebViewViewController(urlString: privacyURL, title: "개인정보처리방침".localized)
             navigationController?.pushViewController(webViewController, animated: true)
             
         case .legal:
             let termsURL = "https://silicon-distance-ef3.notion.site/1e9f678b2fe28076a4fddb8ef4c4e5e0?pvs=4"
-            let webViewController = WebViewViewController(urlString: termsURL, title: "서비스 이용약관")
+            let webViewController = WebViewViewController(urlString: termsURL, title: "서비스 이용약관".localized)
             navigationController?.pushViewController(webViewController, animated: true)
             
         case .developerInfo:
             let developerURL = "https://github.com/iyungui"
-            let webViewController = WebViewViewController(urlString: developerURL, title: "개발자 정보")
+            let webViewController = WebViewViewController(urlString: developerURL, title: "개발자 정보".localized)
             navigationController?.pushViewController(webViewController, animated: true)
             
         default:

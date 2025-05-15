@@ -88,8 +88,8 @@
 "피크닉" = "Picnic";
 "출장/비즈니스" = "Business";
 "해변 휴양" = "Beach Resort";
-"문화/역사 탐방" = "Cultural/Historical Tour";
-"사진 여행" = "Photography Trip";
+"문화/역사 탐방" = "Heritage Tour";
+"사진 여행" = "Photography";
 "가족 여행" = "Family Trip";
 "배낭여행" = "Backpacking";
 "스파/힐링" = "Spa/Wellness";
@@ -334,3 +334,20 @@
 "여행지 검색" = "Search destination";
 "출발지 선택" = "Select Departure";
 "목적지 선택" = "Select Destination";
+
+
+"연결된 계정" = "Connected Account";
+"버전 정보" = "Version Info";
+"개발자 정보" = "Developer Info";
+"개인정보처리방침" = "Privacy Policy";
+"서비스 이용약관" = "Terms of Service";
+"로그아웃" = "Log Out";
+"회원탈퇴" = "Delete Account";
+
+"일" = "Sun";
+"월" = "Mon";
+"화" = "Tue";
+"수" = "Wed";
+"목" = "Thu";
+"금" = "Fri";
+"토" = "Sat";

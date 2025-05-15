@@ -110,16 +110,7 @@ class LocationSearchViewController: UIViewController {
                 
                 // 쿼리가 비어있으면 기본 인기 도시 목록 표시
                 if query.isEmpty {
-                    let defaultCities: [CitySearchResult] = [
-                        CitySearchResult(korName: "서울", engName: "Seoul", countryCode: "KR"),
-                        CitySearchResult(korName: "부산", engName: "Busan", countryCode: "KR"),
-                        CitySearchResult(korName: "도쿄", engName: "Tokyo", countryCode: "JP"),
-                        CitySearchResult(korName: "오사카", engName: "Osaka", countryCode: "JP"),
-                        CitySearchResult(korName: "파리", engName: "Paris", countryCode: "FR"),
-                        CitySearchResult(korName: "뉴욕", engName: "New York", countryCode: "US"),
-                        CitySearchResult(korName: "방콕", engName: "Bangkok", countryCode: "TH")
-                    ]
-                    return Observable.just(defaultCities)
+                    return Observable.just(self.getDefaultCities())
                 }
                 
                 return self.locationService.searchLocations(query: query, limit: 20)
@@ -134,6 +125,50 @@ class LocationSearchViewController: UIViewController {
         
         // 초기 검색 결과 로드 (인기 도시)
         searchDebouncer.onNext("")  // 빈 검색어로 기본 인기 도시 로드
+    }
+    
+    // MARK: - Helper Methods
+    private var isKoreanUser: Bool {
+        return Locale.current.language.languageCode?.identifier == "ko"
+    }
+    
+    private func displayName(for city: CitySearchResult) -> String {
+        return isKoreanUser ? city.korName : city.engName
+    }
+    
+    private func secondaryText(for city: CitySearchResult) -> String {
+        if isKoreanUser {
+            return "\(city.engName), \(city.countryCode)"
+        } else {
+            // 영어 사용자에게는 한국어 이름을 작게 표시
+            return "\(city.korName), \(city.countryCode)"
+            // 한국어 이름을 제외하고 국가 코드만 표시하려면:
+            // return city.countryCode
+        }
+    }
+    
+    private func getDefaultCities() -> [CitySearchResult] {
+        if isKoreanUser {
+            return [
+                CitySearchResult(korName: "서울", engName: "Seoul", countryCode: "KR"),
+                CitySearchResult(korName: "부산", engName: "Busan", countryCode: "KR"),
+                CitySearchResult(korName: "도쿄", engName: "Tokyo", countryCode: "JP"),
+                CitySearchResult(korName: "오사카", engName: "Osaka", countryCode: "JP"),
+                CitySearchResult(korName: "파리", engName: "Paris", countryCode: "FR"),
+                CitySearchResult(korName: "뉴욕", engName: "New York", countryCode: "US"),
+                CitySearchResult(korName: "방콕", engName: "Bangkok", countryCode: "TH")
+            ]
+        } else {
+            return [
+                CitySearchResult(korName: "뉴욕", engName: "New York", countryCode: "US"),
+                CitySearchResult(korName: "런던", engName: "London", countryCode: "GB"),
+                CitySearchResult(korName: "파리", engName: "Paris", countryCode: "FR"),
+                CitySearchResult(korName: "도쿄", engName: "Tokyo", countryCode: "JP"),
+                CitySearchResult(korName: "싱가포르", engName: "Singapore", countryCode: "SG"),
+                CitySearchResult(korName: "홍콩", engName: "Hong Kong", countryCode: "HK"),
+                CitySearchResult(korName: "로스앤젤레스", engName: "Los Angeles", countryCode: "US")
+            ]
+        }
     }
 }
 
@@ -156,8 +191,15 @@ extension LocationSearchViewController: UITableViewDelegate, UITableViewDataSour
         let city = searchResults[indexPath.row]
         
         var content = UIListContentConfiguration.cell()
-        content.text = city.korName
-        content.secondaryText = "\(city.engName), \(city.countryCode)"
+        content.text = displayName(for: city)
+        content.secondaryText = secondaryText(for: city)
+        
+        // 영어 사용자의 경우 보조 텍스트를 더 작게 표시
+        if !isKoreanUser {
+            content.secondaryTextProperties.font = .systemFont(ofSize: 12)
+            content.secondaryTextProperties.color = .secondaryLabel
+        }
+        
         cell.contentConfiguration = content
         
         return cell
@@ -167,7 +209,11 @@ extension LocationSearchViewController: UITableViewDelegate, UITableViewDataSour
         tableView.deselectRow(at: indexPath, animated: true)
         
         let selectedCity = searchResults[indexPath.row]
-        completion?(selectedCity.korName)
+        
+        // 선택 시에도 언어에 따라 다른 값 반환
+        let selectedName = displayName(for: selectedCity)
+        
+        completion?(selectedName)
         dismiss(animated: true)
     }
 }

@@ -8,13 +8,13 @@
 import Foundation
 
 enum ProfileMenuItem: String, CaseIterable {
-    case connectedAccount = "연결된 계정" // (just display)
-    case versionInfo = "버전 정보"  // (just display)
-    case developerInfo = "개발자 정보"   // navigate to another View
-    case privacy = "개인정보처리방침"  // navigate to another View
-    case legal = "서비스 이용약관"  // navigate to another View
-    case logout = "로그아웃"    // button (show alert)
-    case deleteId = "회원탈퇴"  // button (show alert)
+    case connectedAccount = "connected_account"
+    case versionInfo = "version_info"
+    case developerInfo = "developer_info"
+    case privacy = "privacy_policy"
+    case legal = "terms_of_service"
+    case logout = "logout"
+    case deleteId = "delete_account"
     
     var isDestructive: Bool {
         return self == .logout || self == .deleteId
@@ -26,5 +26,25 @@ enum ProfileMenuItem: String, CaseIterable {
     
     var isDisplayOnly: Bool {
         return self == .connectedAccount || self == .versionInfo
+    }
+    
+    // 새로운 computed property 추가
+    var displayName: String {
+        switch self {
+        case .connectedAccount:
+            return "연결된 계정".localized
+        case .versionInfo:
+            return "버전 정보".localized
+        case .developerInfo:
+            return "개발자 정보".localized
+        case .privacy:
+            return "개인정보처리방침".localized
+        case .legal:
+            return "서비스 이용약관".localized
+        case .logout:
+            return "로그아웃".localized
+        case .deleteId:
+            return "회원탈퇴".localized
+        }
     }
 }

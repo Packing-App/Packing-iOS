@@ -30,7 +30,7 @@ class JourneySummaryViewController: UIViewController, View {
         let iconSize: CGFloat = isSmallDevice ? 20 : 24
         imageAttachment.bounds = CGRect(x: 0, y: -6, width: iconSize, height: iconSize)
         attachmentString.append(NSAttributedString(attachment: imageAttachment))
-        attachmentString.append(NSAttributedString(string: " PACKING"))
+        attachmentString.append(NSAttributedString(string: " 패킹"))
         label.attributedText = attachmentString
         label.sizeToFit()
         

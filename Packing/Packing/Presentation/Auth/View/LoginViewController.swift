@@ -190,7 +190,7 @@ class LoginViewController: UIViewController {
     
     // MARK: - UI Setup
     private func setupUI() {
-        title = "PACKING"
+        title = "패킹"
         view.backgroundColor = .systemBackground
         
         view.addSubview(logoImageView)

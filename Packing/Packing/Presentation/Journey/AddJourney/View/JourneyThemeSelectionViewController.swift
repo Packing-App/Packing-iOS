@@ -26,7 +26,7 @@ class JourneyThemeSelectionViewController: UIViewController, View {
         let iconSize: CGFloat = isSmallDevice ? 20 : 24
         imageAttachment.bounds = CGRect(x: 0, y: -6, width: iconSize, height: iconSize)
         attachmentString.append(NSAttributedString(attachment: imageAttachment))
-        attachmentString.append(NSAttributedString(string: " PACKING"))
+        attachmentString.append(NSAttributedString(string: " 패킹"))
         label.attributedText = attachmentString
         label.sizeToFit()
         
@@ -69,7 +69,7 @@ class JourneyThemeSelectionViewController: UIViewController, View {
     
     private let subtitleLabel: UILabel = {
         let label = UILabel()
-        label.text = "복수 선택이 가능해요"
+        label.text = "여러 개 선택할 수 있어요!"
         label.font = UIFont.systemFont(ofSize: 13, weight: .regular)
         label.textColor = .darkGray
         label.textAlignment = .center

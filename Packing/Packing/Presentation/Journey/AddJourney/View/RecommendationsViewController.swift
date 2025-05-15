@@ -25,7 +25,7 @@ class RecommendationsViewController: UIViewController, View {
         imageAttachment.image = UIImage(named: "logoIconWhite")
         imageAttachment.bounds = CGRect(x: 0, y: -7, width: 24, height: 24)
         attachmentString.append(NSAttributedString(attachment: imageAttachment))
-        attachmentString.append(NSAttributedString(string: " PACKING"))
+        attachmentString.append(NSAttributedString(string: " 패킹"))
         label.attributedText = attachmentString
         label.textAlignment = .center
         label.font = .systemFont(ofSize: 20, weight: .semibold)

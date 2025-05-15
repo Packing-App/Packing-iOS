@@ -37,6 +37,9 @@ class APIClient: APIClientProtocol {
             var request = URLRequest(url: url)
             request.httpMethod = endpoint.method.rawValue
             request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+            let languageCode = Locale.current.language.languageCode?.identifier ?? "ko"
+            request.addValue(languageCode, forHTTPHeaderField: "Accept-Language")
 
             // 인증이 필요한 endpoints에는 token 추가
             if self.requiresAuthentication(endpoint) {
@@ -167,7 +170,11 @@ class APIClient: APIClientProtocol {
             var request = URLRequest(url: url)
             request.httpMethod = endpoint.method.rawValue
             request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-
+                               
+            let languageCode = Locale.current.language.languageCode?.identifier ?? "ko"
+            request.addValue(languageCode, forHTTPHeaderField: "Accept-Language")
+            
+            
             if self.requiresAuthentication(endpoint) {
                 if let token = self.tokenManager.accessToken {
                     request.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")

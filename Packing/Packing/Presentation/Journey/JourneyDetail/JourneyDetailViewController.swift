@@ -160,6 +160,7 @@ struct JourneyDetailView: View {
     @State private var expandedCategories: Set<ItemCategory> = Set()
     
     @State private var showingAddItemSheet = false
+    @State private var showingFullScreenImage = false
     
     // State for API calls
     @State private var isLoading = false
@@ -228,6 +229,9 @@ struct JourneyDetailView: View {
         .onAppear {
             loadPackingItems()
         }
+        .fullScreenCover(isPresented: $showingFullScreenImage) {
+            FullScreenImageView(imageUrl: journey.imageUrl, isPresented: $showingFullScreenImage)
+        }
     }
     
     // 화면 크기에 따른 간격 조정
@@ -292,6 +296,10 @@ struct JourneyDetailView: View {
                     .frame(height: min(screenWidth * 0.6, UIConstants.imageHeight))
                     .clipped()
             }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            showingFullScreenImage = true
         }
     }
     
@@ -786,7 +794,114 @@ struct JourneyDetailView: View {
     }
 }
 
+
 // MARK: - Supporting Views
+
+struct FullScreenImageView: View {
+    let imageUrl: String?
+    @Binding var isPresented: Bool
+    @State private var currentZoom: CGFloat = 1.0
+    @State private var totalZoom: CGFloat = 1.0
+    @State private var currentPosition: CGSize = .zero
+    @State private var previousPosition: CGSize = .zero
+    
+    var body: some View {
+        ZStack {
+            Color.black
+                .ignoresSafeArea()
+            
+            if let imageUrlString = imageUrl, let url = URL(string: imageUrlString) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .scaleEffect(currentZoom * totalZoom)
+                            .offset(x: currentPosition.width + previousPosition.width,
+                                   y: currentPosition.height + previousPosition.height)
+                            .gesture(
+                                MagnificationGesture()
+                                    .onChanged { value in
+                                        currentZoom = value
+                                    }
+                                    .onEnded { value in
+                                        totalZoom = min(max(totalZoom * value, 1), 4)
+                                        currentZoom = 1.0
+                                        
+                                        // 줌아웃시 위치 초기화
+                                        if totalZoom == 1 {
+                                            withAnimation(.easeInOut(duration: 0.2)) {
+                                                currentPosition = .zero
+                                                previousPosition = .zero
+                                            }
+                                        }
+                                    }
+                                    .simultaneously(with:
+                                        DragGesture()
+                                            .onChanged { value in
+                                                currentPosition = value.translation
+                                            }
+                                            .onEnded { value in
+                                                previousPosition.width += value.translation.width
+                                                previousPosition.height += value.translation.height
+                                                currentPosition = .zero
+                                            }
+                                    )
+                            )
+                            .onTapGesture(count: 2) {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    if totalZoom > 1 {
+                                        totalZoom = 1
+                                        currentPosition = .zero
+                                        previousPosition = .zero
+                                    } else {
+                                        totalZoom = 2
+                                    }
+                                }
+                            }
+                    case .failure(_):
+                        Image("defaultTravelImage")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    case .empty:
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    @unknown default:
+                        Image("defaultTravelImage")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    }
+                }
+            } else {
+                Image("defaultTravelImage")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            }
+            
+            VStack {
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        isPresented = false
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.white)
+                            .font(.system(size: 30))
+                            .background(Color.black.opacity(0.6))
+                            .clipShape(Circle())
+                    }
+                    .padding()
+                }
+                Spacer()
+            }
+            .padding()
+        }
+        .edgesIgnoringSafeArea(.all)
+        .statusBar(hidden: true)
+    }
+}
+
 struct ParticipantView: View {
     let participant: User
     let isCreator: Bool

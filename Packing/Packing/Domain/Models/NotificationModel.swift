@@ -38,15 +38,3 @@ enum NotificationType: String, Codable {
     case friendRequest = "friendRequest"                  // 친구 요청
     case friendRequestResponse = "friendRequestResponse"  // 친구 요청 응답
 }
-
-// 디바이스 토큰 응답
-struct DeviceTokenResponse: Codable {
-    let deviceToken: String
-    let deviceType: String
-    let pushNotificationEnabled: Bool
-}
-
-// 푸시 설정 응답
-struct PushSettingsResponse: Codable {
-    let pushNotificationEnabled: Bool
-}

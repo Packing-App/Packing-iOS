@@ -82,5 +82,3 @@ class DeviceService: DeviceServiceProtocol {
             }
     }
 }
-
-struct EmptyResponse: Codable {}

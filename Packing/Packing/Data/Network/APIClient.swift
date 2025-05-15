@@ -14,46 +14,6 @@ protocol APIClientProtocol {
     func uploadImage(imageData: Data, endpoint: APIEndpoint) -> Observable<ProfileImageResponse>
 }
 
-// MARK: - API Response 모델
-
-struct APIResponse<T: Codable>: Codable {
-    let success: Bool
-    let message: String
-    let data: T?
-    let status: Int?
-}
-
-struct UserResponse: Codable {
-    let user: User
-}
-
-struct ProfileImageResponse: Codable {
-    let profileImage: String
-}
-
-struct TokenData: Codable, Equatable {
-    let accessToken: String
-    let refreshToken: String
-    let user: User
-}
-
-struct RefreshTokenResponse: Codable {
-    let accessToken: String
-}
-
-struct RecommendationResponse: Codable {
-    let journey: Journey
-    let categories: [String: RecommendationCategory]
-}
-
-struct ErrorResponse: Codable {
-    let success: Bool
-    let message: String
-}
-
-
-// MARK: - APIClient
-
 class APIClient: APIClientProtocol {
     static let shared = APIClient()
     private let session: URLSession
@@ -493,7 +453,8 @@ class APIClient: APIClientProtocol {
     }
 }
 
-// APIClient Extension for Async/Await support
+// MARK: - APIClient Extension for Async/Await support
+
 extension APIClientProtocol {
     func requestAsync<T: Decodable>(_ endpoint: APIEndpoint) async throws -> T {
         return try await withCheckedThrowingContinuation { continuation in

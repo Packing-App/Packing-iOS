@@ -105,11 +105,6 @@ struct SentFriendRequest: Codable, Identifiable, Equatable {
     }
 }
 
-// MARK: - 친구 요청 목록 응답
-struct FriendRequestsResponse: Codable {
-    let received: [ReceivedFriendRequest]
-    let sent: [SentFriendRequest]
-}
 
 // MARK: - 친구 검색 결과 항목
 struct FriendSearchResult: Codable, Identifiable, Equatable {

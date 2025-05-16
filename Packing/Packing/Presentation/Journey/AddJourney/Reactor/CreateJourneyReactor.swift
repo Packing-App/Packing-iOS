@@ -117,8 +117,13 @@ class CreateJourneyReactor: Reactor {
             
             let model = currentState.journeyModel
             
-            // 여행 제목이 비어있으면 목적지를 제목으로 사용
-            let title = model.title.isEmpty ? "\(model.destination) 여행" : model.title
+            var title: String
+            if model.title.isEmpty {
+                let languageCode = Locale.current.language.languageCode?.identifier
+                title = "\(model.destination) \(languageCode == "ko" ? "여행" : "Trip")"
+            } else {
+                title = model.title
+            }
             
             // 선택된 테마들을 배열로 변환
             let themes = Array(model.themes)

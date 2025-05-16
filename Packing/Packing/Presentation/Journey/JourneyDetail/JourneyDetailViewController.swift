@@ -339,7 +339,7 @@ struct JourneyDetailView: View {
             HStack {
                 Image(systemName: themeIcon)
                     .foregroundColor(.secondary)
-                Text("테마: %@".localized(with: journey.themes.first!.displayName))
+                Text("테마: %@".localized(with: journey.themes.first?.displayName ?? "없음"))
                     .font(.system(size: 14))
                     .foregroundColor(.secondary)
             }

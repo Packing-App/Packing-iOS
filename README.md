@@ -1,9 +1,9 @@
-# 🧳 패킹(Packing) - 여행 준비물 관리 앱
+# 🧳 패킹(Packing) - 여행에 딱! 필요한 짐만
 
 <div align="center">
   <img src="https://github.com/Packing-App/Packing-iOS/blob/main/Packing/Packing/Resources/Assets.xcassets/AppIcon.appiconset/1024.png?raw=true" alt="Packing 로고" width="200">
   <br>
-  <p><strong>여행 준비물의 스마트한 관리와 공유를 위한 iOS 애플리케이션</strong></p>
+  <p><strong>여행에 필요한 준비물을 자동으로 추천해주고, 파티원과 역할을 나눠 준비 상황을 함께 관리할 수 있는 앱</strong></p>
   <a href="https://apps.apple.com/us/app/%ED%8C%A8%ED%82%B9/id6745450311">
     <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" height="80">
   </a>

@@ -312,7 +312,6 @@ class APIClient: APIClientProtocol {
     }
 
     private func requiresAuthentication(_ endpoint: any Endpoints) -> Bool {
-        // AuthEndpoint의 인증이 필요없는 케이스들
         if let authEndpoint = endpoint as? AuthEndpoint {
             switch authEndpoint {
             case .register, .login, .verifyEmail, .resendVerificationCode,
@@ -324,12 +323,15 @@ class APIClient: APIClientProtocol {
             }
         }
         
-        // LocationEndpoint는 인증이 필요없음
-        if endpoint is LocationEndpoint {
-            return false
+        if let locationEndpoint = endpoint as? LocationEndpoint {
+            switch locationEndpoint {
+            case .searchLocations, .translateCity:
+                return false
+            case .getCityWeather, .getJourneyForecast:
+                return true
+            }
         }
         
-        // 나머지 모든 endpoint는 인증 필요
         return true
     }
 

@@ -32,7 +32,7 @@ class UserService: UserServiceProtocol {
         print("getMyProfile 호출됨")
         
         // 타임아웃 추가로 무한 대기 방지
-        return apiClient.request(APIEndpoint.getMyProfile)
+        return apiClient.request(UserEndpoint.getMyProfile)
             .do(onNext: { _ in print("API 응답 받음") },
                 onError: { error in print("API 에러 발생: \(error)") },
                 onCompleted: { print("API 호출 완료") })
@@ -56,7 +56,7 @@ class UserService: UserServiceProtocol {
     }
     
     func updateProfile(name: String, intro: String) -> Observable<User> {
-        return apiClient.request(APIEndpoint.updateProfile(name: name, intro: intro))
+        return apiClient.request(UserEndpoint.updateProfile(name: name, intro: intro))
             .map { (response: APIResponse<UserResponse>) -> User in
                 guard let data = response.data else {
                     throw NetworkError.invalidResponse
@@ -79,7 +79,7 @@ class UserService: UserServiceProtocol {
         }
         
         // 이미지 업로드
-        return apiClient.uploadImage(imageData: imageData, endpoint: APIEndpoint.updateProfileImage(imageData: imageData))
+        return apiClient.uploadImage(imageData: imageData, endpoint: UserEndpoint.updateProfileImage(imageData: imageData))
             .map { profileImageData -> String in
                 return profileImageData.profileImage
             }

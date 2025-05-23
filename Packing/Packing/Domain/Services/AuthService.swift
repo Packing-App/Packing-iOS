@@ -64,7 +64,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     }
     
     func registerUser(name: String, email: String, password: String) -> Observable<TokenData> {
-        return apiClient.request(APIEndpoint.register(name: name, email: email, password: password))
+        return apiClient.request(AuthEndpoint.register(name: name, email: email, password: password))
             .map { (response: APIResponse<TokenData>) -> TokenData in
                 guard let data = response.data else {
                     throw AuthError.noData
@@ -91,7 +91,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     }
     
     func login(email: String, password: String) -> Observable<TokenData> {
-        return apiClient.request(APIEndpoint.login(email: email, password: password))
+        return apiClient.request(AuthEndpoint.login(email: email, password: password))
             .map { (response: APIResponse<TokenData>) -> TokenData in
                 guard let data = response.data else {
                     throw AuthError.noData
@@ -117,7 +117,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     
     
     func verifyEmail(email: String, code: String) -> Observable<Bool> {
-        return apiClient.request(APIEndpoint.verifyEmail(email: email, code: code))
+        return apiClient.request(AuthEndpoint.verifyEmail(email: email, code: code))
             .map { (response: APIResponse<Bool>) -> Bool in
                 return response.success
             }
@@ -130,7 +130,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     }
     
     func resendVerificationCode(email: String) -> Observable<Bool> {
-        return apiClient.request(APIEndpoint.resendVerificationCode(email: email))
+        return apiClient.request(AuthEndpoint.resendVerificationCode(email: email))
             .map { (response: APIResponse<Bool>) -> Bool in
                 return response.success
             }
@@ -143,7 +143,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     }
     
     func forgotPassword(email: String) -> Observable<Bool> {
-        return apiClient.request(APIEndpoint.forgotPassword(email: email))
+        return apiClient.request(AuthEndpoint.forgotPassword(email: email))
             .map { (response: APIResponse<Bool>) -> Bool in
                 return response.success
             }
@@ -156,7 +156,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     }
     
     func verifyResetCode(email: String, code: String) -> Observable<Bool> {
-        return apiClient.request(APIEndpoint.verifyResetCode(email: email, code: code))
+        return apiClient.request(AuthEndpoint.verifyResetCode(email: email, code: code))
             .map { (response: APIResponse<Bool>) -> Bool in
                 return response.success
             }
@@ -169,7 +169,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     }
     
     func resetPassword(email: String, code: String, password: String) -> Observable<TokenData> {
-        return apiClient.request(APIEndpoint.resetPassword(email: email, code: code, password: password))
+        return apiClient.request(AuthEndpoint.resetPassword(email: email, code: code, password: password))
             .map { (response: APIResponse<TokenData>) -> TokenData in
                 guard let data = response.data else {
                     throw AuthError.noData
@@ -196,7 +196,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     }
     
     func logout() -> Observable<Bool> {
-        return apiClient.request(APIEndpoint.logout)
+        return apiClient.request(AuthEndpoint.logout)
             .map { (response: APIResponse<Bool>) -> Bool in
                 // 토큰과 사용자 정보 삭제
                 self.tokenStorage.clearTokens()
@@ -212,7 +212,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     }
     
     func deleteAccount() -> Observable<Bool> {
-        return apiClient.request(APIEndpoint.deleteAccount)
+        return apiClient.request(AuthEndpoint.deleteAccount)
             .map { (response: APIResponse<Bool>) -> Bool in
                 // 계정 삭제 후 토큰과 사용자 정보 삭제
                 self.tokenStorage.clearTokens()
@@ -232,7 +232,7 @@ class AuthService: NSObject, AuthServiceProtocol {
             return Observable.error(AuthError.apiError(.unauthorized(nil)))
         }
         
-        return apiClient.request(APIEndpoint.refreshToken(refreshToken: refreshToken))
+        return apiClient.request(AuthEndpoint.refreshToken(refreshToken: refreshToken))
             .map { (response: APIResponse<TokenData>) -> String in
                 guard let data = response.data else {
                     throw AuthError.noData
@@ -255,7 +255,7 @@ class AuthService: NSObject, AuthServiceProtocol {
         self.socialLoginSubject = subject
         self.presentationContext = viewController
         
-        var endPoint: APIEndpoint
+        var endPoint: AuthEndpoint
         
         switch type {
         case .google: endPoint = .googleLogin
@@ -347,7 +347,7 @@ class AuthService: NSObject, AuthServiceProtocol {
     
     // 사용자 정보 가져오기
     private func getUserInfo() -> Observable<User> {
-        return apiClient.request(APIEndpoint.getMyProfile)
+        return apiClient.request(UserEndpoint.getMyProfile)
             .map { (response: APIResponse<UserResponse>) -> User in
                 guard let data = response.data else {
                     throw AuthError.noData
@@ -383,7 +383,7 @@ extension AuthService: ASAuthorizationControllerDelegate, ASAuthorizationControl
             }
             
             // Apple 로그인 검증 요청
-            _ = apiClient.request(APIEndpoint.appleVerify(userId: userId, email: email, fullName: fullName))
+            _ = apiClient.request(AuthEndpoint.appleVerify(userId: userId, email: email, fullName: fullName))
                 .subscribe(onNext: { [weak self] (response: APIResponse<TokenData>) in
                     guard let self = self, let data = response.data else {
                         self?.socialLoginSubject?.onError(AuthError.noData)

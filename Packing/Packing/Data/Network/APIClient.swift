@@ -9,9 +9,9 @@ import Foundation
 import RxSwift
 
 protocol APIClientProtocol {
-    func request<T: Decodable>(_ endpoint: APIEndpoint) -> Observable<T>
-    func requestWithDateDecoding<T: Decodable>(_ endpoint: APIEndpoint) -> Observable<T>
-    func uploadImage(imageData: Data, endpoint: APIEndpoint) -> Observable<ProfileImageResponse>
+    func request<T: Decodable>(_ endpoint: any Endpoints) -> Observable<T>
+    func requestWithDateDecoding<T: Decodable>(_ endpoint: any Endpoints) -> Observable<T>
+    func uploadImage(imageData: Data, endpoint: any Endpoints) -> Observable<ProfileImageResponse>
 }
 
 class APIClient: APIClientProtocol {
@@ -19,6 +19,7 @@ class APIClient: APIClientProtocol {
     private let session: URLSession
     private let tokenManager: KeyChainTokenStorage
     private let disposeBag = DisposeBag()
+    
     private init(
         session: URLSession = .shared,
         tokenManager: KeyChainTokenStorage = .shared
@@ -27,7 +28,7 @@ class APIClient: APIClientProtocol {
         self.tokenManager = tokenManager
     }
     
-    func request<T: Decodable>(_ endpoint: APIEndpoint) -> Observable<T> {
+    func request<T: Decodable>(_ endpoint: any Endpoints) -> Observable<T> {
         return Observable.create { [weak self] observer in
             guard let self = self, let url = endpoint.url() else {
                 observer.onError(NetworkError.invalidURL)
@@ -107,7 +108,7 @@ class APIClient: APIClientProtocol {
                     }
                 case 401:
                     // endpoint 가 refreshToken 인데, 401 에러다! -> networkerror 뱉고 로그아웃 해야함.
-                    if case .refreshToken = endpoint {
+                    if self.isRefreshTokenEndpoint(endpoint) {
                         print("로그아웃 해야해")
                         AuthCoordinator.shared.navigateToLogin()
                         observer.onError(NetworkError.unauthorized(nil))
@@ -116,7 +117,6 @@ class APIClient: APIClientProtocol {
                     
                     print("refreshToken 호출 전")
                     self.refreshToken()
-                        
                         .flatMap { _ -> Observable<T> in
                             // 토큰 갱신 성공 시 원래 요청 재시도
                             print("원래 요청 재시도!")
@@ -160,7 +160,7 @@ class APIClient: APIClientProtocol {
         }
     }
     
-    func requestWithDateDecoding<T: Decodable>(_ endpoint: APIEndpoint) -> Observable<T> {
+    func requestWithDateDecoding<T: Decodable>(_ endpoint: any Endpoints) -> Observable<T> {
         return Observable.create { [weak self] observer in
             guard let self = self, let url = endpoint.url() else {
                 observer.onError(NetworkError.invalidURL)
@@ -258,7 +258,7 @@ class APIClient: APIClientProtocol {
                     
                 case 401:
                     // endpoint 가 refreshToken 인데, 401 에러다! -> networkerror 뱉고 로그아웃 해야함.
-                    if case .refreshToken = endpoint {
+                    if self.isRefreshTokenEndpoint(endpoint) {
                         print("로그아웃 해야해")
                         AuthCoordinator.shared.navigateToLogin()
                         observer.onError(NetworkError.unauthorized(nil))
@@ -267,7 +267,6 @@ class APIClient: APIClientProtocol {
                     
                     print("refreshToken 호출 전")
                     self.refreshToken()
-                        
                         .flatMap { _ -> Observable<T> in
                             // 토큰 갱신 성공 시 원래 요청 재시도
                             print("원래 요청 재시도!")
@@ -310,17 +309,36 @@ class APIClient: APIClientProtocol {
         }
     }
 
-    private func requiresAuthentication(_ endpoint: APIEndpoint) -> Bool {
-        switch endpoint {
-        case .register, .login, .verifyEmail, .resendVerificationCode,
-             .forgotPassword, .verifyResetCode, .resetPassword, .refreshToken,
-             .googleLogin, .kakaoLogin, .naverLogin, .appleVerify, .translateCity, .searchLocations:
-            return false
-        default:
-            return true
+    private func requiresAuthentication(_ endpoint: any Endpoints) -> Bool {
+        // AuthEndpoint의 인증이 필요없는 케이스들
+        if let authEndpoint = endpoint as? AuthEndpoint {
+            switch authEndpoint {
+            case .register, .login, .verifyEmail, .resendVerificationCode,
+                 .forgotPassword, .verifyResetCode, .resetPassword, .refreshToken,
+                 .googleLogin, .kakaoLogin, .naverLogin, .appleVerify:
+                return false
+            default:
+                return true
+            }
         }
+        
+        // LocationEndpoint는 인증이 필요없음
+        if endpoint is LocationEndpoint {
+            return false
+        }
+        
+        // 나머지 모든 endpoint는 인증 필요
+        return true
     }
     
+    private func isRefreshTokenEndpoint(_ endpoint: any Endpoints) -> Bool {
+        if let authEndpoint = endpoint as? AuthEndpoint {
+            if case .refreshToken = authEndpoint {
+                return true
+            }
+        }
+        return false
+    }
     
     private func refreshToken() -> Observable<String> {
         print(#fileID, #function, #line, "- ")
@@ -331,7 +349,7 @@ class APIClient: APIClientProtocol {
             return Observable.error(NetworkError.unauthorized(nil))
         }
         
-        let refreshEndpoint = APIEndpoint.refreshToken(refreshToken: refreshToken)
+        let refreshEndpoint = AuthEndpoint.refreshToken(refreshToken: refreshToken)
         
         return self.request(refreshEndpoint)
             .map { (response: APIResponse<RefreshTokenResponse>) -> String in
@@ -352,7 +370,7 @@ class APIClient: APIClientProtocol {
     }
     
     // 멀티파트 폼 데이터 요청 (이미지 업로드용)
-    func uploadImage(imageData: Data, endpoint: APIEndpoint) -> Observable<ProfileImageResponse> {
+    func uploadImage(imageData: Data, endpoint: any Endpoints) -> Observable<ProfileImageResponse> {
         return Observable.create { [weak self] observer in
             guard let self = self, let url = endpoint.url() else {
                 observer.onError(NetworkError.invalidURL)
@@ -463,7 +481,7 @@ class APIClient: APIClientProtocol {
 // MARK: - APIClient Extension for Async/Await support
 
 extension APIClientProtocol {
-    func requestAsync<T: Decodable>(_ endpoint: APIEndpoint) async throws -> T {
+    func requestAsync<T: Decodable>(_ endpoint: any Endpoints) async throws -> T {
         return try await withCheckedThrowingContinuation { continuation in
             var disposable: Disposable?
             
@@ -483,7 +501,7 @@ extension APIClientProtocol {
         }
     }
     
-    func requestWithDateDecodingAsync<T: Decodable>(_ endpoint: APIEndpoint) async throws -> T {
+    func requestWithDateDecodingAsync<T: Decodable>(_ endpoint: any Endpoints) async throws -> T {
         return try await withCheckedThrowingContinuation { continuation in
             var disposable: Disposable?
             

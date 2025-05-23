@@ -32,7 +32,7 @@ class DeviceService: DeviceServiceProtocol {
     // 디바이스 토큰 등록/업데이트
     func updateDeviceToken(token: String) -> Observable<Bool> {
         print(#fileID, #function, #line, "- ")
-        return apiClient.request(APIEndpoint.updateDeviceToken(token: token))
+        return apiClient.request(DeviceEndpoint.updateDeviceToken(token: token))
             .map { (response: APIResponse<DeviceTokenResponse>) -> Bool in
                 print("디바이스 토큰 업데이트 응답: \(response.message)")
                 return response.success
@@ -45,7 +45,7 @@ class DeviceService: DeviceServiceProtocol {
     
     // 푸시 알림 설정 변경
     func updatePushSettings(enabled: Bool) -> Observable<Bool> {
-        return apiClient.request(APIEndpoint.updatePushSettings(enabled: enabled))
+        return apiClient.request(DeviceEndpoint.updatePushSettings(enabled: enabled))
             .map { (response: APIResponse<PushSettingsResponse>) -> Bool in
                 print("푸시 설정 업데이트 응답: \(response.message)")
                 return response.success
@@ -58,7 +58,7 @@ class DeviceService: DeviceServiceProtocol {
     
     // 테스트 알림 전송
     func sendTestNotification() -> Observable<Bool> {
-        return apiClient.request(APIEndpoint.sendTestNotification)
+        return apiClient.request(DeviceEndpoint.sendTestNotification)
             .map { (response: APIResponse<EmptyResponse>) -> Bool in
                 print("테스트 알림 전송 응답: \(response.message)")
                 return response.success
@@ -71,7 +71,7 @@ class DeviceService: DeviceServiceProtocol {
     
     // 디바이스 토큰 제거
     func removeDeviceToken() -> Observable<Bool> {
-        return apiClient.request(APIEndpoint.removeDeviceToken)
+        return apiClient.request(DeviceEndpoint.removeDeviceToken)
             .map { (response: APIResponse<EmptyResponse>) -> Bool in
                 print("디바이스 토큰 제거 응답: \(response.message)")
                 return response.success

@@ -34,7 +34,7 @@ class LocationService: LocationServiceProtocol {
     // MARK: - 도시 검색 (자동완성)
     func searchLocations(query: String, limit: Int = 10) -> Observable<[CitySearchResult]> {
         print(#fileID, #function, #line, "- 도시 검색 시작: \(query)")
-        return apiClient.request(APIEndpoint.searchLocations(query: query, limit: limit))
+        return apiClient.request(LocationEndpoint.searchLocations(query: query, limit: limit))
             .map { (response: APIResponse<[CitySearchResult]>) -> [CitySearchResult] in
                 guard let cities = response.data else {
                     print("응답에 data 필드가 없음")
@@ -52,7 +52,7 @@ class LocationService: LocationServiceProtocol {
     // MARK: - 도시 영문명 변환
     func translateCity(city: String) -> Observable<CityTranslation> {
         print(#fileID, #function, #line, "- 도시명 변환 시작: \(city)")
-        return apiClient.request(APIEndpoint.translateCity(city: city))
+        return apiClient.request(LocationEndpoint.translateCity(city: city))
             .map { (response: APIResponse<CityTranslation>) -> CityTranslation in
                 guard let translation = response.data else {
                     print("응답에 data 필드가 없음")
@@ -70,7 +70,7 @@ class LocationService: LocationServiceProtocol {
     // MARK: - 도시 날씨 정보 조회
     func getCityWeather(city: String, date: Date? = nil) -> Observable<WeatherInfo> {
         print(#fileID, #function, #line, "- 날씨 정보 조회 시작: \(city)")
-        return apiClient.request(APIEndpoint.getCityWeather(city: city, date: date))
+        return apiClient.request(LocationEndpoint.getCityWeather(city: city, date: date))
             .map { (response: APIResponse<WeatherInfo>) -> WeatherInfo in
                 guard let weatherInfo = response.data else {
                     print("응답에 data 필드가 없음")
@@ -88,7 +88,7 @@ class LocationService: LocationServiceProtocol {
     // MARK: - 여행 기간 내 날씨 정보 조회
     func getJourneyForecast(city: String, startDate: Date, endDate: Date) -> Observable<JourneyForecast> {
         print(#fileID, #function, #line, "- 여행 기간 날씨 정보 조회 시작: \(city), \(startDate) ~ \(endDate)")
-        return apiClient.request(APIEndpoint.getJourneyForecast(city: city, startDate: startDate, endDate: endDate))
+        return apiClient.request(LocationEndpoint.getJourneyForecast(city: city, startDate: startDate, endDate: endDate))
             .map { (response: APIResponse<JourneyForecast>) -> JourneyForecast in
                 guard let forecast = response.data else {
                     print("응답에 data 필드가 없음")

@@ -44,9 +44,10 @@ extension Endpoints {
     }
 }
 
-enum APIEndpoint: Endpoints {
-    
-    // MARK: - AUTH ENDPOINTS
+
+// MARK: - AUTH ENDPOINTS
+
+enum AuthEndpoint: Endpoints {
     // 이메일 회원가입
     case register(name: String, email: String, password: String)
     
@@ -82,14 +83,140 @@ enum APIEndpoint: Endpoints {
     case kakaoLogin
     case naverLogin
     
-    // MARK: - USER PROFILE ENDPOINTS
+    var path: String {
+        switch self {
+        case .register:
+            return "/auth/register"
+        case .login:
+            return "/auth/login"
+        case .verifyEmail:
+            return "/auth/verify-email"
+        case .resendVerificationCode:
+            return "/auth/resend-verification"
+        case .forgotPassword:
+            return "/auth/forgot-password"
+        case .verifyResetCode:
+            return "/auth/verify-reset-code"
+        case .resetPassword:
+            return "/auth/reset-password"
+        case .changePassword:
+            return "/auth/change-password"
+        case .refreshToken:
+            return "/auth/refresh-token"
+        case .logout:
+            return "/auth/logout"
+        case .deleteAccount:
+            return "/auth/delete-account"
+        case .appleVerify:
+            return "/auth/apple/verify"
+        case .googleLogin:
+            return "/auth/google"
+        case .kakaoLogin:
+            return "/auth/kakao"
+        case .naverLogin:
+            return "/auth/naver"
+        }
+    }
     
+    var method: HTTPMethod {
+        switch self {
+        case .register, .login, .verifyEmail, .resendVerificationCode, .forgotPassword,
+             .verifyResetCode, .resetPassword, .changePassword, .refreshToken, .appleVerify, .logout:
+            return .post
+        case .deleteAccount:
+            return .delete
+        case .googleLogin, .kakaoLogin, .naverLogin:
+            return .get
+        }
+    }
+    
+    var parameters: [String: Any]? {
+        switch self {
+        case .register(let name, let email, let password):
+            return ["name": name, "email": email, "password": password]
+        case .login(let email, let password):
+            return ["email": email, "password": password]
+        case .verifyEmail(let email, let code):
+            return ["email": email, "code": code]
+        case .resendVerificationCode(let email):
+            return ["email": email]
+        case .forgotPassword(let email):
+            return ["email": email]
+        case .verifyResetCode(let email, let code):
+            return ["email": email, "code": code]
+        case .resetPassword(let email, let password, let code):
+            return ["email": email, "password": password, "code": code]
+        case .changePassword(let currentPassword, let newPassword):
+            return ["currentPassword": currentPassword, "newPassword": newPassword]
+        case .refreshToken(let refreshToken):
+            return ["refreshToken": refreshToken]
+        case .appleVerify(let userId, let email, let fullName):
+            var params: [String: Any] = ["userId": userId]
+            
+            if let email = email, !email.isEmpty {
+                params["email"] = email
+            }
+            
+            if let fullName = fullName {
+                var nameParams: [String: String?] = [:]
+                if let givenName = fullName.givenName {
+                    nameParams["givenName"] = givenName
+                }
+                if let familyName = fullName.familyName {
+                    nameParams["familyName"] = familyName
+                }
+                if !nameParams.isEmpty {
+                    params["fullName"] = nameParams
+                }
+            }
+            
+            return params
+        default:
+            return nil
+        }
+    }
+}
+
+
+// MARK: - USER ENDPOINTS
+
+enum UserEndpoint: Endpoints {
     case getMyProfile
     case updateProfile(name: String, intro: String)
     case updateProfileImage(imageData: Data)
     
-    // MARK: - JOURNEY ENDPOINTS
+    var path: String {
+        switch self {
+        case .getMyProfile, .updateProfile:
+            return "/users/me"
+        case .updateProfileImage:
+            return "/users/me/profile-image"
+        }
+    }
     
+    var method: HTTPMethod {
+        switch self {
+        case .getMyProfile:
+            return .get
+        case .updateProfile, .updateProfileImage:
+            return .put
+        }
+    }
+    
+    var parameters: [String: Any]? {
+        switch self {
+        case .updateProfile(let name, let intro):
+            return ["name": name, "intro": intro]
+        default:
+            return nil
+        }
+    }
+}
+
+
+// MARK: - JOURNEY ENDPOINTS
+
+enum JourneyEndpoint: Endpoints {
     // 여행 목록 조회
     case getJourneys
     
@@ -136,7 +263,88 @@ enum APIEndpoint: Endpoints {
     // 여행 추천 준비물 조회
     case getRecommendations(journeyId: String)
     
-    // MARK: - LOCATION ENDPOINTS
+    var path: String {
+        switch self {
+        case .getJourneys:
+            return "/journeys"
+        case .getJourneyById(let id):
+            return "/journeys/\(id)"
+        case .createJourney:
+            return "/journeys"
+        case .updateJourney(let id, _, _, _, _, _, _, _, _):
+            return "/journeys/\(id)"
+        case .deleteJourney(let id):
+            return "/journeys/\(id)"
+        case .inviteParticipant(let journeyId, _):
+            return "/journeys/\(journeyId)/participants"
+        case .removeParticipant(let journeyId, let userId):
+            return "/journeys/\(journeyId)/participants/\(userId)"
+        case .respondToInvitation(let notificationId, _):
+            return "/journeys/invitations/\(notificationId)"
+        case .getRecommendations(let journeyId):
+            return "/journeys/\(journeyId)/recommendations"
+        }
+    }
+    
+    var method: HTTPMethod {
+        switch self {
+        case .getJourneys, .getJourneyById, .getRecommendations:
+            return .get
+        case .createJourney, .inviteParticipant:
+            return .post
+        case .updateJourney, .respondToInvitation:
+            return .put
+        case .deleteJourney, .removeParticipant:
+            return .delete
+        }
+    }
+    
+    var parameters: [String: Any]? {
+        switch self {
+        case .createJourney(let title, let transportType, let origin, let destination, let startDate, let endDate, let themes, let isPrivate):
+            let dateFormatter = ISO8601DateFormatter()
+            return [
+                "title": title,
+                "transportType": transportType.rawValue,
+                "origin": origin,
+                "destination": destination,
+                "startDate": dateFormatter.string(from: startDate),
+                "endDate": dateFormatter.string(from: endDate),
+                "themes": themes.map { $0.rawValue },
+                "isPrivate": isPrivate
+            ]
+            
+        case .updateJourney(_, let title, let transportType, let origin, let destination, let startDate, let endDate, let themes, let isPrivate):
+            var params: [String: Any] = [:]
+            let dateFormatter = ISO8601DateFormatter()
+            
+            if let title = title { params["title"] = title }
+            if let transportType = transportType { params["transportType"] = transportType.rawValue }
+            if let origin = origin { params["origin"] = origin }
+            if let destination = destination { params["destination"] = destination }
+            if let startDate = startDate { params["startDate"] = dateFormatter.string(from: startDate) }
+            if let endDate = endDate { params["endDate"] = dateFormatter.string(from: endDate) }
+            if let themes = themes { params["themes"] = themes.map { $0.rawValue } }
+            if let isPrivate = isPrivate { params["isPrivate"] = isPrivate }
+            
+            return params
+            
+        case .inviteParticipant(_, let email):
+            return ["email": email]
+            
+        case .respondToInvitation(_, let accept):
+            return ["accept": accept]
+            
+        default:
+            return nil
+        }
+    }
+}
+
+
+// MARK: - LOCATION ENDPOINTS
+
+enum LocationEndpoint: Endpoints {
     // 도시 검색 (자동완성)
     case searchLocations(query: String, limit: Int)
 
@@ -149,9 +357,55 @@ enum APIEndpoint: Endpoints {
     // 여행 기간 내 날씨 정보 조회
     case getJourneyForecast(city: String, startDate: Date, endDate: Date)
     
+    var path: String {
+        switch self {
+        case .searchLocations:
+            return "/locations/search"
+        case .translateCity:
+            return "/locations/translate"
+        case .getCityWeather(let city, _):
+            return "/locations/\(city)/weather"
+        case .getJourneyForecast(let city, _, _):
+            return "/locations/\(city)/forecast"
+        }
+    }
     
-    // MARK: - PACKING ITEM ENDPOINTS
+    var method: HTTPMethod {
+        switch self {
+        case .searchLocations, .translateCity, .getCityWeather, .getJourneyForecast:
+            return .get
+        }
+    }
     
+    var parameters: [String: Any]? {
+        switch self {
+        case .searchLocations(let query, let limit):
+            return ["query": query, "limit": limit]
+            
+        case .translateCity(let city):
+            return ["city": city]
+            
+        case .getCityWeather(_, let date):
+            if let date = date {
+                let dateFormatter = ISO8601DateFormatter()
+                return ["date": dateFormatter.string(from: date)]
+            }
+            return nil
+            
+        case .getJourneyForecast(_, let startDate, let endDate):
+            let dateFormatter = ISO8601DateFormatter()
+            return [
+                "startDate": dateFormatter.string(from: startDate),
+                "endDate": dateFormatter.string(from: endDate)
+            ]
+        }
+    }
+}
+
+
+// MARK: - PACKING ITEM ENDPOINTS
+
+enum PackingItemEndpoint: Endpoints {
     // 여행별 준비물 목록 조회
     case getPackingItemsByJourney(journeyId: String)
     
@@ -199,113 +453,8 @@ enum APIEndpoint: Endpoints {
     // 특정 테마의 준비물 템플릿 조회
     case getThemeTemplateByName(themeName: String)
     
-    // MARK: - FRIENDSHIP ENDPOINTS
-
-    // 친구 목록 조회
-    case getFriends
-        
-    // 친구 요청 목록 조회
-    case getFriendRequests
-        
-    // 친구 요청 보내기
-    case sendFriendRequest(email: String)
-        
-    // 친구 요청 응답 (수락/거절)
-    case respondToFriendRequest(id: String, accept: Bool)
-        
-    // 친구 삭제
-    case removeFriend(id: String)
-        
-    // 이메일로 친구 검색
-    case searchFriendByEmail(email: String)
-    
-    // MARK: - DEVICE
-    case updateDeviceToken(token: String)
-    case updatePushSettings(enabled: Bool)
-    case sendTestNotification
-    case removeDeviceToken
-
-    // MARK: - NOTIFICATION
-    case getNotifications
-    case markNotificationAsRead(id: String)
-    case markAllNotificationsAsRead
-    case deleteNotification(id: String)
-    case getUnreadCount
-    case createJourneyReminder(journeyId: String)
-    case createWeatherAlert(journeyId: String)
-    
-    // MARK: - PATH
     var path: String {
         switch self {
-        // Auth
-        case .register:
-            return "/auth/register"
-        case .login:
-            return "/auth/login"
-        case .verifyEmail:
-            return "/auth/verify-email"
-        case .resendVerificationCode:
-            return "/auth/resend-verification"
-        case .forgotPassword:
-            return "/auth/forgot-password"
-        case .verifyResetCode:
-            return "/auth/verify-reset-code"
-        case .resetPassword:
-            return "/auth/reset-password"
-        case .changePassword:
-            return "/auth/change-password"
-        case .refreshToken:
-            return "/auth/refresh-token"
-        case .logout:
-            return "/auth/logout"
-        case .deleteAccount:
-            return "/auth/delete-account"
-            
-        // Social Login
-        case .appleVerify:
-            return "/auth/apple/verify"
-        case .googleLogin:
-            return "/auth/google"
-        case .kakaoLogin:
-            return "/auth/kakao"
-        case .naverLogin:
-            return "/auth/naver"
-            
-            // user profile
-        case .getMyProfile, .updateProfile:
-            return "/users/me"
-        case .updateProfileImage:
-            return "/users/me/profile-image"
-            
-            // Journey
-        case .getJourneys:
-            return "/journeys"
-        case .getJourneyById(let id):
-            return "/journeys/\(id)"
-        case .createJourney:
-            return "/journeys"
-        case .updateJourney(let id, _, _, _, _, _, _, _, _):
-            return "/journeys/\(id)"
-        case .deleteJourney(let id):
-            return "/journeys/\(id)"
-        case .inviteParticipant(let journeyId, _):
-            return "/journeys/\(journeyId)/participants"
-        case .removeParticipant(let journeyId, let userId):
-            return "/journeys/\(journeyId)/participants/\(userId)"
-        case .respondToInvitation(let notificationId, _):
-            return "/journeys/invitations/\(notificationId)"
-        case .getRecommendations(let journeyId):
-            return "/journeys/\(journeyId)/recommendations"
-        case .searchLocations:
-            return "/locations/search"
-        case .translateCity:
-            return "/locations/translate"
-        case .getCityWeather(let city, _):
-            return "/locations/\(city)/weather"
-        case .getJourneyForecast(let city, _, _):
-            return "/locations/\(city)/forecast"
-            
-            // Packing Item
         case .getPackingItemsByJourney(let journeyId):
             return "/packing-items/journey/\(journeyId)"
         case .createPackingItem:
@@ -326,82 +475,11 @@ enum APIEndpoint: Endpoints {
             return "/packing-items/templates"
         case .getThemeTemplateByName(let themeName):
             return "/packing-items/templates/\(themeName)"
-            // Friendship
-        case .getFriends:
-            return "/friendships"
-        case .getFriendRequests:
-            return "/friendships/requests"
-        case .sendFriendRequest:
-            return "/friendships/requests"
-        case .respondToFriendRequest(let id, _):
-            return "/friendships/requests/\(id)"
-        case .removeFriend(let id):
-            return "/friendships/\(id)"
-        case .searchFriendByEmail:
-            return "/friendships/search"
-
-            
-            // 디바이스 관련
-        case .updateDeviceToken:
-            return "/devices/token"
-        case .updatePushSettings:
-            return "/devices/push-settings"
-        case .sendTestNotification:
-            return "/devices/test-notification"
-        case .removeDeviceToken:
-            return "/devices/token"
-            
-            // 알림 관련
-        case .getNotifications:
-            return "/notifications"
-        case .markNotificationAsRead(let id):
-            return "/notifications/\(id)/read"
-        case .markAllNotificationsAsRead:
-            return "/notifications/read-all"
-        case .deleteNotification(let id):
-            return "/notifications/\(id)"
-        case .getUnreadCount:
-            return "/notifications/unread-count"
-            
-        case .createJourneyReminder:
-            return "/notifications/journey-reminder"
-        case .createWeatherAlert:
-            return "/notifications/weather-alert"
         }
     }
     
-    // MARK: - METHODS
-    
     var method: HTTPMethod {
         switch self {
-        case .register, .login, .verifyEmail, .resendVerificationCode, .forgotPassword, .verifyResetCode, .resetPassword, .changePassword, .refreshToken, .appleVerify:
-            return .post
-        case .logout:
-            return .post
-        case .deleteAccount:
-            return .delete
-        case .getMyProfile:
-            return .get
-        case .updateProfile:
-            return .put
-        case .updateProfileImage:
-            return .put
-        case .googleLogin, .kakaoLogin, .naverLogin:
-            return .get
-            
-            // Journey
-        case .getJourneys, .getJourneyById, .getRecommendations:
-            return .get
-        case .createJourney, .inviteParticipant:
-            return .post
-        case .updateJourney, .respondToInvitation:
-            return .put
-        case .deleteJourney, .removeParticipant:
-            return .delete
-        case .searchLocations, .translateCity, .getCityWeather, .getJourneyForecast:
-            return .get
-            
-            // Packing Item
         case .getPackingItemsByJourney, .getPackingItemsByCategory, .getThemeTemplates, .getThemeTemplateByName:
             return .get
         case .createPackingItem, .createBulkPackingItems, .createSelectedRecommendedItems:
@@ -410,145 +488,11 @@ enum APIEndpoint: Endpoints {
             return .put
         case .deletePackingItem:
             return .delete
-            
-            // Friendship
-        case .getFriends, .getFriendRequests, .searchFriendByEmail:
-            return .get
-        case .sendFriendRequest:
-            return .post
-        case .respondToFriendRequest:
-            return .put
-        case .removeFriend:
-            return .delete
-            // 디바이스 관련
-        case .updateDeviceToken, .updatePushSettings:
-            return .put
-        case .sendTestNotification:
-            return .post
-        case .removeDeviceToken:
-            return .delete
-            
-            // 알림 관련
-        case .getNotifications, .getUnreadCount:
-            return .get
-        case .markNotificationAsRead, .markAllNotificationsAsRead:
-            return .put
-        case .deleteNotification:
-            return .delete
-        case .createJourneyReminder, .createWeatherAlert:
-            return .post
         }
     }
     
-    // MARK: - PARAMETERS
-    
-    var parameters: [String : Any]? {
+    var parameters: [String: Any]? {
         switch self {
-        case .register(let name, let email, let password):
-            return ["name": name, "email": email, "password": password]
-        case .login(let email, let password):
-            return ["email": email, "password": password]
-        case .verifyEmail(let email, let code):
-            return ["email": email, "code": code]
-        case .resendVerificationCode(let email):
-            return ["email": email]
-        case .forgotPassword(let email):
-            return ["email": email]
-        case .verifyResetCode(let email, let code):
-            return ["email": email, "code": code]
-        case .resetPassword(let email, let password, let code):
-            return ["email": email, "password": password, "code": code]
-        case .changePassword(let currentPassword, let newPassword):
-            return ["currentPassword": currentPassword, "newPassword": newPassword]
-        case .refreshToken(let refreshToken):
-            return ["refreshToken": refreshToken]
-        
-            // social Login
-        case .appleVerify(let userId, let email, let fullName):
-            var params: [String: Any] = ["userId": userId]
-            
-            if let email = email, !email.isEmpty {
-                params["email"] = email
-            }
-            
-            if let fullName = fullName {
-                var nameParams: [String: String?] = [:]
-                if let givenName = fullName.givenName {
-                    nameParams["givenName"] = givenName
-                }
-                if let familyName = fullName.familyName {
-                    nameParams["familyName"] = familyName
-                }
-                if !nameParams.isEmpty {
-                    params["fullName"] = nameParams
-                }
-            }
-            
-            return params
-        case .updateProfile(let name, let intro):
-            return ["name": name, "intro": intro]
-            
-            // Journey
-        case .getJourneys, .getJourneyById, .deleteJourney, .getRecommendations, .removeParticipant:
-            return nil
-            
-        case .createJourney(let title, let transportType, let origin, let destination, let startDate, let endDate, let themes, let isPrivate):
-            let dateFormatter = ISO8601DateFormatter()
-            return [
-                "title": title,
-                "transportType": transportType.rawValue,
-                "origin": origin,
-                "destination": destination,
-                "startDate": dateFormatter.string(from: startDate),
-                "endDate": dateFormatter.string(from: endDate),
-                "themes": themes.map { $0.rawValue },
-                "isPrivate": isPrivate
-            ]
-            
-        case .updateJourney(_, let title, let transportType, let origin, let destination, let startDate, let endDate, let themes, let isPrivate):
-            var params: [String: Any] = [:]
-            let dateFormatter = ISO8601DateFormatter()
-            
-            if let title = title { params["title"] = title }
-            if let transportType = transportType { params["transportType"] = transportType.rawValue }
-            if let origin = origin { params["origin"] = origin }
-            if let destination = destination { params["destination"] = destination }
-            if let startDate = startDate { params["startDate"] = dateFormatter.string(from: startDate) }
-            if let endDate = endDate { params["endDate"] = dateFormatter.string(from: endDate) }
-            if let themes = themes { params["themes"] = themes.map { $0.rawValue } }
-            if let isPrivate = isPrivate { params["isPrivate"] = isPrivate }
-            
-            return params
-            
-        case .inviteParticipant(_, let email):
-            return ["email": email]
-            
-        case .respondToInvitation(_, let accept):
-            return ["accept": accept]
-            // Location
-            
-        case .searchLocations(let query, let limit):
-            return ["query": query, "limit": limit]
-            
-        case .translateCity(let city):
-            return ["city": city]
-        case .getCityWeather(_, let date):
-            if let date = date {
-                let dateFormatter = ISO8601DateFormatter()
-                return ["date": dateFormatter.string(from: date)]
-            }
-            return nil
-        case .getJourneyForecast(_, let startDate, let endDate):
-            let dateFormatter = ISO8601DateFormatter()
-            return [
-                "startDate": dateFormatter.string(from: startDate),
-                "endDate": dateFormatter.string(from: endDate)
-            ]
-            
-        // Packing Items
-        case .getPackingItemsByJourney, .getPackingItemsByCategory, .getThemeTemplates, .getThemeTemplateByName, .togglePackingItem, .deletePackingItem:
-            return nil
-            
         case .createPackingItem(let journeyId, let name, let count, let category, let isShared, let assignedTo):
             var params: [String: Any] = [
                 "journeyId": journeyId,
@@ -594,36 +538,171 @@ enum APIEndpoint: Endpoints {
             
             return params
             
-            // Friendship
-        case .getFriends, .getFriendRequests:
+        default:
             return nil
+        }
+    }
+}
+
+
+// MARK: - FRIENDSHIP ENDPOINTS
+
+enum FriendshipEndpoint: Endpoints {
+    // 친구 목록 조회
+    case getFriends
+        
+    // 친구 요청 목록 조회
+    case getFriendRequests
+        
+    // 친구 요청 보내기
+    case sendFriendRequest(email: String)
+        
+    // 친구 요청 응답 (수락/거절)
+    case respondToFriendRequest(id: String, accept: Bool)
+        
+    // 친구 삭제
+    case removeFriend(id: String)
+        
+    // 이메일로 친구 검색
+    case searchFriendByEmail(email: String)
+    
+    var path: String {
+        switch self {
+        case .getFriends:
+            return "/friendships"
+        case .getFriendRequests:
+            return "/friendships/requests"
+        case .sendFriendRequest:
+            return "/friendships/requests"
+        case .respondToFriendRequest(let id, _):
+            return "/friendships/requests/\(id)"
+        case .removeFriend(let id):
+            return "/friendships/\(id)"
+        case .searchFriendByEmail:
+            return "/friendships/search"
+        }
+    }
+    
+    var method: HTTPMethod {
+        switch self {
+        case .getFriends, .getFriendRequests, .searchFriendByEmail:
+            return .get
+        case .sendFriendRequest:
+            return .post
+        case .respondToFriendRequest:
+            return .put
+        case .removeFriend:
+            return .delete
+        }
+    }
+    
+    var parameters: [String: Any]? {
+        switch self {
         case .sendFriendRequest(let email):
             return ["email": email]
         case .respondToFriendRequest(_, let accept):
             return ["accept": accept]
-        case .removeFriend:
-            return nil
         case .searchFriendByEmail(let email):
             return ["email": email]
-            
-            
-            
-            // 디바이스 관련
+        default:
+            return nil
+        }
+    }
+}
+
+
+// MARK: - DEVICE ENDPOINTS
+
+enum DeviceEndpoint: Endpoints {
+    case updateDeviceToken(token: String)
+    case updatePushSettings(enabled: Bool)
+    case sendTestNotification
+    case removeDeviceToken
+    
+    var path: String {
+        switch self {
+        case .updateDeviceToken:
+            return "/devices/token"
+        case .updatePushSettings:
+            return "/devices/push-settings"
+        case .sendTestNotification:
+            return "/devices/test-notification"
+        case .removeDeviceToken:
+            return "/devices/token"
+        }
+    }
+    
+    var method: HTTPMethod {
+        switch self {
+        case .updateDeviceToken, .updatePushSettings:
+            return .put
+        case .sendTestNotification:
+            return .post
+        case .removeDeviceToken:
+            return .delete
+        }
+    }
+    
+    var parameters: [String: Any]? {
+        switch self {
         case .updateDeviceToken(let token):
             return ["deviceToken": token, "deviceType": "ios"]
         case .updatePushSettings(let enabled):
             return ["enabled": enabled]
-//        case .sendTestNotification, .removeDeviceToken:
-//            return nil
-            
-            // 알림 관련
-//        case .getNotifications, .markNotificationAsRead, .markAllNotificationsAsRead,
-//                .deleteNotification, .getUnreadCount:
-//            return nil
-            
+        default:
+            return nil
+        }
+    }
+}
+
+
+// MARK: - NOTIFICATION ENDPOINTS
+
+enum NotificationEndpoint: Endpoints {
+    case getNotifications
+    case markNotificationAsRead(id: String)
+    case markAllNotificationsAsRead
+    case deleteNotification(id: String)
+    case getUnreadCount
+    case createJourneyReminder(journeyId: String)
+    case createWeatherAlert(journeyId: String)
+    
+    var path: String {
+        switch self {
+        case .getNotifications:
+            return "/notifications"
+        case .markNotificationAsRead(let id):
+            return "/notifications/\(id)/read"
+        case .markAllNotificationsAsRead:
+            return "/notifications/read-all"
+        case .deleteNotification(let id):
+            return "/notifications/\(id)"
+        case .getUnreadCount:
+            return "/notifications/unread-count"
+        case .createJourneyReminder:
+            return "/notifications/journey-reminder"
+        case .createWeatherAlert:
+            return "/notifications/weather-alert"
+        }
+    }
+    
+    var method: HTTPMethod {
+        switch self {
+        case .getNotifications, .getUnreadCount:
+            return .get
+        case .markNotificationAsRead, .markAllNotificationsAsRead:
+            return .put
+        case .deleteNotification:
+            return .delete
+        case .createJourneyReminder, .createWeatherAlert:
+            return .post
+        }
+    }
+    
+    var parameters: [String: Any]? {
+        switch self {
         case .createJourneyReminder(let journeyId), .createWeatherAlert(let journeyId):
             return ["journeyId": journeyId]
-            
         default:
             return nil
         }

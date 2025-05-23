@@ -71,7 +71,7 @@ class PackingItemService: PackingItemServiceProtocol {
     
     // 여행별 준비물 목록 조회
     func getPackingItemsByJourneyAsync(journeyId: String) async throws -> [PackingItem] {
-        let endpoint = APIEndpoint.getPackingItemsByJourney(journeyId: journeyId)
+        let endpoint = PackingItemEndpoint.getPackingItemsByJourney(journeyId: journeyId)
         let response: APIResponse<[PackingItem]> = try await apiClient.requestWithDateDecodingAsync(endpoint)
         
         guard response.success, let items = response.data else {
@@ -90,7 +90,7 @@ class PackingItemService: PackingItemServiceProtocol {
         isShared: Bool,
         assignedTo: String?
     ) async throws -> PackingItem {
-        let endpoint = APIEndpoint.createPackingItem(
+        let endpoint = PackingItemEndpoint.createPackingItem(
             journeyId: journeyId,
             name: name,
             count: count,
@@ -112,7 +112,7 @@ class PackingItemService: PackingItemServiceProtocol {
         names: [String],
         categories: [String]
     ) -> Observable<APIResponse<[PackingItem]>> {
-        let endpoint = APIEndpoint.createBulkPackingItems(journeyId: journeyId, names: names, categories: categories)
+        let endpoint = PackingItemEndpoint.createBulkPackingItems(journeyId: journeyId, names: names, categories: categories)
         return apiClient.requestWithDateDecoding(endpoint)
     }
     
@@ -122,7 +122,7 @@ class PackingItemService: PackingItemServiceProtocol {
         selectedItems: [SelectedRecommendedItem],
         mergeDuplicates: Bool
     ) -> Observable<APIResponse<[PackingItem]>> {
-        let endpoint = APIEndpoint.createSelectedRecommendedItems(
+        let endpoint = PackingItemEndpoint.createSelectedRecommendedItems(
             journeyId: journeyId,
             selectedItems: selectedItems,
             mergeDuplicates: mergeDuplicates
@@ -139,7 +139,7 @@ class PackingItemService: PackingItemServiceProtocol {
         isShared: Bool?,
         assignedTo: String?
     ) async throws -> PackingItem {
-        let endpoint = APIEndpoint.updatePackingItem(
+        let endpoint = PackingItemEndpoint.updatePackingItem(
             id: id,
             name: name,
             count: count,
@@ -158,7 +158,7 @@ class PackingItemService: PackingItemServiceProtocol {
     
     // 준비물 체크 상태 토글
     func togglePackingItemAsync(id: String) async throws -> PackingItem {
-        let endpoint = APIEndpoint.togglePackingItem(id: id)
+        let endpoint = PackingItemEndpoint.togglePackingItem(id: id)
         let response: APIResponse<PackingItem> = try await apiClient.requestWithDateDecodingAsync(endpoint)
         
         guard response.success, let item = response.data else {
@@ -170,7 +170,7 @@ class PackingItemService: PackingItemServiceProtocol {
     
     // 준비물 삭제
     func deletePackingItemAsync(id: String) async throws -> Bool {
-        let endpoint = APIEndpoint.deletePackingItem(id: id)
+        let endpoint = PackingItemEndpoint.deletePackingItem(id: id)
         let response: APIResponse<Bool> = try await apiClient.requestAsync(endpoint)
         
         if !response.success {
@@ -182,7 +182,7 @@ class PackingItemService: PackingItemServiceProtocol {
     
     // 카테고리별 준비물 조회
     func getPackingItemsByCategoryAsync(journeyId: String) async throws -> [String: [PackingItem]] {
-        let endpoint = APIEndpoint.getPackingItemsByCategory(journeyId: journeyId)
+        let endpoint = PackingItemEndpoint.getPackingItemsByCategory(journeyId: journeyId)
         let response: APIResponse<[String: [PackingItem]]> = try await apiClient.requestWithDateDecodingAsync(endpoint)
         
         guard response.success, let categorizedItems = response.data else {
@@ -194,14 +194,14 @@ class PackingItemService: PackingItemServiceProtocol {
     
     // 테마별 준비물 템플릿 목록 조회
     func getThemeTemplates() -> Observable<APIResponse<[ThemeTemplate]>> {
-        let endpoint = APIEndpoint.getThemeTemplates
+        let endpoint = PackingItemEndpoint.getThemeTemplates
         return apiClient.request(endpoint)
     }
     
     // 특정 테마의 준비물 템플릿 조회
     func getThemeTemplateByName(themeName: String) -> Observable<APIResponse<ThemeTemplate>> {
         print(#fileID, #function, #line, "- ")
-        let endpoint = APIEndpoint.getThemeTemplateByName(themeName: themeName)
+        let endpoint = PackingItemEndpoint.getThemeTemplateByName(themeName: themeName)
         return apiClient.requestWithDateDecoding(endpoint)
     }
 }

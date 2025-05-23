@@ -26,7 +26,7 @@ class FriendshipService: FriendshipServiceProtocol {
     
     // 친구 목록 조회
     func getFriends() -> Observable<[Friend]> {
-        return apiClient.request(APIEndpoint.getFriends)
+        return apiClient.request(FriendshipEndpoint.getFriends)
             .map { (response: APIResponse<[Friend]>) -> [Friend] in
                 guard let friends = response.data else {
                     return []
@@ -37,7 +37,7 @@ class FriendshipService: FriendshipServiceProtocol {
     
     // 친구 요청 목록 조회
     func getFriendRequests() -> Observable<FriendRequestsResponse> {
-        return apiClient.requestWithDateDecoding(APIEndpoint.getFriendRequests)
+        return apiClient.requestWithDateDecoding(FriendshipEndpoint.getFriendRequests)
             .map { (response: APIResponse<FriendRequestsResponse>) -> FriendRequestsResponse in
                 guard let requestsData = response.data else {
                     return FriendRequestsResponse(received: [], sent: [])
@@ -48,7 +48,7 @@ class FriendshipService: FriendshipServiceProtocol {
     
     // 친구 요청 보내기
     func sendFriendRequest(email: String) -> Observable<Friendship> {
-        return apiClient.requestWithDateDecoding(APIEndpoint.sendFriendRequest(email: email))
+        return apiClient.requestWithDateDecoding(FriendshipEndpoint.sendFriendRequest(email: email))
             .map { (response: APIResponse<Friendship>) -> Friendship in
                 guard let friendship = response.data else {
                     throw NetworkError.invalidResponse
@@ -59,7 +59,7 @@ class FriendshipService: FriendshipServiceProtocol {
     
     // 친구 요청 응답 (수락/거절)
     func respondToFriendRequest(id: String, accept: Bool) -> Observable<Bool> {
-        return apiClient.request(APIEndpoint.respondToFriendRequest(id: id, accept: accept))
+        return apiClient.request(FriendshipEndpoint.respondToFriendRequest(id: id, accept: accept))
             .map { (response: APIResponse<Bool>) -> Bool in
                 return response.success
             }
@@ -67,7 +67,7 @@ class FriendshipService: FriendshipServiceProtocol {
     
     // 친구 삭제
     func removeFriend(id: String) -> Observable<Bool> {
-        return apiClient.request(APIEndpoint.removeFriend(id: id))
+        return apiClient.request(FriendshipEndpoint.removeFriend(id: id))
             .map { (response: APIResponse<Bool>) -> Bool in
                 return response.success
             }
@@ -76,7 +76,7 @@ class FriendshipService: FriendshipServiceProtocol {
     // 이메일로 친구 검색
     func searchFriendByEmail(email: String) -> Observable<[FriendSearchResult]> {
         print(#fileID, #function, #line, "- ")
-        return apiClient.request(APIEndpoint.searchFriendByEmail(email: email))
+        return apiClient.request(FriendshipEndpoint.searchFriendByEmail(email: email))
             .map { (response: APIResponse<[FriendSearchResult]>) -> [FriendSearchResult] in
                 guard let searchResults = response.data else {
                     return []

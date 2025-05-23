@@ -608,8 +608,7 @@ class RecommendationsViewController: UIViewController, View {
         if item.isEssential {
             essentialBadge.text = "필수".localized
             essentialBadge.font = .systemFont(ofSize: 12, weight: .medium)
-            essentialBadge.textColor = .white
-            essentialBadge.backgroundColor = .systemRed
+            essentialBadge.textColor = .systemRed
             essentialBadge.textAlignment = .center
             essentialBadge.layer.cornerRadius = 4
             essentialBadge.clipsToBounds = true
@@ -648,7 +647,6 @@ class RecommendationsViewController: UIViewController, View {
             NSLayoutConstraint.activate([
                 essentialBadge.leadingAnchor.constraint(equalTo: nameLabel.trailingAnchor, constant: 8),
                 essentialBadge.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-                essentialBadge.widthAnchor.constraint(equalToConstant: 36),
                 essentialBadge.heightAnchor.constraint(equalToConstant: 20),
                 
                 countLabel.leadingAnchor.constraint(equalTo: essentialBadge.trailingAnchor, constant: 8),

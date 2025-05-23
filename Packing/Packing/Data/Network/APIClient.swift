@@ -108,7 +108,7 @@ class APIClient: APIClientProtocol {
                     }
                 case 401:
                     // endpoint 가 refreshToken 인데, 401 에러다! -> networkerror 뱉고 로그아웃 해야함.
-                    if self.isRefreshTokenEndpoint(endpoint) {
+                    if case .refreshToken = endpoint as! AuthEndpoint {
                         print("로그아웃 해야해")
                         AuthCoordinator.shared.navigateToLogin()
                         observer.onError(NetworkError.unauthorized(nil))
@@ -258,7 +258,7 @@ class APIClient: APIClientProtocol {
                     
                 case 401:
                     // endpoint 가 refreshToken 인데, 401 에러다! -> networkerror 뱉고 로그아웃 해야함.
-                    if self.isRefreshTokenEndpoint(endpoint) {
+                    if case .refreshToken = endpoint as! AuthEndpoint {
                         print("로그아웃 해야해")
                         AuthCoordinator.shared.navigateToLogin()
                         observer.onError(NetworkError.unauthorized(nil))
@@ -330,16 +330,7 @@ class APIClient: APIClientProtocol {
         // 나머지 모든 endpoint는 인증 필요
         return true
     }
-    
-    private func isRefreshTokenEndpoint(_ endpoint: any Endpoints) -> Bool {
-        if let authEndpoint = endpoint as? AuthEndpoint {
-            if case .refreshToken = authEndpoint {
-                return true
-            }
-        }
-        return false
-    }
-    
+
     private func refreshToken() -> Observable<String> {
         print(#fileID, #function, #line, "- ")
         guard let refreshToken = tokenManager.refreshToken else {

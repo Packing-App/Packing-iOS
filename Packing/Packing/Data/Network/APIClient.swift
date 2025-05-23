@@ -108,7 +108,8 @@ class APIClient: APIClientProtocol {
                     }
                 case 401:
                     // endpoint 가 refreshToken 인데, 401 에러다! -> networkerror 뱉고 로그아웃 해야함.
-                    if case .refreshToken = endpoint as! AuthEndpoint {
+                    if let authEndpoint = endpoint as? AuthEndpoint,
+                       case .refreshToken = authEndpoint {
                         print("로그아웃 해야해")
                         AuthCoordinator.shared.navigateToLogin()
                         observer.onError(NetworkError.unauthorized(nil))
@@ -258,7 +259,8 @@ class APIClient: APIClientProtocol {
                     
                 case 401:
                     // endpoint 가 refreshToken 인데, 401 에러다! -> networkerror 뱉고 로그아웃 해야함.
-                    if case .refreshToken = endpoint as! AuthEndpoint {
+                    if let authEndpoint = endpoint as? AuthEndpoint,
+                       case .refreshToken = authEndpoint {
                         print("로그아웃 해야해")
                         AuthCoordinator.shared.navigateToLogin()
                         observer.onError(NetworkError.unauthorized(nil))
